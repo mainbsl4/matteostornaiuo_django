@@ -8,6 +8,8 @@ from .managers import UserManager
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_("email address"), unique=True)
+    first_name = models.CharField(max_length=50, null=True, blank=True)
+    last_name = models.CharField(max_length=50, null=True, blank=True)
     is_client = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -15,6 +17,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
 
     objects = UserManager()
 
