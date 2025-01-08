@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import User
-
+from unfold.admin import ModelAdmin
+from .models import User, Skill
 # Register your models here.
 
 # admin.site.register(User)
@@ -11,7 +11,7 @@ from .models import User
 
 # Register your models here.
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ModelAdmin):
     list_display = ('first_name','last_name','email', 'is_client', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('is_client', 'is_staff', 'is_active')
     search_fields = ('email',)
@@ -19,3 +19,7 @@ class UserAdmin(admin.ModelAdmin):
     list_per_page = 20  # Number of records per page
     # list_editable = ('is_client', 'is_staff', 'is_active')
 
+
+@admin.register(Skill)
+class SkillAdmin(ModelAdmin):
+    pass 
