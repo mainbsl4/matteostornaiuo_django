@@ -27,6 +27,7 @@ class CompanyProfile(models.Model):
         verbose_name_plural = 'Company Profiles'
 
 class JobTemplate(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, related_name='templates')
     job_title = models.CharField(max_length=200)
     number_of_staff = models.IntegerField(default=1)
     skills = models.ManyToManyField(Skill, related_name='skills', blank=True)  
