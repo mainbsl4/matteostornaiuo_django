@@ -4,6 +4,13 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        # fields = ("id", "email", "first_name", "last_name", "password")
+        fields = ("id", "email", "first_name", "last_name", "is_client", "is_staff", "date_joined")
+        # fields = "__all__"
+
 class StaffSignupSerializer(serializers.ModelSerializer):
 
     class Meta:
