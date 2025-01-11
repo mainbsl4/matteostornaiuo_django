@@ -8,8 +8,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         # fields = ("id", "email", "first_name", "last_name", "password")
-        # fields = ("id", "email", "first_name", "last_name")
-        fields = "__all__"
+        fields = ("id", "email", "first_name", "last_name", "is_client", "is_staff", "date_joined")
+        # fields = "__all__"
 
 class StaffSignupSerializer(serializers.ModelSerializer):
 
