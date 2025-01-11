@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .serializers import StaffSignupSerializer, ClientSignupSerializer
+from .serializers import StaffSignupSerializer, ClientSignupSerializer, UserSerializer
 
 
 # Create your views here.
@@ -53,3 +53,13 @@ class ClientSignupAPIView(APIView):
             )
 
         return Response(data, status=response)
+
+
+
+class UsersProfileList(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        users = User.objects.filter(email = request.user.email)
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
