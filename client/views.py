@@ -11,12 +11,14 @@ from .models import (
     CompanyProfile,
     JobTemplate,
     Job,
+    Vacancy
 
 )
 from .serializers import (
     CompanyProfileSerializer,
     JobTemplateSerializer,
-    JobSerializer
+    JobSerializer,
+    VacancySerializer
 )
 
 # create company profile
@@ -56,62 +58,22 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class JobTemplateView(generics.ListCreateAPIView):
-    queryset = JobTemplate.objects.all()
-    serializer_class = JobTemplateSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = JobTemplateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            response = {
-                "status": status.HTTP_200_OK,
-                "message": "Job template created successfully",
-                "data": serializer.data
-            }
-            return Response(response, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # update job template
-    def put(self, request, pk):
-        job_template = JobTemplate.objects.get(pk=pk)
-        serializer = JobTemplateSerializer(job_template, data=request.data)
+class VacancyView(APIView):
+    def get(self, request):
+        vacancies = Vacancy.objects.all()
+        serializer = VacancySerializer(vacancies, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = VacancySerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            response = {
-                "status": status.HTTP_200_OK,
-                "message": "Job template updated successfully",
-                "data": serializer.data
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    # delte job template
-    def delete(self, request, pk):
-        job_template = JobTemplate.objects.get(pk=pk)
-        job_template.delete()
-        response = {
-            "status": status.HTTP_200_OK,
-            "message": "Job template deleted successfully"
-        }
-        return Response(response, status=status.HTTP_204_NO_CONTENT)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
 class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
 
-    # def create(self, request, *args, **kwargs):
-
-    #     serializer = JobSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save(user=request.user)
-    #         response = {
-    #             "status": status.HTTP_200_OK,
-    #             "message": "Job created successfully",
-    #             "data": serializer.data
-    #         }
-    #         return Response(response, status=status.HTTP_201_CREATED)
-    #     else:
-    #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
