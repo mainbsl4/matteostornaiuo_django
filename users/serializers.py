@@ -1,4 +1,4 @@
-from .models import User
+from .models import User, Skill
 from rest_framework import fields, serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -25,7 +25,10 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         return user
     
 
-
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = "__all__"
 
 
 class ClientSignupSerializer(serializers.ModelSerializer):
