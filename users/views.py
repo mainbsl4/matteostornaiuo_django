@@ -56,10 +56,3 @@ class ClientSignupAPIView(APIView):
 
 
 
-class UsersProfileList(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, format=None):
-        users = User.objects.filter(email = request.user.email)
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
