@@ -9,6 +9,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         # fields = ("id", "email", "first_name", "last_name", "password")
         fields = ("id", "email", "first_name", "last_name", "is_client", "is_staff", "date_joined")
+        extra_kwargs = {
+            'email': {'required': False}  # Mark email as not required
+        }
         # fields = "__all__"
 
 class StaffSignupSerializer(serializers.ModelSerializer):
