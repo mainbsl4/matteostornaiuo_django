@@ -29,7 +29,7 @@ class Staff(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f'{self.user.username}'
+        return f'{self.user.first_name} {self.user.last_name}'
     # calculate age in year
     def age_in_year(self):
         from datetime import datetime

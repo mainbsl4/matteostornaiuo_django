@@ -48,3 +48,12 @@ class StaffProfileView(APIView):
             return Response(response, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request, pk=None):
+        staff = Staff.objects.get(pk=pk)
+        staff.delete()
+        response = {
+            "status": status.HTTP_204_NO_CONTENT,
+            "message": "Staff profile deleted successfully"
+        }
+        return Response(response, status=status.HTTP_204_NO_CONTENT)
