@@ -60,7 +60,12 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
 
 
 class VacancyView(APIView):
-    def get(self, request):
+    def get(self, request, pk=None):
+        if pk:
+            vacancy = get_object_or_404(Vacancy, pk=pk)
+            serializer = VacancySerializer(vacancy)
+            return Response(serializer.data)
+        
         vacancies = Vacancy.objects.all()
         serializer = VacancySerializer(vacancies, many=True)
         return Response(serializer.data)
@@ -75,5 +80,21 @@ class VacancyView(APIView):
 class JobView(generics.ListCreateAPIView):
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+
+
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+    def put(self, request, *args, **kwargs):
+        job_instance = self.get_object()
+        serializer = self.get_serializer(job_instance, data=request.data)
+        
+        if serializer.is_valid():
+            self.perform_update(serializer)  # This will call the custom update method in your serializer
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
