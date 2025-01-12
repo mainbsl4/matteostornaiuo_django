@@ -87,14 +87,21 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = JobSerializer
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
-    def put(self, request, *args, **kwargs):
-        job_instance = self.get_object()
-        serializer = self.get_serializer(job_instance, data=request.data)
-        
+    
+    # custom response 
+    
+    def update(self, request, pk):
+        job = Job.objects.get(pk=pk)
+        serializer = JobSerializer(job, data=request.data)
         if serializer.is_valid():
-            self.perform_update(serializer)  # This will call the custom update method in your serializer
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer.save()
+            response = {
+                "status": status.HTTP_200_OK,
+                "message": "Job updated successfully",
+                "data": serializer.data
+                
+            }
+            return Response(response, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    
+        

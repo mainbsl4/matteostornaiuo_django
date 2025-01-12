@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/', include('users.urls')),
     path('api/', include('client.urls') ),
     path('api/', include('staff.urls')),
+    path('api/', include('dashboard.urls')),
     
 
 ]
