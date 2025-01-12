@@ -12,17 +12,15 @@ from .serializers import (
 
 )
 
-class StaffProfileView(APIView):
+class StaffProfileView(generics.ListCreateAPIView):
 
-    def get(self, request, pk=None):
-        if pk is None:
-            staff_profiles = Staff.objects.all()
-            serializer = StaffSerializer(staff_profiles, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        staff = Staff.objects.get(pk=pk)
-        serializer = StaffSerializer(staff)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    def post(self, request, *args, **kwargs):
+    queryset = Staff.objects.all()
+    serializer_class = StaffSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
         serializer = StaffSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
@@ -32,12 +30,15 @@ class StaffProfileView(APIView):
                 "data": serializer.data
             }
             return Response(response, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, pk=None):
-        staff = Staff.objects.get(pk=pk)
-        serializer = StaffSerializer(staff, data=request.data)
+class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Staff.objects.all()
+    serializer_class = StaffSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = StaffSerializer(instance, data=request.data)
         if serializer.is_valid():
             serializer.save()
             response = {
@@ -46,14 +47,14 @@ class StaffProfileView(APIView):
                 "data": serializer.data
             }
             return Response(response, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-    def delete(self, request, pk=None):
-        staff = Staff.objects.get(pk=pk)
-        staff.delete()
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
         response = {
             "status": status.HTTP_204_NO_CONTENT,
             "message": "Staff profile deleted successfully"
         }
         return Response(response, status=status.HTTP_204_NO_CONTENT)
+    
