@@ -44,11 +44,6 @@ class VacancySerializer(serializers.ModelSerializer):
         model = Vacancy
         fields = '__all__'
 
-    def get_job_title(self, obj):
-        return obj.job_title.name
-    
-    def get_uniform(self, obj):
-        return obj.uniform.name if obj.uniform.name else None
     def create(self, validated_data):
         print('validated data:', validated_data)
         skill_data = validated_data.pop('skills', {})
@@ -58,20 +53,17 @@ class VacancySerializer(serializers.ModelSerializer):
         
         job_title = job_title_data['name']
         uniform = uniform_data['name']
-        print('job title:', job_title, 'uniform:', uniform)
-
 
         job_role = JobRole.objects.filter(name__iexact=job_title).first()
         uniform = Uniform.objects.filter(name__iexact=uniform).first()
-        print('job title data', job_title_data)
-        print('uniform data', uniform_data)
-
         # user = User.objects.get(pk=user_data)
         vacancy = Vacancy.objects.create(user=user,job_title=job_role,uniform=uniform,**validated_data)
         for skill in skill_data:
             skill,_ = Skill.objects.get_or_create(**skill)
             vacancy.skills.add(skill)
         return vacancy
+    # def update(self, instance, validated_data):
+
     
 
 class JobSerializer(serializers.ModelSerializer):
@@ -82,10 +74,8 @@ class JobSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         vacancy_data = validated_data.pop('vacancy')
+        user_ = vacancy_data[0].get('user')
         save_in_template = validated_data.get('save_template', False)
-        
-        
-
         
         job = Job.objects.create(**validated_data)
         for vacancy in vacancy_data:
@@ -101,7 +91,7 @@ class JobSerializer(serializers.ModelSerializer):
         # in save in tamplate true save job in template model
         #job template have user and job field with foreign key relation
         if save_in_template:
-            job_template = JobTemplate.objects.create(user=validated_data['user'], job=job)
+            job_template = JobTemplate.objects.create(user=user_, job=job)
             job_template.save()
 
         return job
