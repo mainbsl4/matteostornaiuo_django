@@ -1,4 +1,4 @@
-from .models import User
+from .models import User, Skill
 from rest_framework import fields, serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -9,6 +9,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         # fields = ("id", "email", "first_name", "last_name", "password")
         fields = ("id", "email", "first_name", "last_name", "is_client", "is_staff", "date_joined")
+        extra_kwargs = {
+            'email': {'required': False}  # Mark email as not required
+        }
         # fields = "__all__"
 
 class StaffSignupSerializer(serializers.ModelSerializer):
@@ -32,7 +35,10 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         return user
     
 
-
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = "__all__"
 
 
 class ClientSignupSerializer(serializers.ModelSerializer):
