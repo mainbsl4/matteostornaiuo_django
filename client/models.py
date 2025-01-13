@@ -49,12 +49,22 @@ class Vacancy(models.Model):
         ordering = ['-created_at']
 
 
+JOB_STATUS = (
+    ('PUBLISHED', 'Published'),
+    ('DRAFT', 'Draft'),
+    ('ARCHIVED', 'Archived'),
+    ('EXPIRED', 'Expired'),
+    ('CLOSED', 'Closed'),
+    ('WAITING_FOR_RESPONSE', 'Waiting for Response'),
+)
 
 class Job(models.Model):
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
     description = models.TextField()
-    vacancy = models.ManyToManyField(Vacancy, related_name='vacancies', blank=True, null=True)
+    vacancy = models.ManyToManyField(Vacancy, related_name='vacancies', blank=True)
+    status = models.CharField(max_length=10, default='PUBLISHED')
+    save_template= models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
