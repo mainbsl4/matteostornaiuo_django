@@ -6,6 +6,7 @@ from . models import (
     CompanyProfile,
     JobTemplate,
     Job,
+    Vacancy,
 
 )
 
@@ -13,9 +14,6 @@ from . models import (
 class CompanyProfileAdmin(ModelAdmin):
     list_display = ('company_name', 'contact_number', 'company_email','company_address')
 
-@admin.register(JobTemplate)
-class JobTemplateAdmin(ModelAdmin):
-    list_display = ('job_title', 'open_date', 'close_date')
 
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
@@ -24,3 +22,11 @@ class JobAdmin(ModelAdmin):
     # company name
     def company_name(self, obj):
         return obj.company.company_name
+    
+@admin.register(JobTemplate)
+class JobTemplateAdmin(ModelAdmin):
+    pass 
+
+@admin.register(Vacancy)
+class VacancyAdmin(ModelAdmin):
+    list_display = ('job_title','open_date','close_date' )
