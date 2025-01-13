@@ -56,8 +56,11 @@ class JobSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         vacancy_data = validated_data.pop('vacancy')
+        save_in_template = validated_data.get('save_template', False)
         
-        print('vcancy data:', vacancy_data)
+        
+
+        
         job = Job.objects.create(**validated_data)
         for vacancy in vacancy_data:
             vacancy['user'] = vacancy['user'].id
@@ -69,12 +72,16 @@ class JobSerializer(serializers.ModelSerializer):
             else:
                 print('serializer is not valid:', vacancy_serializer.errors)
                 # return None
+        # in save in tamplate true save job in template model
+        #job template have user and job field with foreign key relation
+        if save_in_template:
+            job_template = JobTemplate.objects.create(user=validated_data['user'], job=job)
+            job_template.save()
 
         return job
     def update(self, instance, validated_data):
         # Update Job instance attributes
         vacancy_data = validated_data.pop('vacancy', [])
-
         # for attr, value in validated_data.items():
         #     setattr(instance, attr, value)
         instance.title = validated_data.get('title', instance.title)
