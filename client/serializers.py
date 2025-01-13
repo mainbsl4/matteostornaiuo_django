@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from users.serializers import SkillSerializer
+from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
 
 from django.contrib.auth import get_user_model
@@ -12,6 +12,12 @@ from .models import (
     Vacancy,
 
 
+
+)
+from users.models import (
+    JobRole,
+    Skill,
+    Uniform,
 
 )
 
@@ -32,16 +38,36 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 class VacancySerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True)
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    
+    job_title = JobRoleSerializer()
+    uniform = UniformSerializer()
     class Meta:
         model = Vacancy
         fields = '__all__'
 
+    def get_job_title(self, obj):
+        return obj.job_title.name
+    
+    def get_uniform(self, obj):
+        return obj.uniform.name if obj.uniform.name else None
     def create(self, validated_data):
+        print('validated data:', validated_data)
         skill_data = validated_data.pop('skills', {})
         user = validated_data.pop('user')
+        job_title_data = validated_data.pop('job_title')
+        uniform_data = validated_data.pop('uniform')
+        
+        job_title = job_title_data['name']
+        uniform = uniform_data['name']
+        print('job title:', job_title, 'uniform:', uniform)
+
+
+        job_role = JobRole.objects.filter(name__iexact=job_title).first()
+        uniform = Uniform.objects.filter(name__iexact=uniform).first()
+        print('job title data', job_title_data)
+        print('uniform data', uniform_data)
+
         # user = User.objects.get(pk=user_data)
-        vacancy = Vacancy.objects.create(user=user,**validated_data)
+        vacancy = Vacancy.objects.create(user=user,job_title=job_role,uniform=uniform,**validated_data)
         for skill in skill_data:
             skill,_ = Skill.objects.get_or_create(**skill)
             vacancy.skills.add(skill)
