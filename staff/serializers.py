@@ -8,7 +8,7 @@ from users.models import User
 from users.serializers import UserSerializer
 
 class StaffSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=False)
+    user = UserSerializer()
     
     class Meta:
         model = Staff
