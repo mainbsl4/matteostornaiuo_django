@@ -125,3 +125,9 @@ class JobApplicationAPI(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk=None):
+        job_application = get_object_or_404(JobApplication, pk=pk)
+        job_application.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    

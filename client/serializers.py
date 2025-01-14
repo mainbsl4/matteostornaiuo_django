@@ -22,6 +22,7 @@ from users.models import (
 
 )
 from staff.serializers import StaffSerializer
+from staff.models import Staff
 
 User = get_user_model()
 
@@ -157,10 +158,14 @@ class JobSerializer(serializers.ModelSerializer):
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    vacancy = serializers.StringRelatedField(read_only=True)
-    applicant = serializers.StringRelatedField(read_only=True)
+    vacancy = serializers.PrimaryKeyRelatedField(queryset=Vacancy.objects.all())
+    applicant = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all())
 
     class Meta:
         model = JobApplication
         fields = '__all__'
    
+    def create(self, validated_data):
+        print('validated data', validated_data)
+
+        return 0
