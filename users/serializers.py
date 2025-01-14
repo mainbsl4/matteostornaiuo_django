@@ -1,8 +1,8 @@
-from .models import User, Skill
 from rest_framework import fields, serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
+from .models import User, Skill, Uniform, JobRole
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -60,3 +60,13 @@ class ClientSignupSerializer(serializers.ModelSerializer):
                 is_client=True
             )
         return user
+
+class JobRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobRole
+        fields = ['id', 'name', 'price_per_hour']
+
+class UniformSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Uniform
+        fields = ['id','name','description']
