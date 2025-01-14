@@ -6,3 +6,4 @@ urlpatterns =[
     path('staff/profile/<int:pk>/', views.StaffProfileDetailView.as_view()),
 
 ]
+
