@@ -1,6 +1,12 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
-from .models import User, Skill
+from .models import (
+    User, 
+    Skill, 
+    JobRole, 
+    Uniform
+    )
+        
 # Register your models here.
 
 # admin.site.register(User)
@@ -22,4 +28,15 @@ class UserAdmin(ModelAdmin):
 
 @admin.register(Skill)
 class SkillAdmin(ModelAdmin):
+    pass 
+
+
+@admin.register(JobRole)
+class JobRoleAdmin(ModelAdmin):
+    list_display = ('name', 'price_per_hour')
+    search_fields = ('name',)
+
+
+@admin.register(Uniform)
+class UniformAdmin(ModelAdmin):
     pass 

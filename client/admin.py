@@ -18,6 +18,7 @@ class CompanyProfileAdmin(ModelAdmin):
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
     list_display = ('title', 'company_name', 'created_at')
+    search_fields = ('title', )
 
     # company name
     def company_name(self, obj):
@@ -30,3 +31,9 @@ class JobTemplateAdmin(ModelAdmin):
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
     list_display = ('job_title','open_date','close_date' )
+    list_filter = ('open_date','close_date' )
+    search_fields = ('job_title', )
+    # list_per_page = 10
+    
+    
+    

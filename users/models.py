@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 
 from .managers import UserManager
 
@@ -32,3 +33,46 @@ class Skill(models.Model):
     
     def __str__(self):
         return self.name
+    
+
+class JobRole(models.Model):
+    name = models.CharField(max_length=200)
+    price_per_hour = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f'{self.name}'
+    
+    class Meta:
+        verbose_name_plural = 'Job Roles'
+        ordering = ['name']
+
+    # if the exactly this name exists raise error 
+    def save(self, *args, **kwargs):
+        if self.name and JobRole.objects.filter(name__iexact=self.name).exists():
+            raise ValidationError('Job role with this name already exists.')
+        super().save(*args, **kwargs)
+    
+    
+    
+class Uniform(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Uniforms'
+        ordering = ['name']
+    
+    def save(self, *args, **kwargs):
+        if self.name and Uniform.objects.filter(name__iexact=self.name).exists():
+            raise ValidationError('Uniform with this name already exists.')
+        super().save(*args, **kwargs)
+
