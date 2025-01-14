@@ -10,6 +10,7 @@ from .models import (
     JobTemplate,
     Job,
     Vacancy,
+    JobApplication
 
 
 
@@ -20,6 +21,7 @@ from users.models import (
     Uniform,
 
 )
+from staff.serializers import StaffSerializer
 
 User = get_user_model()
 
@@ -35,11 +37,20 @@ class JobTemplateSerializer(serializers.ModelSerializer):
         model = JobTemplate
         fields = '__all__'
         # read_only_fields = ['profile']
+
+class JobSerializerForVacancy(serializers.ModelSerializer):
+    company = CompanyProfileSerializer(read_only=True)
+    class Meta:
+        model = Job
+        fields = ['id', 'title', 'description', 'status', 'company']
+
 class VacancySerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True)
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     job_title = JobRoleSerializer()
     uniform = UniformSerializer()
+    jobs = JobSerializerForVacancy(many=True, read_only=True, source='vacancies')
+
     class Meta:
         model = Vacancy
         fields = '__all__'
@@ -144,3 +155,12 @@ class JobSerializer(serializers.ModelSerializer):
         return instance
     
 
+
+class JobApplicationSerializer(serializers.ModelSerializer):
+    vacancy = serializers.StringRelatedField(read_only=True)
+    applicant = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = JobApplication
+        fields = '__all__'
+   

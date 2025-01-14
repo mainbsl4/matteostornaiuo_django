@@ -7,6 +7,8 @@ from . models import (
     JobTemplate,
     Job,
     Vacancy,
+    JobApplication,
+
 
 )
 
@@ -37,3 +39,7 @@ class VacancyAdmin(ModelAdmin):
     
     
     
+@admin.register(JobApplication)
+class JobApplicationAdmin(ModelAdmin):
+    list_display = ('vacancy__job_title', 'applicant', 'created_at', 'status')
+

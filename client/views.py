@@ -11,14 +11,16 @@ from .models import (
     CompanyProfile,
     JobTemplate,
     Job,
-    Vacancy
+    Vacancy,
+    JobApplication
 
 )
 from .serializers import (
     CompanyProfileSerializer,
     JobTemplateSerializer,
     JobSerializer,
-    VacancySerializer
+    VacancySerializer,
+    JobApplicationSerializer
 )
 
 # create company profile
@@ -106,3 +108,20 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+
+class JobApplicationAPI(APIView):
+    def get(self, request,pk=None):
+        if pk:
+            job_application = get_object_or_404(JobApplication, pk=pk)
+            serializer = JobApplicationSerializer(job_application)
+            return Response(serializer.data)
+        
+        job_applications = JobApplication.objects.all()
+        serializer = JobApplicationSerializer(job_applications, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = JobApplicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

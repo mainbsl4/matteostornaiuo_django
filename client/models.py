@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from users.models import Skill, Uniform, JobRole
+from staff.models import Staff
 
 User = get_user_model()
 
@@ -37,6 +38,7 @@ class Vacancy(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -97,3 +99,14 @@ class JobTemplate(models.Model):
 
     def __str__(self):
         return self.job.title
+    
+
+class JobApplication(models.Model):
+    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
+    applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f'{self.applicant.user.email} - {self.vacancy.job_title}'
