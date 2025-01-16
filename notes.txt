@@ -1,1 +1,14 @@
 # Badsha
+- vacancy create json
+{
+    "skills": [1,2],
+    "job_title": 1,
+    "uniform": 2,
+    "staff_ids":[],
+    "number_of_staff": 3,
+    "open_date": "2025-01-13",
+    "close_date": "2025-01-14",
+    "start_time": "01:00:00",
+    "end_time": "05:00:00"
+    
+}
