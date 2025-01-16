@@ -1,10 +1,10 @@
-from .models import User
+from .models import User, StaffInvitation
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .serializers import StaffSignupSerializer, ClientSignupSerializer, UserSerializer
+from .serializers import StaffSignupSerializer, ClientSignupSerializer, UserSerializer, StaffInvitationSerializer
 from .email_service import send_staff_signup_email, send_client_signup_email
 
 # Create your views here.
@@ -65,3 +65,21 @@ class ClientSignupAPIView(APIView):
 
 
 
+
+
+
+
+class StaffInvitationList(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        staffInvitation = StaffInvitation.objects.all()
+        serializer = StaffInvitationSerializer(staffInvitation, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = StaffInvitationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user = request.user)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
