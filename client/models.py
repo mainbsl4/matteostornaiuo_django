@@ -105,8 +105,23 @@ class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
+    in_time = models.DateTimeField(blank=True, null=True)
+    out_time = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return f'{self.applicant.user.email} - {self.vacancy.job_title}'
+    
+
+class StaffInvitation(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
+    status = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f'{self.staff.user.email} -invited in {self.vacancy.job_title}'
+    

@@ -12,7 +12,8 @@ from .models import (
     JobTemplate,
     Job,
     Vacancy,
-    JobApplication
+    JobApplication,
+    StaffInvitation
 
 )
 from .serializers import (
@@ -131,3 +132,8 @@ class JobApplicationAPI(APIView):
         job_application.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+
+class InviteStaffView(APIView):
+    def post(self, request, vacancy_id=None):
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        

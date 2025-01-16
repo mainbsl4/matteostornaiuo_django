@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
@@ -10,7 +11,8 @@ from .models import (
     JobTemplate,
     Job,
     Vacancy,
-    JobApplication
+    JobApplication,
+    StaffInvitation
 
 
 
@@ -21,16 +23,25 @@ from users.models import (
     Uniform,
 
 )
+
+from dashboard.models import FavouriteStaff
+
+from users.serializers import UserSerializer
 from staff.serializers import StaffSerializer
 from staff.models import Staff
 
 User = get_user_model()
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
+    user_info = serializers.SerializerMethodField()
     class Meta:
         model = CompanyProfile
         fields = '__all__'
         read_only_fields = ['user']
+    
+    def get_user_info(self, obj):
+        return UserSerializer(obj.user).data
+        
 
 
 class JobTemplateSerializer(serializers.ModelSerializer):
@@ -52,9 +63,15 @@ class VacancySerializer(serializers.ModelSerializer):
     uniform = UniformSerializer()
     jobs = JobSerializerForVacancy(many=True, read_only=True, source='vacancies')
 
+    # add alist of staff id for sending invitation this field is write only
+    staff_ids = serializers.ListField(write_only=True)
+
+
     class Meta:
         model = Vacancy
-        fields = '__all__'
+        # add staff_ids with fields 
+
+        fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
 
     def create(self, validated_data):
         print('validated data:', validated_data)
@@ -62,6 +79,9 @@ class VacancySerializer(serializers.ModelSerializer):
         user = validated_data.pop('user')
         job_title_data = validated_data.pop('job_title')
         uniform_data = validated_data.pop('uniform')
+        
+        staff_ids = validated_data.pop('staff_ids', [])
+        print('staff_ids:', staff_ids)
         
         job_title = job_title_data['name']
         uniform = uniform_data['name']
@@ -73,16 +93,35 @@ class VacancySerializer(serializers.ModelSerializer):
         for skill in skill_data:
             skill,_ = Skill.objects.get_or_create(**skill)
             vacancy.skills.add(skill)
+        
+        # send invitation 
+        for staff_id in staff_ids:
+            staff_ = get_object_or_404(FavouriteStaff, pk=staff_id)
+            staff = Staff.objects.filter(id=staff_.staff.id).first()
+            if not staff:
+                continue
+            invitation = StaffInvitation.objects.create(vacancy=vacancy, staff=staff)
+            invitation.save()
+
         return vacancy
     # def update(self, instance, validated_data):
 
+
+class CreateVacancySerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Vacancy
+        fields = ['user', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','participants']
     
+    def create(self, validated_data):
+        pass
 
 class JobSerializer(serializers.ModelSerializer):
     vacancy = VacancySerializer(many=True)
     class Meta:
         model = Job
         fields = '__all__'
+
+
 
     def create(self, validated_data):
         vacancy_data = validated_data.pop('vacancy')
