@@ -108,12 +108,43 @@ class VacancySerializer(serializers.ModelSerializer):
 
 
 class CreateVacancySerializers(serializers.ModelSerializer):
+    job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+    skills_id = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
+    uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all())
+    # participants = serializers.PrimaryKeyRelatedField()
     class Meta:
         model = Vacancy
-        fields = ['user', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','participants']
+        fields = ['user', 'job_title','number_of_staff','skills_id','uniform', 'open_date', 'close_date', 'start_time', 'end_time']
+        read_only_fields = ['user']
     
     def create(self, validated_data):
-        pass
+        print('validated data', validated_data)
+
+        user = self.context['request'].user
+        validated_data['user'] = user
+
+        job_title = validated_data.pop('job_title')
+        print('job_title', job_title)
+        skills = validated_data.pop('skills')
+        print('skills', skills)
+        uniform = validated_data.pop('uniform')
+        print('uniform', uniform)
+        participants = validated_data.pop('participants')
+        print('participants', participants)
+
+        vacancy = Vacancy.objects.create(
+            job_title=job_title,
+            uniform=uniform,
+            participants=participants,
+            **validated_data
+        )
+        vacancy.skills.set(skills)
+        return vacancy
+
+
+
+        # print all this
+        return 0
 
 class JobSerializer(serializers.ModelSerializer):
     vacancy = VacancySerializer(many=True)
