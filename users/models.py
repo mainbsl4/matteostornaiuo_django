@@ -19,21 +19,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-
     objects = UserManager()
 
     def __str__(self):
         return self.email
-    
+
+
 class Skill(models.Model):
     name = models.CharField(max_length=200)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.name
-    
+
 
 class JobRole(models.Model):
     name = models.CharField(max_length=200)
@@ -41,38 +41,61 @@ class JobRole(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f'{self.name}'
-    
-    class Meta:
-        verbose_name_plural = 'Job Roles'
-        ordering = ['name']
 
-    # if the exactly this name exists raise error 
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name_plural = "Job Roles"
+        ordering = ["name"]
+
+    # if the exactly this name exists raise error
     def save(self, *args, **kwargs):
         if self.name and JobRole.objects.filter(name__iexact=self.name).exists():
-            raise ValidationError('Job role with this name already exists.')
+            raise ValidationError("Job role with this name already exists.")
         super().save(*args, **kwargs)
-    
-    
-    
+
+
 class Uniform(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name_plural = 'Uniforms'
-        ordering = ['name']
-    
+        verbose_name_plural = "Uniforms"
+        ordering = ["name"]
+
     def save(self, *args, **kwargs):
         if self.name and Uniform.objects.filter(name__iexact=self.name).exists():
-            raise ValidationError('Uniform with this name already exists.')
+            raise ValidationError("Uniform with this name already exists.")
         super().save(*args, **kwargs)
 
+
+class StaffInvitation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} invitation"
+
+
+class Invitation(models.Model):
+    staff_invitation = models.ForeignKey(
+        StaffInvitation, related_name="invitations", on_delete=models.CASCADE
+    )
+    staff_name = models.CharField(max_length=200)
+    staff_email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    # job_role = models.ForeignKey(JobRole, related_name="job_role", on_delete=models.CASCADE)
+    employee_type = models.CharField(max_length=200)
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.staff_name} - {self.staff_email}"

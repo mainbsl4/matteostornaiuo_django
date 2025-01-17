@@ -2,7 +2,7 @@ from rest_framework import fields, serializers
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
-from .models import User, Skill, Uniform, JobRole
+from .models import User, Skill, Uniform, JobRole, StaffInvitation, Invitation
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,3 +70,32 @@ class UniformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Uniform
         fields = ['id','name','description']
+
+
+
+
+
+class InviteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invitation
+        # fields = '__all__'
+        fields = ['staff_invitation', 'staff_name', 'staff_email', 'phone', 'employee_type']
+        read_only_fields = ['staff_invitation']
+
+
+class StaffInvitationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    invitations = InviteSerializer(many=True)
+
+
+    class Meta:
+        model = StaffInvitation
+        fields = ['user', 'invitations']
+
+
+    def create(self, validated_data):
+        invitations_data = validated_data.pop('invitations')
+        staff_invitation = StaffInvitation.objects.create(**validated_data)
+        for invitation_data in invitations_data:
+            Invitation.objects.create(staff_invitation=staff_invitation, **invitation_data)
+        return staff_invitation
