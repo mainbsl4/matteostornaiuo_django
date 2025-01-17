@@ -76,6 +76,7 @@ class Uniform(models.Model):
         super().save(*args, **kwargs)
 
 
+# for invite staff from clinets
 class StaffInvitation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
