@@ -85,18 +85,17 @@ class InviteSerializer(serializers.ModelSerializer):
 
 class StaffInvitationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    invitation = InviteSerializer(many=True)
+    invitations = InviteSerializer(many=True)
 
 
     class Meta:
         model = StaffInvitation
-        fields = ['user', 'invitation' ]
+        fields = ['user', 'invitations']
 
 
     def create(self, validated_data):
-        invitations_data = validated_data.pop('invitation')
+        invitations_data = validated_data.pop('invitations')
         staff_invitation = StaffInvitation.objects.create(**validated_data)
         for invitation_data in invitations_data:
             Invitation.objects.create(staff_invitation=staff_invitation, **invitation_data)
         return staff_invitation
-

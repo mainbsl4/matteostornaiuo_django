@@ -72,14 +72,16 @@ class ClientSignupAPIView(APIView):
 class StaffInvitationList(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
-        staffInvitation = StaffInvitation.objects.all()
+        staffInvitation = StaffInvitation.objects.filter(user=request.user)
         serializer = StaffInvitationSerializer(staffInvitation, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
         serializer = StaffInvitationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user = request.user)
-            serializer.save()
+            serializer.save(user=request.user)
+            # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
