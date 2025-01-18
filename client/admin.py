@@ -20,7 +20,7 @@ class CompanyProfileAdmin(ModelAdmin):
 
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
-    list_display = ('title', 'company_name', 'created_at')
+    list_display = ('title', 'company_name', 'created_at', 'status')
     search_fields = ('title', )
 
     # company name
