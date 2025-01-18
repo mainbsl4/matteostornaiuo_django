@@ -21,6 +21,7 @@ from .serializers import (
     JobTemplateSerializer,
     JobSerializer,
     VacancySerializer,
+    CreateVacancySerializers,
     JobApplicationSerializer
 )
 
@@ -73,7 +74,9 @@ class VacancyView(APIView):
         serializer = VacancySerializer(vacancies, many=True)
         return Response(serializer.data)
     def post(self, request):
-        serializer = VacancySerializer(data=request.data, context={'request': request})
+        data = request.data
+        print('data', data)
+        serializer = CreateVacancySerializers(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -81,9 +84,23 @@ class VacancyView(APIView):
     # update vacancy 
     
 
-class JobView(generics.ListCreateAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
+class JobView(APIView):
+    def get(self, request, *args, **kwargs):
+        # if pk:
+        #     job = get_object_or_404(Job, pk=pk)
+        #     serializer = JobSerializer(job)
+        #     return Response(serializer.data)
+        
+        jobs = Job.objects.all()
+        serializer = JobSerializer(jobs, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = JobSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
 class JobDetailView(generics.RetrieveUpdateDestroyAPIView):

@@ -57,64 +57,25 @@ class JobSerializerForVacancy(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'status', 'company']
 
 class VacancySerializer(serializers.ModelSerializer):
-    skills = SkillSerializer(many=True)
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    job_title = JobRoleSerializer()
-    uniform = UniformSerializer()
-    jobs = JobSerializerForVacancy(many=True, read_only=True, source='vacancies')
-
-    # add alist of staff id for sending invitation this field is write only
-    staff_ids = serializers.ListField(write_only=True)
-
-
+    user = UserSerializer(read_only=True)
     class Meta:
         model = Vacancy
-        # add staff_ids with fields 
+        fields = '__all__'
+        depth = 1
 
-        fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
+        # fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
 
-    def create(self, validated_data):
-        print('validated data:', validated_data)
-        skill_data = validated_data.pop('skills', {})
-        user = validated_data.pop('user')
-        job_title_data = validated_data.pop('job_title')
-        uniform_data = validated_data.pop('uniform')
-        
-        staff_ids = validated_data.pop('staff_ids', [])
-        print('staff_ids:', staff_ids)
-        
-        job_title = job_title_data['name']
-        uniform = uniform_data['name']
-
-        job_role = JobRole.objects.filter(name__iexact=job_title).first()
-        uniform = Uniform.objects.filter(name__iexact=uniform).first()
-        # user = User.objects.get(pk=user_data)
-        vacancy = Vacancy.objects.create(user=user,job_title=job_role,uniform=uniform,**validated_data)
-        for skill in skill_data:
-            skill,_ = Skill.objects.get_or_create(**skill)
-            vacancy.skills.add(skill)
-        
-        # send invitation 
-        for staff_id in staff_ids:
-            staff_ = get_object_or_404(FavouriteStaff, pk=staff_id)
-            staff = Staff.objects.filter(id=staff_.staff.id).first()
-            if not staff:
-                continue
-            invitation = StaffInvitation.objects.create(vacancy=vacancy, staff=staff)
-            invitation.save()
-
-        return vacancy
-    # def update(self, instance, validated_data):
+    
 
 
 class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
-    skills_id = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
+    skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
     uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all())
-    # participants = serializers.PrimaryKeyRelatedField()
+    # participants = serializers.PrimaryKeyRelatedField(queryset=FavouriteStaff.objects.all(), many=True)
     class Meta:
         model = Vacancy
-        fields = ['user', 'job_title','number_of_staff','skills_id','uniform', 'open_date', 'close_date', 'start_time', 'end_time']
+        fields = ['user', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time']
         read_only_fields = ['user']
     
     def create(self, validated_data):
@@ -129,13 +90,13 @@ class CreateVacancySerializers(serializers.ModelSerializer):
         print('skills', skills)
         uniform = validated_data.pop('uniform')
         print('uniform', uniform)
-        participants = validated_data.pop('participants')
-        print('participants', participants)
+        # participants = validated_data.pop('participants')
+        # print('participants', participants)
 
         vacancy = Vacancy.objects.create(
             job_title=job_title,
             uniform=uniform,
-            participants=participants,
+            # participants=participants,
             **validated_data
         )
         vacancy.skills.set(skills)
@@ -144,28 +105,43 @@ class CreateVacancySerializers(serializers.ModelSerializer):
 
 
         # print all this
-        return 0
 
 class JobSerializer(serializers.ModelSerializer):
-    vacancy = VacancySerializer(many=True)
+    # vacancy = CreateVacancySerializers(many=True, write_only=True)
+    # get a extra field that get a objects
+    # vacancies = serializers.JSONField()
+    vacancies = serializers.ListField(
+        child=serializers.JSONField(),
+        write_only=True  # Use only for write operations
+    )
+    
     class Meta:
         model = Job
-        fields = '__all__'
+        fields = ['company' , 'title', 'description', 'status', 'save_template', 'vacancies']
+    
+    # to represantation for showing all the vacancy serializers data
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add the vacancy serializers data to the data
+        data['vacancy'] = VacancySerializer(instance.vacancy, many=True).data
+        return data
 
-
-
+    
     def create(self, validated_data):
-        vacancy_data = validated_data.pop('vacancy')
-        user_ = vacancy_data[0].get('user')
+        print('validated data', validated_data)
+        user_ = self.context['request'].user
+        print('job user', user_)
+        vacancy_data = validated_data.pop('vacancies')
+        print('vacancy data', vacancy_data)
         save_in_template = validated_data.get('save_template', False)
         
         job = Job.objects.create(**validated_data)
         for vacancy in vacancy_data:
-            vacancy['user'] = vacancy['user'].id
-            vacancy_serializer = VacancySerializer(data=vacancy)
+            # print('vacancy', vacancy,)
+            # vacancy['user'] =  user_.id
+            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
             if vacancy_serializer.is_valid():
-                vacancy_serializer.save()
-                vacancy_instance = vacancy_serializer.instance
+                vacancy_instance = vacancy_serializer.save()
                 job.vacancy.add(vacancy_instance)
             else:
                 print('serializer is not valid:', vacancy_serializer.errors)
