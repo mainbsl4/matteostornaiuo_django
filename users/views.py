@@ -10,7 +10,7 @@ from .serializers import (
     UserSerializer,
     StaffInvitationSerializer,
 )
-from .email_service import send_staff_signup_email, send_client_signup_email
+from .email_service import send_staff_signup_email, send_client_signup_email, send_staff_invitation_email_from_client
 
 
 # Create your views here.
@@ -77,7 +77,11 @@ class StaffInvitationList(APIView):
 
     def post(self, request, format=None):
         serializer = StaffInvitationSerializer(data=request.data)
+        print("DFS", request.data['invitations'][0]['staff_email'])
         if serializer.is_valid():
+            for invocation in request.data['invitations']:
+                staff_email = invocation['staff_email']
+                send_staff_invitation_email_from_client(staff_email)
             serializer.save(user=request.user)
             # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
