@@ -11,5 +11,6 @@ urlpatterns = [
     path('company/jobs/applications/', views.JobApplicationAPI.as_view()),
     path('company/jobs/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
 
+    path('company/jobs/applications/<int:application_id>/add/', views.AcceptApplicantView.as_view()),
 
 ]

@@ -25,6 +25,8 @@ from .serializers import (
     JobApplicationSerializer
 )
 
+from dashboard.models import Notification
+
 # create company profile
 
 class CompanyProfileCreateView(generics.ListCreateAPIView):
@@ -85,11 +87,11 @@ class VacancyView(APIView):
     
 
 class JobView(APIView):
-    def get(self, request, *args, **kwargs):
-        # if pk:
-        #     job = get_object_or_404(Job, pk=pk)
-        #     serializer = JobSerializer(job)
-        #     return Response(serializer.data)
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            job = get_object_or_404(Job, pk=pk)
+            serializer = JobSerializer(job)
+            return Response(serializer.data)
         
         jobs = Job.objects.all()
         serializer = JobSerializer(jobs, many=True)
@@ -154,3 +156,18 @@ class InviteStaffView(APIView):
     def post(self, request, vacancy_id=None):
         vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
         
+class AcceptApplicantView(APIView):
+    def post(self, request, application_id=None):
+        application = get_object_or_404(JobApplication, pk=application_id)
+        vacancy = application.vacancy
+        application.status = True
+        staff = application.applicant
+        vacancy.participants.add(staff)
+        # send notification to applicant 
+        Notification.objects.create(
+            user = staff.user,
+            message = f"Your application for {vacancy.job_title} has been accepted",
+            
+        )
+        application.save()
+        return Response(status=status.HTTP_200_OK)
