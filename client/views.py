@@ -11,15 +11,21 @@ from .models import (
     CompanyProfile,
     JobTemplate,
     Job,
-    Vacancy
+    Vacancy,
+    JobApplication,
+    StaffInvitation
 
 )
 from .serializers import (
     CompanyProfileSerializer,
     JobTemplateSerializer,
     JobSerializer,
-    VacancySerializer
+    VacancySerializer,
+    CreateVacancySerializers,
+    JobApplicationSerializer
 )
+
+from dashboard.models import Notification
 
 # create company profile
 
@@ -70,7 +76,9 @@ class VacancyView(APIView):
         serializer = VacancySerializer(vacancies, many=True)
         return Response(serializer.data)
     def post(self, request):
-        serializer = VacancySerializer(data=request.data)
+        data = request.data
+        print('data', data)
+        serializer = CreateVacancySerializers(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -78,9 +86,23 @@ class VacancyView(APIView):
     # update vacancy 
     
 
-class JobView(generics.ListCreateAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
+class JobView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            job = get_object_or_404(Job, pk=pk)
+            serializer = JobSerializer(job)
+            return Response(serializer.data)
+        
+        jobs = Job.objects.all()
+        serializer = JobSerializer(jobs, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = JobSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
 class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -106,3 +128,46 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+
+class JobApplicationAPI(APIView):
+    def get(self, request,pk=None):
+        if pk:
+            job_application = get_object_or_404(JobApplication, pk=pk)
+            serializer = JobApplicationSerializer(job_application)
+            return Response(serializer.data)
+        
+        job_applications = JobApplication.objects.all()
+        serializer = JobApplicationSerializer(job_applications, many=True)
+        return Response(serializer.data)
+    def post(self, request):
+        serializer = JobApplicationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk=None):
+        job_application = get_object_or_404(JobApplication, pk=pk)
+        job_application.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+class InviteStaffView(APIView):
+    def post(self, request, vacancy_id=None):
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        
+class AcceptApplicantView(APIView):
+    def post(self, request, application_id=None):
+        application = get_object_or_404(JobApplication, pk=application_id)
+        vacancy = application.vacancy
+        application.status = True
+        staff = application.applicant
+        vacancy.participants.add(staff)
+        # send notification to applicant 
+        Notification.objects.create(
+            user = staff.user,
+            message = f"Your application for {vacancy.job_title} has been accepted",
+            
+        )
+        application.save()
+        return Response(status=status.HTTP_200_OK)
