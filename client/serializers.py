@@ -1,4 +1,6 @@
-from rest_framework import serializers
+from rest_framework import serializers,status 
+from rest_framework.response import Response
+
 from django.shortcuts import get_object_or_404
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
@@ -72,7 +74,7 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
     uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all())
-    invited_staff = serializers.ListField(write_only=True)
+    invited_staff = serializers.ListField(write_only=True, required=False )
     # participants = serializers.PrimaryKeyRelatedField(queryset=FavouriteStaff.objects.all(), many=True)
 
     class Meta:
@@ -127,7 +129,7 @@ class JobSerializer(serializers.ModelSerializer):
         child=serializers.JSONField(),
         write_only=True  # Use only for write operations
     )
-    
+    # company = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = Job
         fields = ['id','company' , 'title', 'description', 'status', 'save_template', 'vacancies']
@@ -137,6 +139,7 @@ class JobSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         # Add the vacancy serializers data to the data
         data['vacancy'] = VacancySerializer(instance.vacancy, many=True).data
+        data['company'] = CompanyProfileSerializer(instance.company, read_only=True).data
         return data
 
     
@@ -149,16 +152,24 @@ class JobSerializer(serializers.ModelSerializer):
         save_in_template = validated_data.get('save_template', False)
         
         job = Job.objects.create(**validated_data)
+        job_vacancies = []
         for vacancy in vacancy_data:
-            # print('vacancy', vacancy,)
+            # print('vacancy', vacancy,) 
             # vacancy['user'] =  user_.id
             vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
             if vacancy_serializer.is_valid():
                 vacancy_instance = vacancy_serializer.save()
-                job.vacancy.add(vacancy_instance)
+                job_vacancies.append(vacancy_instance)
             else:
                 print('serializer is not valid:', vacancy_serializer.errors)
                 # return None
+        # job.vacancy.add(vacancy_instance)
+        job.vacancy.set(job_vacancies)
+        # print('job vacancy', job.vacancy)
+
+        # print('job vacancy', job.vacancy.all())
+        # print('job vacancy', job.vacancy.values_list('id', flat=True))
+        # print('job vacancy', list(job.vacancy.values_list('id', flat=True)))
         # in save in tamplate true save job in template model
         #job template have user and job field with foreign key relation
         if save_in_template:
@@ -171,14 +182,27 @@ class JobSerializer(serializers.ModelSerializer):
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    vacancy = serializers.PrimaryKeyRelatedField(queryset=Vacancy.objects.all())
-    applicant = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all())
-
     class Meta:
         model = JobApplication
         fields = '__all__'
-   
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['vacancy'] = VacancySerializer(instance.vacancy).data
+        data['applicant'] = StaffSerializer(instance.applicant).data
+        return data
     def create(self, validated_data):
         print('validated data', validated_data)
 
-        return 0
+        job_application = JobApplication.objects.create(**validated_data)
+        # send notification to vacancy user
+        vacancy = validated_data.get('vacancy')
+        user = vacancy.user
+        notification = Notification.objects.create(
+            user = user,
+            message = f"{validated_data['applicant']} has sent an application for your {vacancy.job_title} job."
+        )
+
+
+
+        return job_application
