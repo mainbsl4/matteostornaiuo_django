@@ -4,8 +4,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .serializers import StaffSignupSerializer, ClientSignupSerializer, UserSerializer, StaffInvitationSerializer
+from .serializers import (
+    StaffSignupSerializer,
+    ClientSignupSerializer,
+    UserSerializer,
+    StaffInvitationSerializer,
+)
 from .email_service import send_staff_signup_email, send_client_signup_email
+
 
 # Create your views here.
 class StaffSignupAPIView(APIView):
@@ -18,7 +24,7 @@ class StaffSignupAPIView(APIView):
         if password == confirm_password:
             serializer = StaffSignupSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save(is_staff = True)
+            serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
             send_staff_signup_email(staff_member)
@@ -32,9 +38,6 @@ class StaffSignupAPIView(APIView):
             )
 
         return Response(data, status=response)
-    
-
-
 
 
 class ClientSignupAPIView(APIView):
@@ -47,8 +50,7 @@ class ClientSignupAPIView(APIView):
         if password == confirm_password:
             serializer = ClientSignupSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save(is_staff = True)
-
+            serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
             send_client_signup_email(staff_member)
@@ -64,13 +66,10 @@ class ClientSignupAPIView(APIView):
         return Response(data, status=response)
 
 
-
-
-
-
-
+# for invite staff from clinets
 class StaffInvitationList(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, format=None):
         staffInvitation = StaffInvitation.objects.filter(user=request.user)
         serializer = StaffInvitationSerializer(staffInvitation, many=True)
@@ -83,5 +82,3 @@ class StaffInvitationList(APIView):
             # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
