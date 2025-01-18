@@ -1,5 +1,10 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+from users.models import JobRole
+
 
 User = get_user_model()
 
@@ -19,6 +24,7 @@ class Staff(models.Model):
     exp_year = models.IntegerField(default=0)
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
     video_resume = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
+    # role = models.ManyToManyField("StaffRole", blank=True, related_name='staff_roles')
 
     # review = 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -35,3 +41,19 @@ class Staff(models.Model):
         from datetime import datetime
         today = datetime.now()
         return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+    
+class StaffRole(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    role = models.ForeignKey(JobRole, on_delete=models.CASCADE)
+    rating = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
+    comment = models.TextField(blank=True)
+    primary = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = 'Staff Roles'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'

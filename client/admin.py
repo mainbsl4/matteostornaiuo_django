@@ -7,6 +7,9 @@ from . models import (
     JobTemplate,
     Job,
     Vacancy,
+    JobApplication,
+    StaffInvitation
+
 
 )
 
@@ -17,7 +20,7 @@ class CompanyProfileAdmin(ModelAdmin):
 
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
-    list_display = ('title', 'company_name', 'created_at')
+    list_display = ('title', 'company_name', 'created_at', 'status')
     search_fields = ('title', )
 
     # company name
@@ -37,3 +40,10 @@ class VacancyAdmin(ModelAdmin):
     
     
     
+@admin.register(JobApplication)
+class JobApplicationAdmin(ModelAdmin):
+    list_display = ('vacancy__job_title', 'applicant', 'created_at', 'status')
+
+@admin.register(StaffInvitation)
+class StaffInvitationAdmin(ModelAdmin):
+    list_display = ('staff', 'vacancy', 'created_at', 'status')
