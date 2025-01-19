@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from users.models import Skill, Uniform, JobRole
 from staff.models import Staff
@@ -124,4 +125,25 @@ class StaffInvitation(models.Model):
     
     def __str__(self):
         return f'{self.staff.user.email} -invited in {self.vacancy.job_title}'
+
+class Checkin(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
+    in_time = models.DateTimeField()
+    status = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f'{self.staff.user.email} - checked in at {self.in_time}'
+
+class Checkout(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
+    out_time = models.DateTimeField()
+    status = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.staff.user.email} - checked out at {self.out_time}'
     

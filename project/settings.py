@@ -159,3 +159,56 @@ EMAIL_HOST_USER = "mainbsl4@gmail.com"
 EMAIL_HOST_PASSWORD = "nmwk umma atdu sosv"
 EMAIL_PORT = 465  # SMTP port
 EMAIL_USE_SSL = True  # Use SSL for secure connection
+
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
+# UNFOLD = {
+
+#      "SIDEBAR": {
+#         "show_search": True,  # Search in applications and models names
+#         "show_all_applications": True, 
+#          "navigation": [
+#             {
+#                 "title": _("Navigation"),
+#                 "separator": True,  # Top border
+#                 "collapsible": True,  # Collapsible group of links
+#                 "items": [
+#                     {
+#                         "title": _("Dashboard"),
+#                         "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
+#                         "link": reverse_lazy("admin:index"),
+#                         # "badge": "sample_app.badge_callback",
+#                         "permission": lambda request: request.user.is_superuser,
+#                     },
+#                     {
+#                         "title": _("Users"),
+#                         "icon": "people",
+#                         "link": reverse_lazy("admin:users_user_changelist"),
+#                     },
+#                 ],
+#             },
+#             {
+#                 "title": _("Company Profile"),
+#                 "icon": "apartment",
+#                 "collapsible": True, 
+#                 "items":[
+#                     {
+#                         "title": _("Profile"),
+#                         "icon": "apartment",
+#                         "link": reverse_lazy("admin:client_companyprofile_changelist"),
+#                     },
+#                     {
+#                         "title": _("Create Jobs"),
+#                         "icon": "work",
+#                         "link": reverse_lazy("admin:client_job_add"),
+#                     }
+#                 ]
+#             },
+            
+#         ],
+#     },
+    
+
+# }
