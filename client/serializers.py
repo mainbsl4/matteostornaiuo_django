@@ -14,7 +14,9 @@ from .models import (
     Job,
     Vacancy,
     JobApplication,
-    StaffInvitation
+    StaffInvitation,
+    Checkin,
+    Checkout,
 
 
 
@@ -206,3 +208,21 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 
 
         return job_application
+
+
+class CheckinSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Checkin
+        exclude = ('created_at',)
+        read_only_fields = ['staff']
+        depth = 1
+    
+    
+class CheckOutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Checkout
+        exclude = ('created_at',)
+        read_only_fields = ['staff']
+        depth = 1
+
+

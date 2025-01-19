@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from users.models import JobRole
 
 
+
 User = get_user_model()
 
 # class Review(models.Model):
@@ -57,3 +58,5 @@ class StaffRole(models.Model):
     
     def __str__(self):
         return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'
+    
+

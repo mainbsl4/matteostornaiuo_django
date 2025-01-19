@@ -13,19 +13,27 @@ from .models import (
     Job,
     Vacancy,
     JobApplication,
-    StaffInvitation
+    StaffInvitation,
+    Checkin,
+    Checkout,
+
 
 )
+
 from .serializers import (
     CompanyProfileSerializer,
     JobTemplateSerializer,
     JobSerializer,
     VacancySerializer,
     CreateVacancySerializers,
-    JobApplicationSerializer
+    JobApplicationSerializer,
+    CheckinSerializer,
+    CheckOutSerializer,
+
 )
 
 from dashboard.models import Notification
+from staff.models import Staff
 
 # create company profile
 
@@ -171,3 +179,72 @@ class AcceptApplicantView(APIView):
         )
         application.save()
         return Response(status=status.HTTP_200_OK)
+    
+class CheckInView(APIView):
+    def post(self, request, vacancy_id=None):
+        data = request.data
+        user = request.user
+        staff = Staff.objects.filter(user=user).first()
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        serializer = CheckinSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(staff=staff, vacancy=vacancy)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def get(self, request,vacancy_id=None, *args, **kwargs):
+        checkin = get_object_or_404(Checkin, vacancy__id=vacancy_id)
+        serializer = CheckinSerializer(checkin)
+        return Response(serializer.data)
+
+class CheckOutView(APIView):
+    def post(self, request, vacancy_id=None):
+        data = request.data
+        user = request.user
+        staff = Staff.objects.filter(user=user).first()
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        serializer = CheckOutSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(staff=staff, vacancy=vacancy)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def get(self, request,vacancy_id=None, pk=None, *args, **kwargs):
+        if pk:
+            checkout = get_object_or_404(Checkout, pk=pk)
+            serializer = CheckOutSerializer(checkout)
+            return Response(serializer.data)
+        checkout = get_object_or_404(Checkout, vacancy__id=vacancy_id)
+        serializer = CheckOutSerializer(checkout)
+        return Response(serializer.data)
+    
+# approval check in checkout request
+
+class ApproveCheckinView(APIView):
+    def post(self, request, vacancy_id=None, pk=None):
+        staff_id = request.data['staff_id']
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        checkin = get_object_or_404(Checkin, vacancy=vacancy, staff__id=staff_id)
+        checkin.status = True
+        checkin.save()
+        # send notification to staff
+        notification = Notification.objects.create(
+            user = checkin.staff.user,
+            message = f"Your check-in request for {vacancy.job_title} has been approved",
+            
+        )
+        return Response(status=status.HTTP_200_OK)
+    
+class ApproveCheckoutView(APIView):
+    def post(self, request, vacancy_id=None, pk=None):
+        staff_id = request.data['staff_id']
+        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+        checkout = get_object_or_404(Checkout, vacancy=vacancy, staff__id=staff_id)
+
+        checkout.status = True
+        checkout.save()
+        # send notification to staff
+        notification = Notification.objects.create(
+            user = checkout.staff.user,
+            message = f"Your check-out request for {vacancy.job_title} has been approved",
+            
+        )
+        return Response(status=status.HTTP_200_OK)
+    
+
