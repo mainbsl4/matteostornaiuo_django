@@ -5,11 +5,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 # Create your views here.
-from .models import FavouriteStaff, CompanyReview
-from . serializers import FavouriteStaffSerializer, CompanyReviewSerializer, StaffReviewSerializer
+from .models import FavouriteStaff, CompanyReview, Notification
+from . serializers import (
+    FavouriteStaffSerializer, 
+    CompanyReviewSerializer, 
+    StaffReviewSerializer, 
+    NotificationSerializer, 
+    SkillSerializer
+)
 
 from client.models import CompanyProfile, Vacancy
 from staff.models import Staff
+from users.models import Skill
 
 
 class FavouriteStaffView(APIView):
@@ -90,4 +97,42 @@ class StaffReviewView(APIView):
             serializer.save(staff=staff,vacancy=vacancy, profile=company)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NotificationView(APIView):
+    def get(self, request):
+        user = request.user
+        
+
+        notifications = Notification.objects.filter(user=user).order_by('-created_at')
+        
+        serializer = NotificationSerializer(notifications, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "data": serializer.data,
+        }
+        return Response(response_data , status=status.HTTP_200_OK)
     
+
+class SkillView(APIView):
+    def get(self, request):
+        skills = Skill.objects.all()
+        serializer = SkillSerializer(skills, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "data": serializer.data,
+        }
+        return Response(response_data , status=status.HTTP_200_OK)
+    def post(self, request):
+        data = request.data 
+        # check this name is already exists 
+        skill = Skill.objects.filter(name=data['name']).first()
+        if skill:
+            return Response({"message": "Skill already exists"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = SkillSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
