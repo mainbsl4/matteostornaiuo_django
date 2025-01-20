@@ -84,6 +84,7 @@ class UniformSerializer(serializers.ModelSerializer):
 
 #  invite staff from clients
 class InviteSerializer(serializers.ModelSerializer):
+    job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     class Meta:
         model = Invitation
         # fields = '__all__'
@@ -92,9 +93,16 @@ class InviteSerializer(serializers.ModelSerializer):
             "staff_name",
             "staff_email",
             "phone",
+            "job_role",
             "employee_type",
         ]
         read_only_fields = ["staff_invitation"]
+
+    # to represantion for job role 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['job_role'] = JobRoleSerializer(instance.job_role).data
+        return data
 
 
 class StaffInvitationSerializer(serializers.ModelSerializer):
