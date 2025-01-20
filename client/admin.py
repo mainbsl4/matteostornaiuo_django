@@ -8,7 +8,9 @@ from . models import (
     Job,
     Vacancy,
     JobApplication,
-    StaffInvitation
+    StaffInvitation,
+    Checkout,
+    Checkin,
 
 
 )
@@ -47,3 +49,11 @@ class JobApplicationAdmin(ModelAdmin):
 @admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):
     list_display = ('staff', 'vacancy', 'created_at', 'status')
+
+@admin.register(Checkin)
+class CheckinAdmin(ModelAdmin):
+    list_display = ('staff', 'vacancy', 'in_time', 'status')
+@admin.register(Checkout)
+class CheckoutAdmin(ModelAdmin):
+    list_display = ('staff', 'vacancy', 'out_time', 'status')
+

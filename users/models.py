@@ -83,7 +83,7 @@ class StaffInvitation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username} invitation"
+        return f"{self.user} invitation"
 
 
 class Invitation(models.Model):

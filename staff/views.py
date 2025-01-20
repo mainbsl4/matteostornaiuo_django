@@ -17,9 +17,17 @@ from .serializers import (
 
 class StaffProfileView(APIView):
     def get(self, request, *args, **kwargs):
-        staff = Staff.objects.filter(user=request.user).first()
+        user = request.user
+        staff = Staff.objects.filter(user=user).first()
         serializer = StaffSerializer(staff)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Staff profile retrieved successfully",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+        
     def post(self, request, *args, **kwargs):
         serializer = CreateStaffSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -44,6 +52,7 @@ class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             response = {
                 "status": status.HTTP_200_OK,
+                "success": True,
                 "message": "Staff profile updated successfully",
                 "data": serializer.data
             }
@@ -55,6 +64,7 @@ class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
         response = {
             "status": status.HTTP_204_NO_CONTENT,
+            "success": True,
             "message": "Staff profile deleted successfully"
         }
         return Response(response, status=status.HTTP_204_NO_CONTENT)
@@ -64,7 +74,14 @@ class StaffRoleView(APIView):
     def get(self, request, *args, **kwargs):
         queryset = StaffRole.objects.all()
         serializer = StaffRoleSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Staff roles retrieved successfully",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
     def post(self, request, *args, **kwargs):
         serializer = StaffRoleSerializer(data=request.data)
