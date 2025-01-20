@@ -8,6 +8,9 @@ urlpatterns = [
     path('company/vacancy/<int:pk>/', views.VacancyView.as_view()),
     path('company/jobs/', views.JobView.as_view()),
     path('company/jobs/<int:pk>/', views.JobDetailView.as_view()),
+    path('company/jobs/applications/', views.JobApplicationAPI.as_view()),
+    path('company/jobs/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
 
+    path('company/jobs/applications/<int:application_id>/add/', views.AcceptApplicantView.as_view()),
 
 ]
