@@ -41,6 +41,19 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
     queryset = CompanyProfile.objects.all()
     serializer_class = CompanyProfileSerializer
 
+    # format the response in get request
+    
+    def list(self, request, format=None):
+        queryset = CompanyProfile.objects.filter(user=request.user).first()
+        serializer = CompanyProfileSerializer(queryset)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of company profiles",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
     # create company profile with custom respones in post request
@@ -78,11 +91,23 @@ class VacancyView(APIView):
         if pk:
             vacancy = get_object_or_404(Vacancy, pk=pk)
             serializer = VacancySerializer(vacancy)
-            return Response(serializer.data)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Vacancy details",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         
         vacancies = Vacancy.objects.all()
         serializer = VacancySerializer(vacancies, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of vacancies",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request):
         data = request.data
         print('data', data)
@@ -99,11 +124,23 @@ class JobView(APIView):
         if pk:
             job = get_object_or_404(Job, pk=pk)
             serializer = JobSerializer(job)
-            return Response(serializer.data)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job details",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         
         jobs = Job.objects.all()
         serializer = JobSerializer(jobs, many=True)
-        return Response(serializer.data)
+        response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job details",
+                "data": serializer.data
+            }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request):
         serializer = JobSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -120,6 +157,16 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(user=self.request.user)
     
     # custom response 
+    def list(self, request):
+        queryset = Job.objects.filter(user=request.user).first()
+        serializer = JobSerializer(queryset)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of your jobs",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
     def update(self, request, pk):
         job = Job.objects.get(pk=pk)
@@ -142,11 +189,24 @@ class JobApplicationAPI(APIView):
         if pk:
             job_application = get_object_or_404(JobApplication, pk=pk)
             serializer = JobApplicationSerializer(job_application)
-            return Response(serializer.data)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job application details",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         
         job_applications = JobApplication.objects.all()
         serializer = JobApplicationSerializer(job_applications, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job applications",
+                "data": serializer.data
+    
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request):
         serializer = JobApplicationSerializer(data=request.data)
         if serializer.is_valid():
@@ -181,6 +241,18 @@ class AcceptApplicantView(APIView):
         return Response(status=status.HTTP_200_OK)
     
 class CheckInView(APIView):
+
+    def get(self, request, vacancy_id=None, *args, **kwargs):
+        checkins = Checkin.objects.filter(vacancy__id=vacancy_id)
+        serializer = CheckinSerializer(checkins, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of checkins",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
     def post(self, request, vacancy_id=None):
         data = request.data
         user = request.user
@@ -190,11 +262,7 @@ class CheckInView(APIView):
         if serializer.is_valid():
             serializer.save(staff=staff, vacancy=vacancy)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-    def get(self, request,vacancy_id=None, *args, **kwargs):
-        checkin = get_object_or_404(Checkin, vacancy__id=vacancy_id)
-        serializer = CheckinSerializer(checkin)
-        return Response(serializer.data)
-
+    
 class CheckOutView(APIView):
     def post(self, request, vacancy_id=None):
         data = request.data
@@ -212,11 +280,29 @@ class CheckOutView(APIView):
             return Response(serializer.data)
         checkout = get_object_or_404(Checkout, vacancy__id=vacancy_id)
         serializer = CheckOutSerializer(checkout)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Check-out details",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
 # approval check in checkout request
 
 class ApproveCheckinView(APIView):
+
+    # get request
+    def get(self, request, vacancy_id=None, *args, **kwargs):
+        checkins = Checkin.objects.filter(vacancy__id=vacancy_id) # add status = false
+        serializer = CheckinSerializer(checkins, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of pending check-in requests",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request, vacancy_id=None, pk=None):
         staff_id = request.data['staff_id']
         vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
@@ -232,6 +318,19 @@ class ApproveCheckinView(APIView):
         return Response(status=status.HTTP_200_OK)
     
 class ApproveCheckoutView(APIView):
+
+    # get request
+    def get(self, request, vacancy_id=None, *args, **kwargs):
+        """ list of pending checkout list."""
+        checkouts = Checkout.objects.filter(vacancy__id=vacancy_id) # add status = false
+        serializer = CheckOutSerializer(checkouts, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of pending check-out requests",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request, vacancy_id=None, pk=None):
         staff_id = request.data['staff_id']
         vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
