@@ -93,7 +93,9 @@ class Invitation(models.Model):
     staff_name = models.CharField(max_length=200)
     staff_email = models.EmailField()
     phone = models.CharField(max_length=20)
-    # job_role = models.ForeignKey(JobRole, related_name="job_role", on_delete=models.CASCADE)
+    job_role = models.ForeignKey(
+        JobRole, related_name="invitations_job_role", on_delete=models.SET_NULL, null=True
+    )  # cleint can select multipal roles
     employee_type = models.CharField(max_length=200)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
