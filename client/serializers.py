@@ -120,7 +120,34 @@ class CreateVacancySerializers(serializers.ModelSerializer):
 
         return vacancy
     
-    # update
+    # update vacancy as similar create method 
+    def update(self, instance, validated_data):
+        print('validated data', validated_data)
+        user = self.context['request'].user
+        validated_data['user'] = user
+        job_title = validated_data.pop('job_title')
+        skills = validated_data.pop('skills')
+        uniform = validated_data.pop('uniform')
+        invited_staff_ids = validated_data.pop('invited_staff', [])
+        print('invited_staff_ids:', invited_staff_ids)
+        # participants = validated_data.pop('participants')
+        # 
+        instance.job_title = job_title
+        instance.uniform = uniform
+        # instance.participants = participants
+        instance.skills.set(skills)
+        instance.save()
+        
+        for invited in invited_staff_ids:
+            fav_staff = FavouriteStaff.objects.filter(id=invited).first()
+            print('invited staff', fav_staff)
+            StaffInvitation.objects.create(vacancy=instance,staff=fav_staff.staff)
+            # send notification
+            notification = Notification.objects.create(
+                user = user,
+                message = f"{user.companyprofile.company_name} has invited you to a {instance.job_title} job application."
+            )
+        return instance
     
 
 class JobSerializer(serializers.ModelSerializer):
@@ -144,7 +171,7 @@ class JobSerializer(serializers.ModelSerializer):
         data['company'] = CompanyProfileSerializer(instance.company, read_only=True).data
         return data
 
-    
+
     def create(self, validated_data):
         print('validated data', validated_data)
         user_ = self.context['request'].user
@@ -169,16 +196,44 @@ class JobSerializer(serializers.ModelSerializer):
         job.vacancy.set(job_vacancies)
         # print('job vacancy', job.vacancy)
 
-        # print('job vacancy', job.vacancy.all())
-        # print('job vacancy', job.vacancy.values_list('id', flat=True))
-        # print('job vacancy', list(job.vacancy.values_list('id', flat=True)))
-        # in save in tamplate true save job in template model
         #job template have user and job field with foreign key relation
         if save_in_template:
             job_template = JobTemplate.objects.create(user=user_, job=job)
             job_template.save()
 
         return job
+    # update job alsco can update vacancy as followed create method
+    def update(self, instance, validated_data):
+        print('validated data', validated_data)
+        user_ = self.context['request'].user
+        print('job user', user_)
+        vacancy_data = validated_data.pop('vacancies')
+        print('vacancy data', vacancy_data)
+        save_in_template = validated_data.get('save_template', False)
+        
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        instance.status = validated_data.get('status', instance.status)
+        
+        job_vacancies = []
+        instance.vacancy.clear()
+        for vacancy in vacancy_data:
+            # print('vacancy', vacancy,) 
+            # vacancy['user'] =  user_.id
+            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
+            if vacancy_serializer.is_valid():
+                vacancy_instance = vacancy_serializer.save()
+                job_vacancies.append(vacancy_instance)
+                instance.vacancy.add(vacancy_instance)
+                instance.save()
+        
+        #job template have user and job field with foreign key relation
+        if save_in_template:
+            job_template = JobTemplate.objects.create(user=user_, job=instance)
+            job_template.save()
+        
+        return instance
+    
     
     
 

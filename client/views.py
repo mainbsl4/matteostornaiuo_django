@@ -117,6 +117,20 @@ class VacancyView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # update vacancy 
+    def put(self, request, pk):
+        vacancy = Vacancy.objects.get(pk=pk)
+        serializer = VacancySerializer(vacancy, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            response = {
+                "status": status.HTTP_200_OK,
+                "message": "Vacancy updated successfully",
+                "data": serializer.data
+                
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class JobView(APIView):
@@ -145,8 +159,29 @@ class JobView(APIView):
         serializer = JobSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job created successfully",
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # update job
+    def put(self, request, pk):
+        job = Job.objects.get(pk=pk)
+        serializer = JobSerializer(job, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            response = {
+                "status": status.HTTP_200_OK,
+                "message": "Job updated successfully",
+                "data": serializer.data
+                
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 
@@ -185,7 +220,7 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
         
 
 class JobApplicationAPI(APIView):
-    def get(self, request,pk=None):
+    def get(self, request, vacancy_id=None,pk=None):
         if pk:
             job_application = get_object_or_404(JobApplication, pk=pk)
             serializer = JobApplicationSerializer(job_application)
@@ -197,7 +232,7 @@ class JobApplicationAPI(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
-        job_applications = JobApplication.objects.all()
+        job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
         serializer = JobApplicationSerializer(job_applications, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -207,12 +242,17 @@ class JobApplicationAPI(APIView):
     
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request):
-        serializer = JobApplicationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request,vacancy_id=None):
+        data = request.data
+        staff = Staff.objects.filter(id=data['applicant']).first()
+        vacancy = Vacancy.objects.filter(id=vacancy_id).first()
+        job_application = JobApplication.objects.create(vacancy=vacancy,applicant = staff)
+        response = {
+            "status": status.HTTP_201_CREATED,
+            "message": "Job application created successfully",
+            "data": JobApplicationSerializer(job_application).data
+        }
+        return Response(response, status=status.HTTP_201_CREATED)
     
     def delete(self, request, pk=None):
         job_application = get_object_or_404(JobApplication, pk=pk)
