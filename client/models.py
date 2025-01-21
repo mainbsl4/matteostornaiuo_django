@@ -147,3 +147,37 @@ class Checkout(models.Model):
     def __str__(self):
         return f'{self.staff.user.email} - checked out at {self.out_time}'
     
+
+# job_type like full-time
+JOB_TYPE = (
+    ('full time', 'full time'),
+    ('part time', 'part time'),
+    ('contract', 'contract'),
+    
+)
+class PermanentJobs(models.Model):
+    company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+    job_title = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.BooleanField(default=False) # set choices field later
+
+
+    job_type = models.CharField(max_length=20, choices=JOB_TYPE, default='full time')
+    number_of_staff = models.IntegerField(default=1)
+    skills = models.ManyToManyField(Skill, related_name='permanent_skills', blank=True)
+    start_date = models.DateTimeField(db_index=True)
+    website_url = models.URLField(blank=True)
+    contact_percentage = models.IntegerField(default=0)
+    login_email = models.EmailField(max_length=200)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.job_title
+    
+    class Meta:
+        verbose_name = 'Permanent Job'
+        verbose_name_plural = 'Permanent Jobs'
+        ordering = ['-created_at']
+        # set indexing on start_date

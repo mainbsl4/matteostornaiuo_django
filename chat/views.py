@@ -28,11 +28,11 @@ class ConversationsAPI(APIView):
         if not receiver:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
-        conversation = Conversation.objects.create(sender=sender, receiver=receiver)
-        
-        conversation.message = data['message']
-        conversation.save()
-        
-        serializer = ConversationSerializer(conversation)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        conversation = Conversation.objects.create(sender=sender, receiver=receiver, message= data['message'])
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "message": "Message sent successfully",
+            "data": ConversationSerializer(conversation).data
+        }
+        return Response(response_data, status=status.HTTP_201_CREATED)
     

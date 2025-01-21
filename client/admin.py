@@ -11,6 +11,7 @@ from . models import (
     StaffInvitation,
     Checkout,
     Checkin,
+    PermanentJobs
 
 
 )
@@ -39,9 +40,7 @@ class VacancyAdmin(ModelAdmin):
     list_filter = ('open_date','close_date' )
     search_fields = ('job_title', )
     # list_per_page = 10
-    
-    
-    
+
 @admin.register(JobApplication)
 class JobApplicationAdmin(ModelAdmin):
     list_display = ('vacancy__job_title', 'applicant', 'created_at', 'status')
@@ -57,3 +56,6 @@ class CheckinAdmin(ModelAdmin):
 class CheckoutAdmin(ModelAdmin):
     list_display = ('staff', 'vacancy', 'out_time', 'status')
 
+@admin.register(PermanentJobs)
+class PermanentJobsAdmin(ModelAdmin):
+    list_display = ('job_title', 'company', 'start_date', 'number_of_staff', 'created_at')
