@@ -77,11 +77,13 @@ class StaffInvitationList(APIView):
 
     def post(self, request, format=None):
         serializer = StaffInvitationSerializer(data=request.data)
-        print("DFS", request.data['invitations'][0]['staff_email'])
+        # print("DFS", request.data['invitations'][0]['staff_email'])
         if serializer.is_valid():
             for invocation in request.data['invitations']:
                 staff_email = invocation['staff_email']
-                send_staff_invitation_email_from_client(staff_email)
+                message = f" {staff_email} {invocation['job_role']} "
+                # send_staff_invitation_email_from_client(staff_email, message)
+
             serializer.save(user=request.user)
             # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
