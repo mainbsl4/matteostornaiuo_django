@@ -3,7 +3,17 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
 from .models import User, Skill, Uniform, JobRole, StaffInvitation, Invitation
+import uuid
+from .email_service import send_staff_invitation_email_from_client
 
+def code_genator():
+    # Generate a UUID
+    random_uuid = uuid.uuid4()
+    code = str(random_uuid)[-6:]
+    return code
+    
+
+# output: 06ac13
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -95,6 +105,7 @@ class InviteSerializer(serializers.ModelSerializer):
             "phone",
             "job_role",
             "employee_type",
+            "invitation_code",
         ]
         read_only_fields = ["staff_invitation"]
 
@@ -117,7 +128,10 @@ class StaffInvitationSerializer(serializers.ModelSerializer):
         invitations_data = validated_data.pop("invitations")
         staff_invitation = StaffInvitation.objects.create(**validated_data)
         for invitation_data in invitations_data:
+            invitation_data['invitation_code'] = code_genator()
             Invitation.objects.create(
                 staff_invitation=staff_invitation, **invitation_data
             )
+
+            send_staff_invitation_email_from_client(invitation_data['staff_email'], f"{invitation_data['staff_email']} {invitation_data['invitation_code']}")
         return staff_invitation

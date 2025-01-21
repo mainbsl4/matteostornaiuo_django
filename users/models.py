@@ -97,6 +97,7 @@ class Invitation(models.Model):
         JobRole, related_name="invitations_job_role", on_delete=models.SET_NULL, null=True
     )  # cleint can select multipal roles
     employee_type = models.CharField(max_length=200)
+    invitation_code = models.CharField(max_length=8, null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
