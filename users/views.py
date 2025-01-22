@@ -19,6 +19,9 @@ class StaffSignupAPIView(APIView):
     permission_classes = []
 
     def post(self, request):
+        # invited_user = StaffInvitation.objects.all()
+        # print("Invited user", invited_user)
+        
         password = request.POST.get("password", None)
         confirm_password = request.POST.get("confirm_password", None)
         if password == confirm_password:
@@ -27,7 +30,7 @@ class StaffSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
-            send_staff_signup_email(staff_member)
+            # send_staff_signup_email(staff_member)
 
             data = serializer.data
             response = status.HTTP_201_CREATED
