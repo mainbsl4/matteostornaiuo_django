@@ -16,6 +16,7 @@ from .models import (
     StaffInvitation,
     Checkin,
     Checkout,
+    PermanentJobs
 
 
 )
@@ -29,6 +30,7 @@ from .serializers import (
     JobApplicationSerializer,
     CheckinSerializer,
     CheckOutSerializer,
+    PermanentJobsSerializer
 
 )
 
@@ -387,3 +389,29 @@ class ApproveCheckoutView(APIView):
         return Response(status=status.HTTP_200_OK)
     
 
+class PermanentJobView(APIView):
+
+    def get(self, request,company_id=None,pk=None,*args,**kwargs):
+        permanent_jobs = PermanentJobs.objects.filter(company__id=company_id)
+        serializer = PermanentJobsSerializer(permanent_jobs, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of permanent jobs",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    def post(self, request, company_id=None):
+        data = request.data
+        company = CompanyProfile.objects.filter(id=company_id).first()
+        serializer = PermanentJobsSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(company=company)
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Permanent job created successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
