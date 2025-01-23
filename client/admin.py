@@ -58,4 +58,9 @@ class CheckoutAdmin(ModelAdmin):
 
 @admin.register(PermanentJobs)
 class PermanentJobsAdmin(ModelAdmin):
-    list_display = ('job_title', 'company', 'start_date', 'number_of_staff', 'created_at')
+    list_display = ('job_title', 'company', 'start_date', 'number_of_staff', 'is_paid', 'created_at')
+    list_filter_sheet = False
+    list_filter = ('is_paid', 'start_date')
+    search_fields = ('job_title', 'company__company_name')
+    # horizontal filter by date
+    date_hierarchy = 'start_date'
