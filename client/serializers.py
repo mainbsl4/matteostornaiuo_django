@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
+from staff.models import StaffRole
 
 from django.contrib.auth import get_user_model
 
@@ -17,6 +18,7 @@ from .models import (
     StaffInvitation,
     Checkin,
     Checkout,
+    PermanentJobs
 
 
 
@@ -116,7 +118,15 @@ class CreateVacancySerializers(serializers.ModelSerializer):
                 user = user,
                 message = f"{user.companyprofile.company_name} has invited you to a {vacancy.job_title} job application."
             )
-
+        # send notification to all staff that match with the job_role
+        staff_with_similar_role = StaffRole.objects.filter(role=job_title)
+        for staff_role in staff_with_similar_role:
+            staff = staff_role.staff
+            notification = Notification.objects.create(
+                user = staff.user,
+                message = f"{user.companyprofile.company_name} has posted a new job for '{job_title}'."
+            )
+        
 
         return vacancy
     
@@ -281,3 +291,14 @@ class CheckOutSerializer(serializers.ModelSerializer):
         depth = 1
 
 
+class PermanentJobsSerializer(serializers.ModelSerializer):
+    skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(),many=True, write_only=True)
+    skill_list = serializers.SerializerMethodField()
+    class Meta:
+        model = PermanentJobs
+        fields = '__all__'
+        depth = 1
+    
+    def get_skill_list(self, obj):
+        s = obj.skills.all()
+        return SkillSerializer(s, many=True).data

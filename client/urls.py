@@ -17,6 +17,9 @@ urlpatterns = [
 
     path('company/jobs/vacancy/<int:vacancy_id>/checkin/approve/', views.ApproveCheckinView.as_view()),
     path('company/jobs/vacancy/<int:vacancy_id>/checkout/approve/', views.ApproveCheckoutView.as_view()),
+
+    path('company/job/ads/<int:company_id>/', views.PermanentJobView.as_view()),
+    
     
     
 
