@@ -4,7 +4,8 @@ from .models import (
     User, 
     Skill, 
     JobRole, 
-    Uniform
+    Uniform,
+    Invitation
     )
         
 # Register your models here.
@@ -40,3 +41,7 @@ class JobRoleAdmin(ModelAdmin):
 @admin.register(Uniform)
 class UniformAdmin(ModelAdmin):
     pass 
+
+@admin.register(Invitation)
+class StaffInvitationAdmin(ModelAdmin):
+    pass

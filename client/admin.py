@@ -8,7 +8,10 @@ from . models import (
     Job,
     Vacancy,
     JobApplication,
-    StaffInvitation
+    StaffInvitation,
+    Checkout,
+    Checkin,
+    PermanentJobs
 
 
 )
@@ -37,9 +40,7 @@ class VacancyAdmin(ModelAdmin):
     list_filter = ('open_date','close_date' )
     search_fields = ('job_title', )
     # list_per_page = 10
-    
-    
-    
+
 @admin.register(JobApplication)
 class JobApplicationAdmin(ModelAdmin):
     list_display = ('vacancy__job_title', 'applicant', 'created_at', 'status')
@@ -47,3 +48,19 @@ class JobApplicationAdmin(ModelAdmin):
 @admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):
     list_display = ('staff', 'vacancy', 'created_at', 'status')
+
+@admin.register(Checkin)
+class CheckinAdmin(ModelAdmin):
+    list_display = ('staff', 'vacancy', 'in_time', 'status')
+@admin.register(Checkout)
+class CheckoutAdmin(ModelAdmin):
+    list_display = ('staff', 'vacancy', 'out_time', 'status')
+
+@admin.register(PermanentJobs)
+class PermanentJobsAdmin(ModelAdmin):
+    list_display = ('job_title', 'company', 'start_date', 'number_of_staff', 'is_paid', 'created_at')
+    list_filter_sheet = False
+    list_filter = ('is_paid', 'start_date')
+    search_fields = ('job_title', 'company__company_name')
+    # horizontal filter by date
+    date_hierarchy = 'start_date'
