@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-from users.models import JobRole
+from users.models import JobRole, Skill
+
 
 
 User = get_user_model()
@@ -25,7 +26,7 @@ class Staff(models.Model):
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
     video_resume = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
     # role = models.ManyToManyField("StaffRole", blank=True, related_name='staff_roles')
-
+    skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
     # review = 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -57,3 +58,5 @@ class StaffRole(models.Model):
     
     def __str__(self):
         return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'
+    
+
