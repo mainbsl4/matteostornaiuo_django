@@ -83,7 +83,7 @@ class StaffInvitation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user} invitation"
+        return f"{self.user.email} invitation"
 
 
 class Invitation(models.Model):
@@ -93,8 +93,12 @@ class Invitation(models.Model):
     staff_name = models.CharField(max_length=200)
     staff_email = models.EmailField()
     phone = models.CharField(max_length=20)
-    # job_role = models.ForeignKey(JobRole, related_name="job_role", on_delete=models.CASCADE)
+    job_role = models.ForeignKey(
+        JobRole, related_name="invitations_job_role", on_delete=models.SET_NULL, null=True
+    )  # cleint can select multipal roles
     employee_type = models.CharField(max_length=200)
+    invitation_code = models.CharField(max_length=8, null=True)
+    code_expiry = models.DateTimeField(blank=True, null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

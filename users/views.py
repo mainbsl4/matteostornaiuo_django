@@ -10,7 +10,7 @@ from .serializers import (
     UserSerializer,
     StaffInvitationSerializer,
 )
-from .email_service import send_staff_signup_email, send_client_signup_email
+from .email_service import send_staff_signup_email, send_client_signup_email, send_staff_invitation_email_from_client
 
 
 # Create your views here.
@@ -19,6 +19,9 @@ class StaffSignupAPIView(APIView):
     permission_classes = []
 
     def post(self, request):
+        # invited_user = StaffInvitation.objects.all()
+        # print("Invited user", invited_user)
+        
         password = request.POST.get("password", None)
         confirm_password = request.POST.get("confirm_password", None)
         if password == confirm_password:
@@ -27,7 +30,7 @@ class StaffSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
-            send_staff_signup_email(staff_member)
+            # send_staff_signup_email(staff_member)
 
             data = serializer.data
             response = status.HTTP_201_CREATED
@@ -77,7 +80,13 @@ class StaffInvitationList(APIView):
 
     def post(self, request, format=None):
         serializer = StaffInvitationSerializer(data=request.data)
+        # print("DFS", request.data['invitations'][0]['staff_email'])
         if serializer.is_valid():
+            for invocation in request.data['invitations']:
+                staff_email = invocation['staff_email']
+                message = f" {staff_email} {invocation['job_role']} "
+                # send_staff_invitation_email_from_client(staff_email, message)
+
             serializer.save(user=request.user)
             # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

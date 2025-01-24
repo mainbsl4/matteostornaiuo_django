@@ -3,6 +3,19 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 
 from .models import User, Skill, Uniform, JobRole, StaffInvitation, Invitation
+import uuid
+from .email_service import send_staff_invitation_email_from_client
+from django.utils.timezone import now, timedelta
+
+
+def code_genator():
+    # Generate a UUID
+    random_uuid = uuid.uuid4()
+    code = str(random_uuid)[-6:]
+    return code
+
+
+# output: 06ac13
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -30,6 +43,16 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
+        # print("validated_data", validated_data)
+        # invited_user = StaffInvitation.objects.filter(user__email = validated_data["email"])
+        invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
+        # print("inv users data: ", invited_user[0].invitation_code)
+        # print("inv users data: ", invited_user)
+
+        if invited_user:
+            invited_user[0].invitation_code = None
+            invited_user[0].save()
+
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
             user = User.objects.create(
@@ -41,6 +64,11 @@ class StaffSignupSerializer(serializers.ModelSerializer):
                 is_staff=True,
             )
         return user
+
+    # def save(self, *args, **kwargs):
+    #     invited_user = StaffInvitation.objects.all()
+    #     print("inv users data: ", invited_user)
+    #     return super().save(*args, **kwargs)
 
 
 class SkillSerializer(serializers.ModelSerializer):
@@ -84,6 +112,8 @@ class UniformSerializer(serializers.ModelSerializer):
 
 #  invite staff from clients
 class InviteSerializer(serializers.ModelSerializer):
+    job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+
     class Meta:
         model = Invitation
         # fields = '__all__'
@@ -92,9 +122,17 @@ class InviteSerializer(serializers.ModelSerializer):
             "staff_name",
             "staff_email",
             "phone",
+            "job_role",
             "employee_type",
+            "invitation_code",
         ]
         read_only_fields = ["staff_invitation"]
+
+    # to represantion for job role
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["job_role"] = JobRoleSerializer(instance.job_role).data
+        return data
 
 
 class StaffInvitationSerializer(serializers.ModelSerializer):
@@ -109,7 +147,11 @@ class StaffInvitationSerializer(serializers.ModelSerializer):
         invitations_data = validated_data.pop("invitations")
         staff_invitation = StaffInvitation.objects.create(**validated_data)
         for invitation_data in invitations_data:
+            invitation_data["invitation_code"] = code_genator()
+            invitation_data["code_expiry"] = now() + timedelta(minutes=1)
             Invitation.objects.create(
                 staff_invitation=staff_invitation, **invitation_data
             )
+
+            # send_staff_invitation_email_from_client(invitation_data['staff_email'], f"{invitation_data['staff_email']} {invitation_data['invitation_code']}")
         return staff_invitation
