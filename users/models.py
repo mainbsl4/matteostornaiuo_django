@@ -99,6 +99,8 @@ class Invitation(models.Model):
     employee_type = models.CharField(max_length=200)
     invitation_code = models.CharField(max_length=8, null=True)
     code_expiry = models.DateTimeField(blank=True, null=True)
+    # status = models.BooleanField(default=False)
+
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
