@@ -115,19 +115,28 @@ class VacancyView(APIView):
         print('data', data)
         serializer = CreateVacancySerializers(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            vacancy = serializer.save()
+            response = VacancySerializer(vacancy)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "message": "Vacancy created successfully",
+                # show response data in vacancy serializer
+                "data": response.data
+                
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # update vacancy 
     def put(self, request, pk):
         vacancy = Vacancy.objects.get(pk=pk)
-        serializer = VacancySerializer(vacancy, data=request.data, context={'request': request})
+        serializer = CreateVacancySerializers(vacancy, data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            res = serializer.save()
+            response = VacancySerializer(res)
             response = {
                 "status": status.HTTP_200_OK,
                 "message": "Vacancy updated successfully",
-                "data": serializer.data
+                "data": response.data
                 
             }
             return Response(response, status=status.HTTP_200_OK)
