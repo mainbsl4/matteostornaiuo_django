@@ -1,11 +1,12 @@
 from django.contrib import admin
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, TabularInline
 from .models import (
     User, 
     Skill, 
     JobRole, 
     Uniform,
-    Invitation
+    Invitation,
+    StaffInvitation
     )
         
 # Register your models here.
@@ -42,6 +43,27 @@ class JobRoleAdmin(ModelAdmin):
 class UniformAdmin(ModelAdmin):
     pass 
 
-@admin.register(Invitation)
+# @admin.register(Invitation)
+# class StaffInvitationAdmin(ModelAdmin):
+#     pass
+
+
+class InvitationInline(TabularInline):
+    model = Invitation
+    extra = 1  # Number of empty forms to display
+@admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):
-    pass
+    list_display = ('user', 'created_at', 'updated_at')
+    search_fields = ('user__email',)
+    inlines = [InvitationInline]
+    list_per_page = 20
+    ordering = ('-created_at',)  # Order by created_at descending
+    list_display_links = ('user',)  # Make the user field a link
+
+# @admin.register(Invitation)
+# class InvitationAdmin(ModelAdmin):
+#     list_display = ('staff_name', 'staff_email', 'phone', 'job_role', 'employee_type')
+#     search_fields = ('staff_name', 'staff_email', 'phone')
+#     list_filter = ('job_role', 'employee_type')
+#     list_per_page = 20
+#     ordering = ('staff_name',)  # Order by staff_name ascending
