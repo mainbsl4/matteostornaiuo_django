@@ -201,3 +201,22 @@ class JobAdsJoiningRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return f'{self.staff.user.email} - requested joining {self.ads.job_title}'
+    
+class MyStaff(models.Model):
+    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+    # staff = models.ManyToManyField(Staff, related_name='my_staff', blank=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    status = models.BooleanField(default=False)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f'my staff'
+    
+    class Meta:
+        verbose_name = 'My Staff'
+        verbose_name_plural = 'My Staffs'
+        ordering = ['-created_at']
