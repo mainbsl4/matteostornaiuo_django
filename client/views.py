@@ -143,7 +143,16 @@ class VacancyView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
+    def delete(self, request, pk):
+        job = get_object_or_404(Vacancy, pk=pk)
+        job.delete()
+        response = {
+            "status": status.HTTP_204_NO_CONTENT,
+            "success": True,
+            "message": "Vacancy deleted successfully"
+        }
+        return Response(response, status=status.HTTP_204_NO_CONTENT)
+    
 class JobView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         if pk:

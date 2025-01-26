@@ -53,17 +53,19 @@ class InvitationInline(TabularInline):
     extra = 1  # Number of empty forms to display
 @admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):
-    list_display = ('user', 'created_at', 'updated_at')
+    list_display = ('user', 'created_at')
     search_fields = ('user__email',)
     inlines = [InvitationInline]
     list_per_page = 20
     ordering = ('-created_at',)  # Order by created_at descending
     list_display_links = ('user',)  # Make the user field a link
 
-# @admin.register(Invitation)
-# class InvitationAdmin(ModelAdmin):
-#     list_display = ('staff_name', 'staff_email', 'phone', 'job_role', 'employee_type')
-#     search_fields = ('staff_name', 'staff_email', 'phone')
-#     list_filter = ('job_role', 'employee_type')
-#     list_per_page = 20
-#     ordering = ('staff_name',)  # Order by staff_name ascending
+@admin.register(Invitation)
+class InvitationAdmin(ModelAdmin):
+    list_display = ('staff_name', 'staff_email', 'phone', 'job_role', 'employee_type')
+    search_fields = ('staff_name', 'staff_email', 'phone')
+    list_filter = ('job_role', 'employee_type')
+    list_per_page = 20
+    ordering = ('staff_name',)  
+    # Order by staff_name ascending
+    extra = 1

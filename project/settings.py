@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "staff",
     "dashboard",
     "chat",
+    "shifting",
+    
     
 
 ]

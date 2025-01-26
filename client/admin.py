@@ -11,7 +11,8 @@ from . models import (
     StaffInvitation,
     Checkout,
     Checkin,
-    PermanentJobs
+    PermanentJobs,
+    MyStaff
 
 
 )
@@ -64,3 +65,7 @@ class PermanentJobsAdmin(ModelAdmin):
     search_fields = ('job_title', 'company__company_name')
     # horizontal filter by date
     date_hierarchy = 'start_date'
+
+@admin.register(MyStaff)
+class MyStaffAdmin(ModelAdmin):
+    list_display = ('client', 'staff', 'start_date', 'status')
