@@ -14,6 +14,8 @@ from .serializers import (
     StaffRoleSerializer
 
 )
+from shifting.models import Shifting, DailyShift
+from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 
 class StaffProfileView(APIView):
     def get(self, request, *args, **kwargs):
@@ -94,3 +96,21 @@ class StaffRoleView(APIView):
             }
             return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ShiftRequestView(APIView):
+    def get(self, request, company_id=None, *args, **kwargs):
+        user = request.user
+        staff = Staff.objects.filter(user=user).first()
+        if DailyShift.objects.filter(staff=staff, status=False).exists():
+            shifts = DailyShift.objects.filter(staff=staff, status=False)
+            serializer = DailyShiftSerializer(shifts, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Shift requests retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+

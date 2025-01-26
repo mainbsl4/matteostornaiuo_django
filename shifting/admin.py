@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from unfold.admin import ModelAdmin
+from unfold.admin import ModelAdmin, StackedInline
 
 from . models import (
     DailyShift,
@@ -10,8 +10,12 @@ from . models import (
 
 @admin.register(DailyShift)
 class DailyShiftAdmin(ModelAdmin):
-    pass 
+    list_display = ('shift','staff', 'day', 'start_time','end_time' , 'status','location') 
+
 
 @admin.register(Shifting)
 class ShiftingAdmin(ModelAdmin):
-    pass 
+    list_display = ('company', 'shift_for')
+
+
+

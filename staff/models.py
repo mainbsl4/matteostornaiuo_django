@@ -36,12 +36,17 @@ class Staff(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f'{self.user.first_name} {self.user.last_name}'
+        return f'{self.user.first_name} {self.user.last_name} {self.get_staff_role.name}'
     # calculate age in year
     def age_in_year(self):
         from datetime import datetime
         today = datetime.now()
         return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+    
+    # get staff role 
+    @property
+    def get_staff_role(self):
+        return self.staffrole_set.first().role
     
 class StaffRole(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
