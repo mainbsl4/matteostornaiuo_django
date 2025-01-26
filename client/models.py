@@ -214,7 +214,7 @@ class MyStaff(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f'my staff'
+        return f'{self.staff}'
     
     class Meta:
         verbose_name = 'My Staff'

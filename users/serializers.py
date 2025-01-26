@@ -67,7 +67,7 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         #     client = CompanyProfile.objects.get(user=invited_by)
         #     MyStaff.objects.create(user=user, client=client, status=True)
         #     # send email to invited staff 
-        # return user
+        return user
     # def save(self, *args, **kwargs):
     #     invited_user = StaffInvitation.objects.all()
     #     print("inv users data: ", invited_user)
