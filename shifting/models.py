@@ -36,7 +36,13 @@ class Shifting(models.Model):
     def set_my_shift(self):
         me = self.shift_for.staff
         self.shift.add(me)
-    
+
+SHIFT_STATUS = (
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
+    ('completed', 'Completed')
+)
 class DailyShift(models.Model):
     shift = models.ForeignKey(Shifting, related_name="shifts", on_delete=models.SET_NULL, null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
@@ -45,6 +51,14 @@ class DailyShift(models.Model):
     end_time = models.TimeField()
     location = models.CharField(max_length=255)
     status = models.BooleanField(default=False)
+
+    checkin_time = models.DateTimeField(blank=True, null=True)
+    checkout_time = models.DateTimeField(blank=True, null=True)
+
+    checkoin_location = models.CharField(max_length=255, blank=True, null=True)
+    checkout_location = models.CharField(max_length=255, blank=True, null=True)
+
+    shift_status = models.CharField(max_length=10, choices=SHIFT_STATUS, default='pending')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)    

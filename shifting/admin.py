@@ -10,7 +10,14 @@ from . models import (
 
 @admin.register(DailyShift)
 class DailyShiftAdmin(ModelAdmin):
-    list_display = ('shift','staff', 'day', 'start_time','end_time' , 'status','location') 
+    list_display = ('shift','staff', 'day', 'start_time','end_time' , 'status','location', 'checkin_time', 'checkout_time', 'shift_status')
+    # add filter, date hiararchy, search 
+    search_fields = ('staff', 'company', 'shift_status', 'day')
+    list_filter = ('shift', 'shift_status')
+    list_filter_sheet = False
+    date_hierarchy = 'day'
+    list_fullwidth = True
+
 
 
 @admin.register(Shifting)

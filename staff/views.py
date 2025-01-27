@@ -16,6 +16,7 @@ from .serializers import (
 )
 from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
+from dashboard.models import Notification
 
 class StaffProfileView(APIView):
     def get(self, request, *args, **kwargs):
@@ -99,7 +100,7 @@ class StaffRoleView(APIView):
     
 
 class ShiftRequestView(APIView):
-    def get(self, request, company_id=None, *args, **kwargs):
+    def get(self, request,  *args, **kwargs):
         user = request.user
         staff = Staff.objects.filter(user=user).first()
         if DailyShift.objects.filter(staff=staff, status=False).exists():
@@ -113,4 +114,22 @@ class ShiftRequestView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
-
+    def post(self, request, *args, **kwargs):
+        data = request.data  
+        daily_shift = DailyShift.objects.filter(id=data['shift']).first()
+        if daily_shift and data['status'] == True:
+            daily_shift.status = True
+            daily_shift.save()
+            # send notification to client 
+            notification = Notification.objects.create(
+                user = daily_shift.shift.company.user,
+                message = f"Your shift request for {daily_shift.shift.shift_for.staff.staffrole_set.first().role} has been approved",
+                
+            )
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Shift request approved successfully",
+                "data": daily_shift.id
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
