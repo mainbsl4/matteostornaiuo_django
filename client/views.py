@@ -36,7 +36,8 @@ from .serializers import (
 
 from dashboard.models import Notification
 from staff.models import Staff
-
+from shifting.models import DailyShift, Shifting
+from shifting.serializers import DailyShiftSerializer
 # create company profile
 
 class CompanyProfileCreateView(generics.ListCreateAPIView):
@@ -433,3 +434,48 @@ class PermanentJobView(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
+
+class ShiftCheckinAcceptView(APIView):
+    def get(self, request, shifting_id=None, pk=None, *args, **kwargs):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+        shifting = Shifting.objects.get(id=shifting_id)
+        if shifting.company == company:
+            daily_shifts = DailyShift.objects.filter(shift=shifting)
+            serializer = DailyShiftSerializer(daily_shifts, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "List of daily shifts",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        response = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to view this shifting"
+        }
+        return Response(response, status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request, shifting_id=None, pk=None):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+        shifting = Shifting.objects.get(id=shifting_id)
+        if shifting.company == company:
+            daily_shift = DailyShift.objects.get(id=pk)
+            daily_shift.checkin_status = True
+            daily_shift.save()
+            # send notification
+            notification = Notification.objects.create(
+                user = daily_shift.staff.user,
+                message = f"Your check-in request for  has been approved", # need to add the 
+                
+            )
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Check-in status updated successfully"
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        

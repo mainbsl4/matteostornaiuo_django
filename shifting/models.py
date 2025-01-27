@@ -39,7 +39,7 @@ class Shifting(models.Model):
 
 SHIFT_STATUS = (
     ('pending', 'Pending'),
-    ('approved', 'Approved'),
+    ('accepted', 'Accepted'),
     ('rejected', 'Rejected'),
     ('completed', 'Completed')
 )
@@ -55,8 +55,11 @@ class DailyShift(models.Model):
     checkin_time = models.DateTimeField(blank=True, null=True)
     checkout_time = models.DateTimeField(blank=True, null=True)
 
-    checkoin_location = models.CharField(max_length=255, blank=True, null=True)
+    checkin_location = models.CharField(max_length=255, blank=True, null=True)
     checkout_location = models.CharField(max_length=255, blank=True, null=True)
+
+    checkin_status = models.BooleanField(default=False)
+    checkout_status = models.BooleanField(default=False)
 
     shift_status = models.CharField(max_length=10, choices=SHIFT_STATUS, default='pending')
 
