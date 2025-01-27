@@ -26,6 +26,6 @@ class ShiftingSerializer(serializers.ModelSerializer):
         print('instance ', instance)
         data = super().to_representation(instance)
         # shifts = DailyShift.objects.all()
-        data['shift'] = DailyShiftSerializer(instance.shift, many=True).data
+        data['shift'] = DailyShiftSerializer(instance.shifts, many=True).data
         return data
     

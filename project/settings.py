@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "dashboard",
     "chat",
     "shifting",
+    "subscription",
     
     
 
