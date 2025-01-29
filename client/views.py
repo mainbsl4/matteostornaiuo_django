@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -460,22 +461,40 @@ class ShiftCheckinAcceptView(APIView):
     
     def post(self, request, shifting_id=None, pk=None):
         user = request.user
+        data = request.data
         company = get_object_or_404(CompanyProfile, user=user)
         shifting = Shifting.objects.get(id=shifting_id)
         if shifting.company == company:
             daily_shift = DailyShift.objects.get(id=pk)
-            daily_shift.checkin_status = True
-            daily_shift.save()
-            # send notification
-            notification = Notification.objects.create(
+            if data['type'] == 'checkin':
+                daily_shift.checkin_status = True
+                daily_shift.checkin_time = timezone.now()
+                daily_shift.save()
+                notification = Notification.objects.create(
                 user = daily_shift.staff.user,
                 message = f"Your check-in request for  has been approved", # need to add the 
                 
-            )
-            response_data = {
+                )
+                response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Check-in status updated successfully"
-            }
+                }
+            elif data['type'] == 'checkout':
+                daily_shift.checkout_status = True
+                daily_shift.checkout_time = timezone.now()
+                daily_shift.save()
+                notification = Notification.objects.create(
+                user = daily_shift.staff.user,
+                message = f"Your check-out request for  has been approved", 
+                )
+                response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Check-out status updated successfully"
+                }
+            # send notification
+            
+            
             return Response(response_data, status=status.HTTP_200_OK)
         
