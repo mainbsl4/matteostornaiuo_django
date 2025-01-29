@@ -34,12 +34,13 @@ class Vacancy(models.Model):
     number_of_staff = models.IntegerField(default=1)
     skills = models.ManyToManyField(Skill, related_name='skills', blank=True)  
     uniform = models.ForeignKey(Uniform, on_delete=models.SET_NULL, blank=True, null=True)
-    open_date = models.DateField()
-    close_date = models.DateField()
+    open_date = models.DateField(blank=True, null=True)
+    close_date = models.DateField(blank=True, null=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
+    one_day_job = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -62,6 +63,8 @@ class Vacancy(models.Model):
     # set salary in save method
     def save(self, *args, **kwargs):
         self.calculate_salary()
+        if not self.close_date:
+            self.one_day_job = True
         super().save(*args, **kwargs)
 
     

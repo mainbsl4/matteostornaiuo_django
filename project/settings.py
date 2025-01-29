@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "chat",
     "shifting",
     "subscription",
+    "import_export",
     
     
 
@@ -136,9 +137,14 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATICFILE_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+
+from import_export.formats.base_formats import CSV, XLSX
+# multiple import options
+IMPORT_FORMATS = [CSV, XLSX]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -165,7 +171,7 @@ EMAIL_USE_SSL = True  # Use SSL for secure connection
 
 # Stripe settings
 PUBLISH_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
-SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
+STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
 WEBHOOK_KEY = ""
 
 from django.templatetags.static import static

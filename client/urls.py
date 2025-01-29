@@ -21,9 +21,8 @@ urlpatterns = [
     path('company/job/ads/<int:company_id>/', views.PermanentJobView.as_view()),
 
     path('company/shifting/<int:shifting_id>/request/', views.ShiftCheckinAcceptView.as_view()),
+    path('company/shifting/<int:shifting_id>/accept/<int:pk>/', views.ShiftCheckinAcceptView.as_view()),
 
-    
-    
-    
+
 
 ]

@@ -1,5 +1,9 @@
 from django.contrib import admin
 
+from import_export import resources
+from import_export.admin import ExportMixin
+from import_export.formats.base_formats import CSV
+
 # Register your models here.
 from unfold.admin import ModelAdmin, StackedInline, TabularInline
 
@@ -8,8 +12,12 @@ from . models import (
     Shifting
 )
 
+class DailyShiftResource(resources.ModelResource):
+    class Meta:
+        model = DailyShift
+class DailyShiftAdmin(ExportMixin,ModelAdmin):
+    resource_class = DailyShiftResource
 
-class DailyShiftAdmin(ModelAdmin):
     list_display = (
         'shift',
         'staff',
@@ -69,6 +77,7 @@ class DailyShiftAdmin(ModelAdmin):
         # }),
     )
     readonly_fields = ('created_at', 'updated_at')
+    date_hierarchy = 'day'
     list_filter_sheet = False
 
 
