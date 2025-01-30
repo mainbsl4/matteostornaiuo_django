@@ -11,7 +11,7 @@ User = get_user_model()
 @admin.register(Staff)
 class StaffAdmin(ModelAdmin):
     list_display = ('user', 'phone', 'exp_year', 'created_at')
-    readonly_fields = ['user']
+    # readonly_fields = ['user']
                     
 
 @admin.register(StaffRole)

@@ -42,18 +42,26 @@ from shifting.serializers import DailyShiftSerializer
 # create company profile
 
 class CompanyProfileCreateView(generics.ListCreateAPIView):
-    queryset = CompanyProfile.objects.all()
-    serializer_class = CompanyProfileSerializer
+    # queryset = CompanyProfile.objects.all()
+    # serializer_class = CompanyProfileSerializer
 
     # format the response in get request
     
     def list(self, request, format=None):
-        queryset = CompanyProfile.objects.filter(user=request.user).first()
+        try:
+            user = request.user
+            if user.is_client:
+                queryset = CompanyProfile.objects.get(user=request.user)
+            else:
+                return Response({"error": "Only client can access this endpoint"}, status=status.HTTP_400_BAD_REQUEST)
+        except CompanyProfile.DoesNotExist:
+            return Response({"error": "Company profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         serializer = CompanyProfileSerializer(queryset)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "List of company profiles",
+            "message": "Company profiles",
             "data": serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
@@ -62,11 +70,17 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
     # create company profile with custom respones in post request
     def create(self, request, *args, **kwargs):
+        # if already have a company profile 
+        if CompanyProfile.objects.filter(user=request.user).exists():
+            return Response({"error": "You already have a company profile"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if not, create a new one
         serializer = CompanyProfileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(user=request.user)
             response = {
                 "status": status.HTTP_200_OK,
+                "success": True,
                 "message": "Company profile created successfully",
                 "data": serializer.data
             }
@@ -75,7 +89,7 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # update profile
     def put(self, request, pk):
-        company_profile = CompanyProfile.objects.get(pk=pk)
+        company_profile = CompanyProfile.objects.get(pk=pk, user=request.user)
         serializer = CompanyProfileSerializer(company_profile, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -290,6 +304,26 @@ class AcceptApplicantView(APIView):
     def post(self, request, application_id=None):
         application = get_object_or_404(JobApplication, pk=application_id)
         vacancy = application.vacancy
+        if vacancy.one_day_job:
+            daily_shift = DailyShift.objects.filter(
+                day=vacancy.open_date, 
+                start_time=vacancy.start_time, 
+                end_time=vacancy.end_time,
+                one_day_job = True
+                ).first()
+            if not daily_shift:
+                return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "No available daily shift"})
+            daily_shift.staff = application.applicant
+            daily_shift.status = True
+            daily_shift.save()
+            # send notification to staff
+            Notification.objects.create(
+                user = staff.user,
+                message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date}",
+                
+            )
+
+
         application.status = True
         staff = application.applicant
         vacancy.participants.add(staff)

@@ -57,6 +57,7 @@ class DailyShiftAdmin(ExportMixin,ModelAdmin):
                 'location',
                 'shift_status',
                 'status',
+                'post_job',
             ),
         }),
         ('Check-in/Check-out Details', {

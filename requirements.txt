@@ -12,7 +12,7 @@ colorama==0.4.6
 diff-match-patch==20241021
 Django==5.1.4
 django-import-export==4.3.4
-django-unfold==0.45.0
+django-unfold==0.43.0
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 idna==3.10
