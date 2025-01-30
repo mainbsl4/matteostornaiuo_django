@@ -185,51 +185,83 @@ from django.utils.translation import gettext_lazy as _
 # CELERY_TASK_SERIALIZER = 'json'
 
 
-# UNFOLD = {
+UNFOLD = {
 
-#      "SIDEBAR": {
-#         "show_search": True,  # Search in applications and models names
-#         "show_all_applications": True, 
-#          "navigation": [
-#             {
-#                 "title": _("Navigation"),
-#                 "separator": True,  # Top border
-#                 "collapsible": True,  # Collapsible group of links
-#                 "items": [
-#                     {
-#                         "title": _("Dashboard"),
-#                         "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
-#                         "link": reverse_lazy("admin:index"),
-#                         # "badge": "sample_app.badge_callback",
-#                         "permission": lambda request: request.user.is_superuser,
-#                     },
-#                     {
-#                         "title": _("Users"),
-#                         "icon": "people",
-#                         "link": reverse_lazy("admin:users_user_changelist"),
-#                     },
-#                 ],
-#             },
-#             {
-#                 "title": _("Company Profile"),
-#                 "icon": "apartment",
-#                 "collapsible": True, 
-#                 "items":[
-#                     {
-#                         "title": _("Profile"),
-#                         "icon": "apartment",
-#                         "link": reverse_lazy("admin:client_companyprofile_changelist"),
-#                     },
-#                     {
-#                         "title": _("Create Jobs"),
-#                         "icon": "work",
-#                         "link": reverse_lazy("admin:client_job_add"),
-#                     }
-#                 ]
-#             },
+     "SIDEBAR": {
+        "show_search": True,  # Search in applications and models names
+        "show_all_applications": True, 
+         "navigation": [
+            {
+                "title": _("Super Admin"), 
+                "separator": True,  # Top border
+                "collapsible": False,  # Collapsible group of links
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
+                        "link": reverse_lazy("admin:index"),
+                        # "badge": "sample_app.badge_callback",
+                        "permission": lambda request: request.user.is_superuser,
+                    },
+                    {
+                        "title": _("Users"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:users_user_changelist"),
+                    },
+                    {
+                        "title": _("Job Role"),
+                        "icon": "engineering",
+                        "link": reverse_lazy("admin:users_jobrole_changelist"),
+                    },
+                    {
+                        "title": _("Skills"),
+                        "icon": "bolt",
+                        "link": reverse_lazy("admin:users_skill_changelist"),
+                    },
+                    {
+                        "title": _("Uniform"),
+                        "icon": "person_apron",
+                        "link": reverse_lazy("admin:users_uniform_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Company Profile"),
+                "icon": "apartment",
+                "collapsible": True, 
+                "items":[
+                    {
+                        "title": _("Profile"),
+                        "icon": "apartment",
+                        "link": reverse_lazy("admin:client_companyprofile_changelist"),
+                    },
+                    {
+                        "title": _("Create Jobs"),
+                        "icon": "work",
+                        "link": reverse_lazy("admin:client_job_add"),
+                    }
+                ]
+            },
+            {
+                "title": _("Staff Profile"),
+                "icon": "apartment",
+                "collapsible": True, 
+                "items":[
+                    {
+                        "title": _("Staff"),
+                        "icon": "id_card",
+                        "link": reverse_lazy("admin:staff_staff_changelist"),
+                    },
+                    {
+                        "title": _("Create Jobs"),
+                        "icon": "work",
+                        "link": reverse_lazy("admin:client_job_add"),
+                    }
+                ]
+            },
             
-#         ],
-#     },
+        ],
+    },
     
 
-# }
+}

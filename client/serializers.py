@@ -39,14 +39,16 @@ from staff.models import Staff
 User = get_user_model()
 
 class CompanyProfileSerializer(serializers.ModelSerializer):
-    user_info = serializers.SerializerMethodField()
     class Meta:
         model = CompanyProfile
         fields = '__all__'
         read_only_fields = ['user']
     
-    def get_user_info(self, obj):
-        return UserSerializer(obj.user).data
+    # to_representation method for user 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['user'] = UserSerializer(instance.user).data
+        return data
         
 
 

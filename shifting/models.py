@@ -62,6 +62,7 @@ class DailyShift(models.Model):
     checkout_status = models.BooleanField(default=False)
 
     shift_status = models.CharField(max_length=10, choices=SHIFT_STATUS, default='pending')
+    post_job = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)    

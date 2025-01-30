@@ -20,6 +20,7 @@ from . models import (
 @admin.register(CompanyProfile)
 class CompanyProfileAdmin(ModelAdmin):
     list_display = ('company_name', 'contact_number', 'company_email','company_address')
+    
 
 
 @admin.register(Job)

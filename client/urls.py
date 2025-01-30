@@ -2,8 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('company/profile/', views.CompanyProfileCreateView.as_view(), name='company_profile'),
-    path('company/profile/<int:pk>/', views.CompanyProfileCreateView.as_view()),
+    path('company/profile/', views.CompanyProfileCreateView.as_view(), name='company_profile'), # read, create
+    path('company/profile/<int:pk>/', views.CompanyProfileCreateView.as_view()), # put, delete
     path('company/vacancy/', views.VacancyView.as_view(), name='company_vacancy'),
     path('company/vacancy/<int:pk>/', views.VacancyView.as_view()),
     path('company/jobs/', views.JobView.as_view()),
