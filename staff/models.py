@@ -26,6 +26,7 @@ class Staff(models.Model):
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
     video_resume = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
     # role = models.ManyToManyField("StaffRole", blank=True, related_name='staff_roles')
+    role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
     # review = 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -36,7 +37,7 @@ class Staff(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f'{self.user.first_name} {self.user.last_name} {self.get_staff_role.name}'
+        return f'{self.user.first_name} {self.user.last_name} '
     # calculate age in year
     def age_in_year(self):
         from datetime import datetime
@@ -48,20 +49,21 @@ class Staff(models.Model):
     def get_staff_role(self):
         return self.staffrole_set.first().role
     
-class StaffRole(models.Model):
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    role = models.ForeignKey(JobRole, on_delete=models.CASCADE)
-    rating = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
-    comment = models.TextField(blank=True)
-    primary = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class StaffRole(models.Model):
+#     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+#     role = models.ForeignKey(JobRole, on_delete=models.CASCADE)
+#     rating = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)], default=0)
+#     comment = models.TextField(blank=True)
+#     primary = models.BooleanField(default=False)
     
-    class Meta:
-        verbose_name_plural = 'Staff Roles'
-        ordering = ['-created_at']
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
     
-    def __str__(self):
-        return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'
+#     class Meta:
+#         verbose_name_plural = 'Staff Roles'
+#         ordering = ['-created_at']
+    
+#     def __str__(self):
+#         return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'
     
 

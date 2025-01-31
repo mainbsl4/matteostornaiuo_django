@@ -4,7 +4,6 @@ from . import views
 urlpatterns =[
     path('staff/profile/', views.StaffProfileView.as_view()),
     path('staff/profile/<int:pk>/', views.StaffProfileDetailView.as_view()),
-    path('staff/profile/role/', views.StaffRoleView.as_view()),
     path('staff/shift/', views.ShiftRequestView.as_view()), # all shift
     path('staff/shift/<int:pk>/', views.ShiftRequestView.as_view()), # shift details
 

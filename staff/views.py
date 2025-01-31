@@ -6,13 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import (
-    Staff,
-    StaffRole
+    Staff
 )
 from .serializers import (
     StaffSerializer,
-    CreateStaffSerializer,
-    StaffRoleSerializer
+    CreateStaffSerializer
 
 )
 from shifting.models import Shifting, DailyShift
@@ -72,32 +70,6 @@ class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
             "message": "Staff profile deleted successfully"
         }
         return Response(response, status=status.HTTP_204_NO_CONTENT)
-    
-
-class StaffRoleView(APIView):
-    def get(self, request, *args, **kwargs):
-        queryset = StaffRole.objects.all()
-        serializer = StaffRoleSerializer(queryset, many=True)
-
-        response_data = {
-            "status": status.HTTP_200_OK,
-            "success": True,
-            "message": "Staff roles retrieved successfully",
-            "data": serializer.data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-    
-    def post(self, request, *args, **kwargs):
-        serializer = StaffRoleSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            response = {
-                "status": status.HTTP_201_CREATED,
-                "message": "Staff role created successfully",
-                "data": serializer.data
-            }
-            return Response(response, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
 class ShiftRequestView(APIView):

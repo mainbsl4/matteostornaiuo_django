@@ -236,9 +236,29 @@ UNFOLD = {
                         "link": reverse_lazy("admin:client_companyprofile_changelist"),
                     },
                     {
-                        "title": _("Create Jobs"),
+                        "title": _("Jobs"),
                         "icon": "work",
-                        "link": reverse_lazy("admin:client_job_add"),
+                        "link": reverse_lazy("admin:client_job_changelist"),
+                    },
+                    {
+                        "title": _("Vacancies"),
+                        "icon": "work",
+                        "link": reverse_lazy("admin:client_vacancy_changelist"),
+                    },
+                    {
+                        "title": _("Favourite Staff"),
+                        "icon": "star",
+                        "link": reverse_lazy("admin:client_favouritestaff_changelist"),
+                    },
+                    {
+                        "title": _("My Own Staff"),
+                        "icon": "location_away",
+                        "link": reverse_lazy("admin:client_mystaff_changelist"),
+                    },
+                    {
+                        "title": _("Job Ads"),
+                        "icon": "ads_click",
+                        "link": reverse_lazy("admin:client_jobads_changelist"),
                     }
                 ]
             },

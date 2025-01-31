@@ -2,8 +2,7 @@ from rest_framework import serializers
 
 
 from .models import (
-    Staff,
-    StaffRole
+    Staff
 )
 from users.models import User, JobRole, Skill
 from users.serializers import UserSerializer
@@ -27,7 +26,7 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         staff_profile = Staff.objects.create(user=user,**validated_data)
         # create a job role
         role = JobRole.objects.get(id=role_id)
-        StaffRole.objects.create(staff=staff_profile, role=role, primary=True)
+        
         
         # check if any value in skills have 
         if skills:
@@ -41,17 +40,11 @@ class CreateStaffSerializer(serializers.ModelSerializer):
 
 class StaffSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    # show roles 
-    staff_role = serializers.SerializerMethodField()
     class Meta:
         model = Staff
         fields = '__all__'
 
     # serializers method field for shoing staff role 
-    def get_staff_role(self, obj):
-        roles = obj.staffrole_set.all()
-        serializers = StaffRoleSerializer(roles, many=True)
-        return serializers.data
     
         
     def create(self, validated_data):
@@ -65,7 +58,6 @@ class StaffSerializer(serializers.ModelSerializer):
 
         # create a job role
         role = JobRole.objects.get(id=role_data)
-        StaffRole.objects.create(staff=staff_profile, role=role, primary=True)
 
         
         return staff_profile
@@ -74,12 +66,7 @@ class StaffSerializer(serializers.ModelSerializer):
 
         
     
-class StaffRoleSerializer(serializers.ModelSerializer):
-    role = serializers.StringRelatedField(read_only=True)
-    class Meta:
-        model = StaffRole
-        fields = '__all__'
-        # depth = 1
+
     
     # to_representation method for showing staff profiles information
     
