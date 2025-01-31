@@ -2,16 +2,8 @@ from django.contrib import admin
 
 from unfold.admin import ModelAdmin
 
-from .models import FavouriteStaff, Notification, CompanyReview, StaffReview
+from .models import  Notification, CompanyReview, StaffReview
 
-
-@admin.register(FavouriteStaff)
-class FavouriteStaffAdmin(ModelAdmin):
-    list_display = ('company','staff','staff__id') 
-
-    # show number of staff
-    
-    
 
 @admin.register(Notification)
 class NotificationAdmin(ModelAdmin):

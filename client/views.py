@@ -17,7 +17,9 @@ from .models import (
     StaffInvitation,
     Checkin,
     Checkout,
-    PermanentJobs
+    JobAds,
+    FavouriteStaff,
+    MyStaff
 
 
 )
@@ -31,7 +33,9 @@ from .serializers import (
     JobApplicationSerializer,
     CheckinSerializer,
     CheckOutSerializer,
-    PermanentJobsSerializer
+    PermanentJobsSerializer,
+    FavouriteStaffSerializer,
+    MyStaffSerializer
 
 )
 
@@ -42,11 +46,6 @@ from shifting.serializers import DailyShiftSerializer
 # create company profile
 
 class CompanyProfileCreateView(generics.ListCreateAPIView):
-    # queryset = CompanyProfile.objects.all()
-    # serializer_class = CompanyProfileSerializer
-
-    # format the response in get request
-    
     def list(self, request, format=None):
         try:
             user = request.user
@@ -103,11 +102,15 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class VacancyView(APIView):
     def get(self, request, pk=None):
+        user = request.user 
+        client = CompanyProfile.objects.filter(user=user).first()
+
         if pk:
-            vacancy = get_object_or_404(Vacancy, pk=pk)
+            vacancy = Vacancy.objects.filter(client=client, pk=pk).first()
+            if not vacancy:
+                return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
             serializer = VacancySerializer(vacancy)
             response_data = {
                 "status": status.HTTP_200_OK,
@@ -117,7 +120,7 @@ class VacancyView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
-        vacancies = Vacancy.objects.all()
+        vacancies = Vacancy.objects.filter(client=client)
         serializer = VacancySerializer(vacancies, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -128,7 +131,6 @@ class VacancyView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request):
         data = request.data
-        print('data', data)
         serializer = CreateVacancySerializers(data=request.data, context={'request': request})
         if serializer.is_valid():
             vacancy = serializer.save()
@@ -171,8 +173,12 @@ class VacancyView(APIView):
     
 class JobView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
+        user=request.user
+        client = CompanyProfile.objects.filter(user=user).first()
         if pk:
-            job = get_object_or_404(Job, pk=pk)
+            job = Job.objects.filter(company=client, pk=pk).first()
+            if not job:
+                return Response({"error": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
             serializer = JobSerializer(job)
             response_data = {
                 "status": status.HTTP_200_OK,
@@ -182,7 +188,7 @@ class JobView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
-        jobs = Job.objects.all()
+        jobs = Job.objects.filter(company=client)
         serializer = JobSerializer(jobs, many=True)
         response_data = {
                 "status": status.HTTP_200_OK,
@@ -219,41 +225,19 @@ class JobView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-
-class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    def perform_update(self, serializer):
-        serializer.save(user=self.request.user)
-    
-    # custom response 
-    def list(self, request):
-        queryset = Job.objects.filter(user=request.user).first()
-        serializer = JobSerializer(queryset)
-        response_data = {
-            "status": status.HTTP_200_OK,
+    def delete(self, request, pk):
+        try:
+            job = Job.objects.get(pk=pk)
+        except Job.DoesNotExist:
+            return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+        job.delete()
+        response = {
+            "status": status.HTTP_204_NO_CONTENT,
             "success": True,
-            "message": "List of your jobs",
-            "data": serializer.data
+            "message": "Job deleted successfully"
         }
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(response, status=status.HTTP_204_NO_CONTENT)
     
-    def update(self, request, pk):
-        job = Job.objects.get(pk=pk)
-        serializer = JobSerializer(job, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            response = {
-                "status": status.HTTP_200_OK,
-                "message": "Job updated successfully",
-                "data": serializer.data
-                
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
 
 class JobApplicationAPI(APIView):
     def get(self, request, vacancy_id=None,pk=None):
@@ -295,11 +279,6 @@ class JobApplicationAPI(APIView):
         job_application.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-
-class InviteStaffView(APIView):
-    def post(self, request, vacancy_id=None):
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        
 class AcceptApplicantView(APIView):
     def post(self, request, application_id=None):
         application = get_object_or_404(JobApplication, pk=application_id)
@@ -443,10 +422,27 @@ class ApproveCheckoutView(APIView):
         return Response(status=status.HTTP_200_OK)
     
 
-class PermanentJobView(APIView):
+class JobAdsView(APIView):
 
-    def get(self, request,company_id=None,pk=None,*args,**kwargs):
-        permanent_jobs = PermanentJobs.objects.filter(company__id=company_id)
+    def get(self, request,pk=None,*args,**kwargs):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+
+        if pk:
+            permanent_job = JobAds.objects.filter(company=company, id=pk).first()
+            if not permanent_job:
+                return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "Permanent job not found"})
+            serializer = PermanentJobsSerializer(permanent_job)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Permanent job details",
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        
+        permanent_jobs = JobAds.objects.filter(company=company)
+        
         serializer = PermanentJobsSerializer(permanent_jobs, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -456,12 +452,12 @@ class PermanentJobView(APIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
-    def post(self, request, company_id=None):
+    def post(self, request, **kwargs):
         data = request.data
-        company = CompanyProfile.objects.filter(id=company_id).first()
-        serializer = PermanentJobsSerializer(data=data)
+        
+        serializer = PermanentJobsSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(company=company)
+            serializer.save()
             response_data = {
                 "status": status.HTTP_201_CREATED,
                 "success": True,
@@ -469,7 +465,37 @@ class PermanentJobView(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
-
+        response_data = {
+            "status": status.HTTP_400_BAD_REQUEST,
+                "success": False,
+                "message": "Invalid data",
+                "data": serializer.errors
+            }
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, pk=None):
+        data = request.data
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+        permanent_job = JobAds.objects.get(id=pk)
+        if permanent_job.company == company:
+            serializer = PermanentJobsSerializer(permanent_job, data=data, partial=True, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Permanent job updated successfully",
+                    "data": serializer.data
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data = {
+                "status": status.HTTP_400_BAD_REQUEST,
+                "success": False,
+                "message": "Invalid data",
+                "data": serializer.error
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 class ShiftCheckinAcceptView(APIView):
     def get(self, request, shifting_id=None, pk=None, *args, **kwargs):
         user = request.user
@@ -531,4 +557,80 @@ class ShiftCheckinAcceptView(APIView):
             
             
             return Response(response_data, status=status.HTTP_200_OK)
+
+class FavouriteStaffView(APIView):
+    def get(self, request,pk=None):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+
+        if pk:
+            favourite = FavouriteStaff.objects.filter(company=company,pk=pk).first()
+            if favourite:
+                serializer = FavouriteStaffSerializer(favourite)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Favourite staff details",
+                    "data": serializer.data
+                }
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                response = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Favourite staff not found"
+                }
+                return Response(response,status=status.HTTP_404_NOT_FOUND)
         
+        favourites = FavouriteStaff.objects.filter(company = company)
+        serializer = FavouriteStaffSerializer(favourites, many=True)
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of favourite staff",
+            "data": serializer.data
+        }
+        return Response(response,status=status.HTTP_200_OK)
+    
+    def post(self, request, pk=None):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+        favourite_staff,_ = FavouriteStaff.objects.get_or_create(company=company)
+        data = request.data        
+        try:
+            staff = Staff.objects.get(id=pk)
+        except Staff.DoesNotExist:
+            response = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Staff not found"
+            }
+            return Response(response,status=status.HTTP_404_NOT_FOUND)
+        
+        if data['action'] == 'add':
+            # check is staff already added
+            if staff in favourite_staff.staff.all():
+                return Response({"message": "Staff is already a favourite"})
+            favourite_staff.staff.add(staff)
+            return Response({"message": "Favourite staff added successfully"})
+        elif data['action'] =='remove':
+            if staff in favourite_staff.staff.all():
+                favourite_staff.staff.remove(staff)
+                return Response({"message": "Favourite staff removed successfully"})
+            return Response({"message": "Staff is not a favourite"})
+
+class MyStaffView(APIView):
+    def get(self, request, pk=None):
+        user = request.user
+        company = get_object_or_404(CompanyProfile, user=user)
+        mystaff = MyStaff.objects.filter(client=company, status = True)
+        serializer = MyStaffSerializer(mystaff, many=True)
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of staff",
+            "data": serializer.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
+    
+
