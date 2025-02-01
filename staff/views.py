@@ -18,9 +18,32 @@ from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
 class StaffProfileView(APIView):
-    def get(self, request, *args, **kwargs):
+    def get(self, request,pk=None, *args, **kwargs):
         user = request.user
-        staff = Staff.objects.filter(user=user).first()
+        try:
+            staff = Staff.objects.get(user=user)
+        except Staff.DoesNotExist:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": "Staff profile not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        if pk:
+            try:
+                staff = Staff.objects.get(id=pk)
+            except Staff.DoesNotExist:
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": "Staff not found"
+                }, status=status.HTTP_404_NOT_FOUND)
+            serializer = StaffSerializer(staff)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Staff profile retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
         serializer = StaffSerializer(staff)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -33,44 +56,74 @@ class StaffProfileView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = CreateStaffSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            staff = serializer.save()
+            # show staff serializers in response
+            res = StaffSerializer(staff)
             response = {
                 "status": status.HTTP_201_CREATED,
                 "message": "Staff profile created successfully",
-                "data": serializer.data
+                "data": res.data
             }
             return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Staff.objects.all()
-    serializer_class = StaffSerializer
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = StaffSerializer(instance, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            response = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "Staff profile updated successfully",
-                "data": serializer.data
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def put(self, request, pk):
+        data = request.data
+        user = request.user
+        staff = Staff.objects.filter(user=user).first()
+        if staff:
+            serializer = CreateStaffSerializer(staff, data=data, partial=True)
+            if serializer.is_valid():
+                data = serializer.save()
+                res = StaffSerializer(data)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Staff profile updated successfully",
+                    "data": res.data
+                }
+                return Response(response, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "status": status.HTTP_404_NOT_FOUND,
+            "message": "Staff profile not found"
+        }, status=status.HTTP_404_NOT_FOUND)
     
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
-        response = {
-            "status": status.HTTP_204_NO_CONTENT,
-            "success": True,
-            "message": "Staff profile deleted successfully"
-        }
-        return Response(response, status=status.HTTP_204_NO_CONTENT)
+# class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Staff.objects.all()
+#     serializer_class = StaffSerializer
+
+#     def update(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = StaffSerializer(instance, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             response = {
+#                 "status": status.HTTP_200_OK,
+#                 "success": True,
+#                 "message": "Staff profile updated successfully",
+#                 "data": serializer.data
+#             }
+#             return Response(response, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+#     def destroy(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         instance.delete()
+#         response = {
+#             "status": status.HTTP_204_NO_CONTENT,
+#             "success": True,
+#             "message": "Staff profile deleted successfully"
+#         }
+#         return Response(response, status=status.HTTP_204_NO_CONTENT)
+    
+
+class JobsView(APIView):
+    def get(self, request,pk=None, *args, **kwargs):
+        # todo:
+        # post vacancy as a job. 
+        # 
+        pass
 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
