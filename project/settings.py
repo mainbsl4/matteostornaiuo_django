@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     "chat",
     "shifting",
     "subscription",
+    # 3rd party 
     "import_export",
+    "drf_yasg"
     
     
 
