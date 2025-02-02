@@ -122,7 +122,8 @@ class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         # todo:
         # post vacancy as a job. 
-        # 
+        # filter vacancy
+        # order by similar job role
         pass
 
 class ShiftRequestView(APIView):
