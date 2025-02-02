@@ -15,7 +15,7 @@ SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
+ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com']
 
 
 # Application definition
@@ -157,6 +157,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # CORS_ALLOWED_ORIGINS = []
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = ['https://matteostornaiuo-django.onrender.com']
+SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
+CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 from import_export.formats.base_formats import CSV, XLSX
 # multiple import options
