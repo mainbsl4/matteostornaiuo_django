@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     # 3rd party 
     "import_export",
     "drf_spectacular",
-    "corsheaders"
+    "corsheaders",
+    'whitenoise.runserver_nostatic',
     
     
 
@@ -154,9 +155,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
-# CORS_ALLOWED_ORIGINS = []
+# CORS_ALLOWED_ORIGINS = [
+
+# ]
 CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = ['https://matteostornaiuo-django.onrender.com']
+CSRF_TRUSTED_ORIGINS = [
+    'https://matteostornaiuo-django.onrender.com'
+    ]
 SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
