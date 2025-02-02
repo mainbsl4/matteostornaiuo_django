@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
 
@@ -156,6 +156,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
 # CORS_ALLOWED_ORIGINS = []
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['https://matteostornaiuo-django.onrender.com']
+
 from import_export.formats.base_formats import CSV, XLSX
 # multiple import options
 IMPORT_FORMATS = [CSV, XLSX]
