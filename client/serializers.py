@@ -61,11 +61,11 @@ class JobTemplateSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # read_only_fields = ['profile']
 
-class JobSerializerForVacancy(serializers.ModelSerializer):
-    company = CompanyProfileSerializer(read_only=True)
-    class Meta:
-        model = Job
-        fields = ['id', 'title', 'description', 'status', 'company']
+# class JobSerializerForVacancy(serializers.ModelSerializer):
+#     company = CompanyProfileSerializer(read_only=True)
+#     class Meta:
+#         model = Job
+#         fields = '__all__'
 
 class VacancySerializer(serializers.ModelSerializer):
     client = CompanyProfileSerializer(read_only=True)
@@ -81,8 +81,8 @@ class VacancySerializer(serializers.ModelSerializer):
 
 class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
-    skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
-    uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all())
+    skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
+    uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False)
     invited_staff = serializers.ListField(write_only=True, required=False )
     # participants = serializers.PrimaryKeyRelatedField(queryset=FavouriteStaff.objects.all(), many=True)
 
@@ -262,7 +262,12 @@ class JobSerializer(serializers.ModelSerializer):
         return instance
     
     
-    
+class JobViewSerializers(serializers.ModelSerializer):
+    company  = CompanyProfileSerializer(read_only=True)
+    class Meta:
+        model = Job
+        # fields = '__all__'
+        exclude = ('vacancy',)
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):

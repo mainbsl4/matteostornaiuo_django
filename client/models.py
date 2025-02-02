@@ -98,7 +98,11 @@ class Job(models.Model):
         verbose_name = 'Job'
         verbose_name_plural = 'Jobs'
         ordering = ['-created_at']
-
+    # add index to created_at field
+    indexes = [
+            models.Index(fields=['created_at']),
+        ]
+    
 class JobTemplate(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
