@@ -1,4 +1,6 @@
 window.addEventListener("load", (e) => {
+  submitSearch();
+
   fileInputUpdatePath();
 
   dateTimeShortcutsOverlay();
@@ -37,11 +39,9 @@ const warnWithoutSaving = () => {
       "form.warn-unsaved-form input, form.warn-unsaved-form select, form.warn-unsaved-form textarea"
     );
 
-    for (const field of elements) {
-      field.addEventListener("input", () => {
-        formChanged = true;
-      });
-    }
+    Array.from(elements).forEach((field) => {
+      field.addEventListener("input", (e) => (formChanged = true));
+    });
   };
 
   if (!form) {
@@ -78,9 +78,9 @@ const filterForm = () => {
   }
 
   filterForm.addEventListener("formdata", (event) => {
-    for (const [key, value] of event.formData.entries()) {
+    Array.from(event.formData.entries()).forEach(([key, value]) => {
       if (value === "") event.formData.delete(key);
-    }
+    });
   });
 };
 
@@ -109,7 +109,7 @@ const watchClassChanges = (selector, callback) => {
  *************************************************************/
 const dateTimeShortcutsOverlay = () => {
   const observer = new MutationObserver((mutations) => {
-    for (const mutationRecord of mutations) {
+    mutations.forEach((mutationRecord) => {
       const display = mutationRecord.target.style.display;
       const overlay = document.getElementById("modal-overlay");
 
@@ -118,17 +118,17 @@ const dateTimeShortcutsOverlay = () => {
       } else {
         overlay.style.display = "none";
       }
-    }
+    });
   });
 
   const targets = document.querySelectorAll(".calendarbox, .clockbox");
 
-  for (const target of targets) {
+  Array.from(targets).forEach((target) => {
     observer.observe(target, {
       attributes: true,
       attributeFilter: ["style"],
     });
-  }
+  });
 };
 
 /*************************************************************
@@ -162,6 +162,54 @@ const fileInputUpdatePath = () => {
   });
 
   checkInputChanged();
+};
+
+/*************************************************************
+ * Search form on changelist view
+ *************************************************************/
+const submitSearch = () => {
+  const searchbar = document.getElementById("searchbar");
+  const searchbarSubmit = document.getElementById("searchbar-submit");
+
+  const getQueryParams = (searchString) => {
+    const queryParams = window.location.search
+      .replace("?", "")
+      .split("&")
+      .map((param) => param.split("="))
+      .reduce((values, [key, value]) => {
+        if (key && key !== "q") {
+          values[key] = value;
+        }
+
+        return values;
+      }, {});
+
+    if (searchString) {
+      queryParams["q"] = encodeURIComponent(searchString);
+    }
+
+    const result = Object.entries(queryParams)
+      .map(([key, value]) => `${key}=${value}`)
+      .join("&");
+
+    return `?${result}`;
+  };
+
+  if (searchbar !== null) {
+    searchbar.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        window.location = getQueryParams(e.target.value);
+        e.preventDefault();
+      }
+    });
+  }
+
+  if (searchbarSubmit !== null && searchbar !== null) {
+    searchbarSubmit.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.location = getQueryParams(searchbar.value);
+    });
+  }
 };
 
 /*************************************************************
@@ -235,10 +283,11 @@ const DEFAULT_CHART_OPTIONS = {
         },
       },
       grid: {
-        lineWidth: (context) => {
+        lineWidth: function (context) {
           if (context.tick.value === 0) {
             return 1;
           }
+
           return 0;
         },
         tickWidth: 0,
@@ -248,68 +297,38 @@ const DEFAULT_CHART_OPTIONS = {
 };
 
 const renderCharts = () => {
-  const charts = [];
+  let charts = [];
 
   const changeDarkModeSettings = () => {
     const hasDarkClass = document
       .querySelector("html")
       .classList.contains("dark");
 
-    const baseColorDark = getComputedStyle(document.documentElement)
-      .getPropertyValue("--color-base-700")
-      .trim();
-
-    const baseColorLight = getComputedStyle(document.documentElement)
-      .getPropertyValue("--color-base-300")
-      .trim();
-
-    const borderColor = hasDarkClass
-      ? `rgb(${baseColorDark})`
-      : `rgb(${baseColorLight})`;
-
-    for (const chart of charts) {
-      chart.options.scales.x.grid.color = borderColor;
-      chart.options.scales.y.grid.color = borderColor;
+    charts.forEach((chart) => {
+      chart.options.scales.x.grid.color = hasDarkClass ? "#374151" : "#d1d5db";
+      chart.options.scales.y.grid.color = hasDarkClass ? "#374151" : "#d1d5db";
       chart.update();
-    }
+    });
   };
 
-  for (const chart of document.querySelectorAll(".chart")) {
+  Array.from(document.querySelectorAll(".chart")).forEach((chart) => {
     const ctx = chart.getContext("2d");
     const data = chart.dataset.value;
     const type = chart.dataset.type;
     const options = chart.dataset.options;
 
     if (!data) {
-      continue;
-    }
-
-    const parsedData = JSON.parse(chart.dataset.value);
-
-    for (const key in parsedData.datasets) {
-      const dataset = parsedData.datasets[key];
-      const processColor = (colorProp) => {
-        if (dataset?.[colorProp]?.startsWith("var(")) {
-          const cssVar = dataset[colorProp].match(/var\((.*?)\)/)[1];
-          const color = getComputedStyle(document.documentElement)
-            .getPropertyValue(cssVar)
-            .trim();
-          dataset[colorProp] = `rgb(${color})`;
-        }
-      };
-
-      processColor("borderColor");
-      processColor("backgroundColor");
+      return;
     }
 
     charts.push(
       new Chart(ctx, {
         type: type || "bar",
-        data: parsedData,
+        data: JSON.parse(chart.dataset.value),
         options: options ? JSON.parse(options) : DEFAULT_CHART_OPTIONS,
       })
     );
-  }
+  });
 
   changeDarkModeSettings();
 
