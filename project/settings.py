@@ -15,7 +15,7 @@ SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com']
+ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
 
 
 # Application definition
@@ -104,12 +104,20 @@ WSGI_APPLICATION = "project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+import dj_database_url
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(
+        default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
+    )
 }
+
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Matteo API',
