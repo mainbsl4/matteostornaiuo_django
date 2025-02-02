@@ -2,7 +2,8 @@ from rest_framework import serializers
 
 from .models import  CompanyReview, StaffReview, Notification
 from staff.serializers import StaffSerializer
-
+from client.models import Vacancy
+from client.serializers import JobViewSerializers, VacancySerializer
 from users.models import Skill
 
 
@@ -29,3 +30,8 @@ class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
         fields = "__all__"
+
+class VacancyJobSerializer(serializers.Serializer):
+    job = JobViewSerializers()
+    vacancy = VacancySerializer()
+    

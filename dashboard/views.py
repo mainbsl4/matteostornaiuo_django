@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404
+from datetime import date 
+from operator import itemgetter
 
 from rest_framework import status, generics 
 from rest_framework.views import APIView
@@ -11,10 +13,11 @@ from . serializers import (
     CompanyReviewSerializer, 
     StaffReviewSerializer, 
     NotificationSerializer, 
-    SkillSerializer
+    SkillSerializer,
+    VacancyJobSerializer
 )
 
-from client.models import CompanyProfile, Vacancy
+from client.models import CompanyProfile, Vacancy, Job
 from staff.models import Staff
 from users.models import Skill
 
@@ -105,3 +108,84 @@ class SkillView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class FeedJobView(APIView):
+    def get(self, request):
+        user = request.user
+        today = date.today()
+
+        # Check if the user is a staff member
+        if user.is_staff:
+            try:
+                staff = Staff.objects.get(user=user)
+                skills = set(staff.skills.all())  # Convert to set for faster intersection
+                job_roles = set(staff.role.all())  # Convert to set for faster lookup
+
+                # Fetch all published jobs with their vacancies
+                jobs = Job.objects.filter(status='PUBLISHED').prefetch_related('vacancy')
+
+                # Prepare a list to hold job-vacancy pairs with similarity scores
+                feed_job = []
+
+                for job in jobs:
+                    for vacancy in job.vacancy.all():
+                        # Initialize similarity score
+                        similarity_score = 0
+
+                        # Check if the vacancy is open today
+                        if vacancy.open_date and vacancy.close_date:
+                            if vacancy.open_date <= today <= vacancy.close_date:
+                                similarity_score += 5  # Higher weight for today's jobs
+
+                        # Add score for role match
+                        if vacancy.job_title in job_roles:
+                            similarity_score += 3  # Moderate weight for role match
+
+                        # Add score for skill match
+                        matching_skills = len(set(vacancy.skills.all()) & skills)  # Intersection of skills
+                        similarity_score += matching_skills  # Weight for each matching skill
+
+                        # Append job-vacancy pair with similarity score
+                        feed_job.append({
+                            "job": job,
+                            "vacancy": vacancy,
+                            "similarity_score": similarity_score
+                        })
+
+                # Sort jobs by similarity score (descending)
+                feed_job.sort(key=itemgetter('similarity_score'), reverse=True)
+
+                # Serialize the sorted data
+                serializer = VacancyJobSerializer(
+                    [{"job": item["job"], "vacancy": item["vacancy"]} for item in feed_job],
+                    many=True
+                ).data
+
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "data": serializer,
+                }
+                return Response(response, status=status.HTTP_200_OK)
+
+            except Staff.DoesNotExist:
+                return Response(
+                    {"status": status.HTTP_404_NOT_FOUND, "success": False, "message": "Staff profile not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # If the user is not a staff member, return all jobs without sorting
+        jobs = Job.objects.filter(status='PUBLISHED').prefetch_related('vacancy')
+        feed_job = []
+        for job in jobs:
+            for vacancy in job.vacancy.all():
+                feed_job.append({"job": job, "vacancy": vacancy})
+
+        serializer = VacancyJobSerializer(feed_job, many=True).data
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "data": serializer,
+        }
+        return Response(response, status=status.HTTP_200_OK)
