@@ -121,11 +121,7 @@ class StaffProfileView(APIView):
 
 class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
-        user = request.user 
-        staff = Staff.objects.filter(user=user).first()
-
-        jobs = Job.obj
-
+        pass 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user

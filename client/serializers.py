@@ -69,11 +69,15 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 
 class VacancySerializer(serializers.ModelSerializer):
     client = CompanyProfileSerializer(read_only=True)
+    
     class Meta:
         model = Vacancy
-        fields = '__all__'
+        fields = [
+            'id', 'jobs','client', 'job_title', 'number_of_staff', 'skills', 'uniform',
+            'open_date', 'close_date', 'start_time', 'end_time',
+            'salary', 'participants', 'one_day_job', 'created_at', 'updated_at'
+        ]
         depth = 1
-
         # fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
 
     
