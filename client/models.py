@@ -84,7 +84,8 @@ class Job(models.Model):
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    vacancy = models.ManyToManyField(Vacancy, related_name='vacancies', blank=True)
+    vacancy = models.ManyToManyField(Vacancy, related_name='jobs', blank=True)
+    
     status = models.CharField(max_length=10, default='PUBLISHED')
     save_template= models.BooleanField(default=False)
     
