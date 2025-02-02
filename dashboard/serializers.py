@@ -1,15 +1,11 @@
 from rest_framework import serializers 
 
-from .models import FavouriteStaff, CompanyReview, StaffReview, Notification
+from .models import  CompanyReview, StaffReview, Notification
 from staff.serializers import StaffSerializer
 
 from users.models import Skill
 
-class FavouriteStaffSerializer(serializers.ModelSerializer):
-    staff = StaffSerializer(many=True)
-    class Meta:
-        model = FavouriteStaff
-        fields = "__all__"
+
 
 class CompanyReviewSerializer(serializers.ModelSerializer):
     class Meta:

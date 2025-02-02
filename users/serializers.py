@@ -6,6 +6,7 @@ from .models import User, Skill, Uniform, JobRole, StaffInvitation, Invitation
 import uuid
 from .email_service import send_staff_invitation_email_from_client
 from django.utils.timezone import now, timedelta
+from client.models import MyStaff, CompanyProfile
 
 
 def code_genator():
@@ -43,16 +44,8 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        # print("validated_data", validated_data)
-        # invited_user = StaffInvitation.objects.filter(user__email = validated_data["email"])
-        invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
-        # print("inv users data: ", invited_user[0].invitation_code)
-        # print("inv users data: ", invited_user)
 
-        if invited_user:
-            invited_user[0].invitation_code = None
-            invited_user[0].save()
-
+        invitations_obj = Invitation.objects.filter(staff_email=validated_data["email"]).first()
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
             user = User.objects.create(
@@ -63,8 +56,18 @@ class StaffSignupSerializer(serializers.ModelSerializer):
                 password=password,
                 is_staff=True,
             )
-        return user
+        # add invited users to my staff list 
+        
+        if invitations_obj:
+            # if not invitations_obj.invitation_code == validated_data['invitation_code'] 
+            invitations_obj.invitation_code = None
+            invitations_obj.save()
 
+        #     invited_by = invitations_obj.staff_invitation.user
+        #     client = CompanyProfile.objects.get(user=invited_by)
+        #     MyStaff.objects.create(user=user, client=client, status=True)
+        #     # send email to invited staff 
+        return user
     # def save(self, *args, **kwargs):
     #     invited_user = StaffInvitation.objects.all()
     #     print("inv users data: ", invited_user)

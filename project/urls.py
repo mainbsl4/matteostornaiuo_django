@@ -24,6 +24,9 @@ admin.site.site_title = "Company Name"
 admin.site.site_header = "matteostornaiuo"
 admin.site.index_title = "Welcome to Company Admin"
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('users.urls')),
@@ -31,8 +34,11 @@ urlpatterns = [
     path('api/', include('staff.urls')),
     path('api/', include('dashboard.urls')),
     path('api/', include('chat.urls')),
-    
+    path('api/', include('shifting.urls')),
 
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
 
 ]
 
