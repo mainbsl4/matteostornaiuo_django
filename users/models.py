@@ -22,7 +22,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        return self.email
+        # return firstname lastname if available
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        else:
+            return self.email
 
 
 class Skill(models.Model):
@@ -51,9 +55,13 @@ class JobRole(models.Model):
 
     # if the exactly this name exists raise error
     def save(self, *args, **kwargs):
-        if self.name and JobRole.objects.filter(name__iexact=self.name).exists():
-            raise ValidationError("Job role with this name already exists.")
+        # user can udpate the price_per_hour
+
+        if self.name:
+            if JobRole.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
+                raise ValidationError("Job role with this name already exists.")
         super().save(*args, **kwargs)
+
 
 
 class Uniform(models.Model):

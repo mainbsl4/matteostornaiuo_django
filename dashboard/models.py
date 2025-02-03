@@ -9,20 +9,7 @@ from client.models import CompanyProfile, Vacancy
 
 
 
-class FavouriteStaff(models.Model):
-    company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff,on_delete=models.CASCADE, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name_plural = 'Favourite Staff'
-        ordering = ['-created_at']
-        # unique_together = (('company', 'staff'),)
-    
-    def __str__(self):
-        return f'{self.company.company_name}'
     
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE) # to whom
