@@ -21,7 +21,7 @@ class CreateStaffSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField()
     )
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
-    user_data = serializers.JSONField(write_only=True)
+    user_data = serializers.JSONField(write_only=True, required=False)
     class Meta:
         model = Staff
         fields = ['user_data','dob', 'address', 'phone', 'exp_year', 'cv', 'video_resume', 'role_id','skills']

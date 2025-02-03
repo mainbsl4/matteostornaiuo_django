@@ -17,7 +17,12 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job 
+from client.models import Job, JobApplication, Vacancy
+from client.serializers import JobApplicationSerializer
+
+from shifting.models import Shifting, DailyShift
+from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
+
 class StaffProfileView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         user = request.user
@@ -90,34 +95,7 @@ class StaffProfileView(APIView):
             "message": "Staff profile not found"
         }, status=status.HTTP_404_NOT_FOUND)
     
-# class StaffProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Staff.objects.all()
-#     serializer_class = StaffSerializer
 
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = StaffSerializer(instance, data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             response = {
-#                 "status": status.HTTP_200_OK,
-#                 "success": True,
-#                 "message": "Staff profile updated successfully",
-#                 "data": serializer.data
-#             }
-#             return Response(response, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-#     def destroy(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         instance.delete()
-#         response = {
-#             "status": status.HTTP_204_NO_CONTENT,
-#             "success": True,
-#             "message": "Staff profile deleted successfully"
-#         }
-#         return Response(response, status=status.HTTP_204_NO_CONTENT)
-    
 
 class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
@@ -305,3 +283,113 @@ class ShiftCheckoutView(APIView):
             "message": "Invalid type. Expected 'checkin' or 'checkout'"
         }
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class JobApplicationView(APIView):
+    def get(self, request, pk=None, **kwargs):
+        user = request.user
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).first()
+            if pk:
+                application = JobApplication.objects.get(applicant=staff, id=pk)
+                serializer = JobApplicationSerializer(application)
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Job application retrieved successfully",
+                    "data": serializer.data
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            # return all job application
+            application = JobApplication.objects.filter(applicant=staff)
+            serializer = JobApplicationSerializer(application, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job applications retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        # user must be a staff instance
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to view this resource"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).first()
+            vacancy = Vacancy.objects.filter(id=data['vacancy']).first()
+            if vacancy is None:
+                response_data = {
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "success": False,
+                    "message": "Invalid vacancy"
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            application = JobApplication.objects.create(
+                applicant = staff,
+                vacancy=vacancy
+            )
+            # send notification to client
+            notification = Notification.objects.create(
+                user=application.vacancy.client.user,
+                message=f'{staff } has submitted a job application for {application.vacancy.job_title}.'
+            )
+            
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Job application created successfully",
+                "data": JobApplicationSerializer(application).data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        # user must be a staff instance
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to create this resource"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+    
+
+# client shift 
+class StaffShiftView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):
+        user = request.user
+        try:
+            staff = Staff.objects.get(user=user)
+        except Staff.DoesNotExist:
+            response_data = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Staff not found"
+            }
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        
+        if staff.is_letme_staff:
+            myshift = DailyShift.objects.filter(staff=staff)
+            serializer = DailyShiftSerializer(myshift, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Shift records retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        else:
+            myshift,_ = Shifting.objects.get_or_create(staff=staff)
+            shifts = DailyShift.objects.filter(shift=shifts)
+            serializer = DailyShiftSerializer(shifts, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Shift records retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
