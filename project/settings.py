@@ -172,7 +172,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # ]
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
-    'https://matteostornaiuo-django.onrender.com'
+    'https://matteostornaiuo-django.onrender.com',
+    'http://127.0.0.1:8080',
     ]
 SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
