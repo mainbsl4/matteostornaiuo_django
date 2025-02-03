@@ -123,11 +123,11 @@ JOB_STATUS = (
 class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    status = models.BooleanField(default=False)
+    is_approve = models.BooleanField(default=False)
     in_time = models.DateTimeField(blank=True, null=True)
     out_time = models.DateTimeField(blank=True, null=True)
 
-    job_status = models.CharField(max_length=10, choices=JOB_STATUS, default='UPCOMMING')
+    job_status = models.CharField(max_length=10, choices=JOB_STATUS, default='PENDING')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -284,16 +284,16 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         data['vacancy'] = VacancySerializer(instance.vacancy).data
         data['applicant'] = StaffSerializer(instance.applicant).data
         return data
-    def create(self, validated_data):
-        job_application = JobApplication.objects.create(**validated_data)
-        # send notification to vacancy user
-        vacancy = validated_data.get('vacancy')
-        user = vacancy.user
-        notification = Notification.objects.create(
-            user = user,
-            message = f"{validated_data['applicant']} has sent an application for your {vacancy.job_title} job."
-        )
-        return job_application
+    # def create(self, validated_data):
+    #     job_application = JobApplication.objects.create(**validated_data)
+    #     # send notification to vacancy user
+    #     vacancy = validated_data.get('vacancy')
+    #     user = vacancy.user
+    #     notification = Notification.objects.create(
+    #         user = user,
+    #         message = f"{validated_data['applicant']} has sent an application for your {vacancy.job_title} job."
+    #     )
+    #     return job_application
     
     
 
