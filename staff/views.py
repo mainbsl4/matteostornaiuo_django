@@ -17,7 +17,7 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy
+from client.models import Job, JobApplication, Vacancy, MyStaff
 from client.serializers import JobApplicationSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -382,8 +382,28 @@ class StaffShiftView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         else:
-            myshift,_ = Shifting.objects.get_or_create(staff=staff)
-            shifts = DailyShift.objects.filter(shift=shifts)
+            try:
+                mystaff = MyStaff.objects.get(staff=staff)
+            except MyStaff.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Your staff record not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            try:
+                myshift = Shifting.objects.get(shift_for=mystaff)
+                shifts = myshift.dailyshift_set.all()
+            except Shifting.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Your shifting record not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            
+            
+            # shifts = DailyShift.objects.filter(shift=shifts)
             serializer = DailyShiftSerializer(shifts, many=True)
             response_data = {
                 "status": status.HTTP_200_OK,
