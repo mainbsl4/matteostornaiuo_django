@@ -106,17 +106,17 @@ WSGI_APPLICATION = "project.wsgi.application"
 
 import dj_database_url
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
+#     )
+# }
 
 
 SPECTACULAR_SETTINGS = {
@@ -167,17 +167,20 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
-# CORS_ALLOWED_ORIGINS = [
-
-# ]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'https://matteostornaiuo-django.onrender.com',
+    'http://127.0.0.1:8080'
+]
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
+    'http://localhost:5173'
     ]
-SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
-CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
+# CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 from import_export.formats.base_formats import CSV, XLSX
 # multiple import options
