@@ -84,7 +84,8 @@ class Job(models.Model):
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    vacancy = models.ManyToManyField(Vacancy, related_name='vacancies', blank=True)
+    vacancy = models.ManyToManyField(Vacancy, related_name='jobs', blank=True)
+    
     status = models.CharField(max_length=10, default='PUBLISHED')
     save_template= models.BooleanField(default=False)
     
@@ -98,7 +99,11 @@ class Job(models.Model):
         verbose_name = 'Job'
         verbose_name_plural = 'Jobs'
         ordering = ['-created_at']
-
+    # add index to created_at field
+    indexes = [
+            models.Index(fields=['created_at']),
+        ]
+    
 class JobTemplate(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
@@ -109,6 +114,7 @@ class JobTemplate(models.Model):
 
 # job status 
 JOB_STATUS = (
+    ('PENDING', 'PENDING'),
     ('UPCOMMING', 'UPCOMMING'),
     ('ACCEPTED', 'ACCEPTED'),
     ('REJECTED', 'REJECTED'),
