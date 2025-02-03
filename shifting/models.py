@@ -46,9 +46,11 @@ SHIFT_STATUS = (
 class DailyShift(models.Model):
     shift = models.ForeignKey(Shifting, related_name="shifts", on_delete=models.SET_NULL, null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    
     day = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
+    
     location = models.CharField(max_length=255)
     status = models.BooleanField(default=False)
 
@@ -62,8 +64,8 @@ class DailyShift(models.Model):
     checkout_status = models.BooleanField(default=False)
 
     shift_status = models.CharField(max_length=10, choices=SHIFT_STATUS, default='pending')
+    
     post_job = models.BooleanField(default=False)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)    
     def __str__(self):
