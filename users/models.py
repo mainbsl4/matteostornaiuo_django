@@ -23,8 +23,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         # return firstname lastname if available
-        if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
+        if self.first_name or self.last_name:
+            return f"{self.first_name} {self.last_name} {self.email}"
         else:
             return self.email
 
