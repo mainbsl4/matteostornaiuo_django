@@ -30,7 +30,7 @@ class StaffSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
-            # send_staff_signup_email(staff_member)
+            send_staff_signup_email(staff_member)
 
             data = serializer.data
             response = status.HTTP_201_CREATED
