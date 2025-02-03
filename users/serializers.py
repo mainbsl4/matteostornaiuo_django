@@ -51,13 +51,10 @@ class StaffSignupSerializer(serializers.ModelSerializer):
             invited_user[0].invitation_code = None
             invited_user[0].save()
 
-
         try:
             validate_password(validated_data["password"])  # Validate the password
         except ValidationError as e:
             raise serializers.ValidationError({"password": e.messages})  # Return errors properly
-
-
 
         invitations_obj = Invitation.objects.filter(staff_email=validated_data["email"]).first()
         if validate_password(validated_data["password"]) == None:
