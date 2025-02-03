@@ -31,6 +31,7 @@ class StaffSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
+
             # send_staff_signup_email(staff_member)
             refresh = RefreshToken.for_user(staff_member)
             tokens = {
@@ -42,6 +43,7 @@ class StaffSignupAPIView(APIView):
                 "tokens": tokens,
             }
             # serializer.data
+
             response = status.HTTP_201_CREATED
         else:
             data = ""
@@ -104,7 +106,7 @@ class StaffInvitationList(APIView):
         if serializer.is_valid():
             for invocation in request.data['invitations']:
                 staff_email = invocation['staff_email']
-                message = f" {staff_email} {invocation['job_role']} "
+                # message = f" {staff_email} {invocation['job_role']} "
                 # send_staff_invitation_email_from_client(staff_email, message)
 
             serializer.save(user=request.user)
