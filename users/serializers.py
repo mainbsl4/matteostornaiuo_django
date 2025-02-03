@@ -6,6 +6,7 @@ from .models import User, Skill, Uniform, JobRole, StaffInvitation, Invitation
 import uuid
 from .email_service import send_staff_invitation_email_from_client
 from django.utils.timezone import now, timedelta
+from django.core.exceptions import ValidationError
 
 
 def code_genator():
@@ -43,15 +44,18 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        # print("validated_data", validated_data)
-        # invited_user = StaffInvitation.objects.filter(user__email = validated_data["email"])
         invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
-        # print("inv users data: ", invited_user[0].invitation_code)
-        # print("inv users data: ", invited_user)
 
         if invited_user:
             invited_user[0].invitation_code = None
             invited_user[0].save()
+
+
+        try:
+            validate_password(validated_data["password"])  # Validate the password
+        except ValidationError as e:
+            raise serializers.ValidationError({"password": e.messages})  # Return errors properly
+
 
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
@@ -84,7 +88,16 @@ class ClientSignupSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "first_name", "last_name", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
+
+
+ 
     def create(self, validated_data):
+
+        try:
+            validate_password(validated_data["password"])  # Validate the password
+        except ValidationError as e:
+            raise serializers.ValidationError({"password": e.messages})  # Return errors properly
+
         if validate_password(validated_data["password"]) == None:
             password = make_password(validated_data["password"])
             user = User.objects.create(
@@ -153,5 +166,5 @@ class StaffInvitationSerializer(serializers.ModelSerializer):
                 staff_invitation=staff_invitation, **invitation_data
             )
 
-            # send_staff_invitation_email_from_client(invitation_data['staff_email'], f"{invitation_data['staff_email']} {invitation_data['invitation_code']}")
+            send_staff_invitation_email_from_client(invitation_data['staff_email'], f"{invitation_data['staff_email']} {invitation_data['invitation_code']}")
         return staff_invitation
