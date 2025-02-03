@@ -1,4 +1,6 @@
 from django.shortcuts import render, get_object_or_404
+from datetime import date 
+from operator import itemgetter
 
 from rest_framework import status, generics 
 from rest_framework.views import APIView
@@ -11,10 +13,12 @@ from . serializers import (
     CompanyReviewSerializer, 
     StaffReviewSerializer, 
     NotificationSerializer, 
-    SkillSerializer
+    SkillSerializer,
+
 )
 
-from client.models import CompanyProfile, Vacancy
+from client.models import CompanyProfile, Vacancy, Job
+from client.serializers import VacancySerializer
 from staff.models import Staff
 from users.models import Skill
 
@@ -105,3 +109,107 @@ class SkillView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class FeedJobView(APIView):
+    def get(self, request, pk=None):
+        user = request.user
+        today = date.today()
+
+        # If a specific vacancy ID (pk) is provided, return the details of that vacancy
+        if pk:
+            try:
+                # Fetch the vacancy by its primary key with prefetching
+                vacancy = Vacancy.objects.prefetch_related('skills', 'jobs').get(pk=pk)
+                
+                # Ensure the vacancy is connected to at least one job
+                if not vacancy.jobs.exists():
+                    return Response(
+                        {"status": status.HTTP_404_NOT_FOUND, "success": False, "message": "Vacancy not connected to any job."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+                # Serialize the vacancy details
+                serializer = VacancySerializer(vacancy)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "List of available jobs",
+                    "data": serializer.data,
+                }
+                return Response(response, status=status.HTTP_200_OK)
+
+            except Vacancy.DoesNotExist:
+                return Response(
+                    {"status": status.HTTP_404_NOT_FOUND, "success": False, "message": "Vacancy not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # If no pk is provided, return the list of vacancies
+        if user.is_staff:
+            try:
+                # Fetch the staff profile and their skills/roles
+                staff = Staff.objects.get(user=user)
+                skills = set(staff.skills.values_list('id', flat=True))  # Prefetch staff skills as IDs
+
+                # Fetch all vacancies that are connected to at least one job
+                vacancies = Vacancy.objects.filter(jobs__isnull=False).distinct().prefetch_related(
+                    'skills', 'jobs'  # Prefetch related skills and jobs
+                )
+
+                # Annotate similarity scores for each vacancy
+                feed_vacancies = []
+                for vacancy in vacancies:
+                    # Initialize similarity score
+                    similarity_score = 0
+
+                    # Add score for today's vacancies
+                    if vacancy.open_date and vacancy.close_date:
+                        if vacancy.open_date <= today <= vacancy.close_date:
+                            similarity_score += 5  # Higher weight for today's vacancies
+
+                    # Add score for skill match
+                    matching_skills = len(set(v.id for v in vacancy.skills.all()) & skills)  # Intersection of skills
+                    similarity_score += matching_skills  # Weight for each matching skill
+
+                    # Append vacancy with similarity score
+                    feed_vacancies.append({
+                        "vacancy": vacancy,
+                        "similarity_score": similarity_score
+                    })
+
+                # Sort vacancies by similarity score (descending)
+                feed_vacancies.sort(key=lambda x: x['similarity_score'], reverse=True)
+
+                # Serialize the sorted data
+                serializer = VacancySerializer(
+                    [item["vacancy"] for item in feed_vacancies],
+                    many=True
+                ).data
+
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "List of available jobs",
+                    "data": serializer,
+                }
+                return Response(response, status=status.HTTP_200_OK)
+
+            except Staff.DoesNotExist:
+                return Response(
+                    {"status": status.HTTP_404_NOT_FOUND, "success": False, "message": "Staff profile not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # If the user is not a staff member, return all vacancies connected to jobs
+        vacancies = Vacancy.objects.filter(jobs__isnull=False).distinct().prefetch_related('skills', 'jobs')
+
+        # Serialize the data
+        serializer = VacancySerializer(vacancies, many=True).data
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of available jobs",
+            "data": serializer,
+        }
+        return Response(response, status=status.HTTP_200_OK)
