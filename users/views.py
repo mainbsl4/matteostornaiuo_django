@@ -67,9 +67,20 @@ class ClientSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
-            send_client_signup_email(staff_member.email)
-
-            data = serializer.data
+            try:
+                send_client_signup_email(staff_member)
+            except Exception as e:
+                pass 
+            
+            refresh = RefreshToken.for_user(staff_member)
+            tokens = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+            data = {
+                "user": serializer.data,
+                "tokens": tokens,
+            }
             response = status.HTTP_201_CREATED
         else:
             data = ""
