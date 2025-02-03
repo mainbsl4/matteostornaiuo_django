@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     StaffSignupSerializer,
     ClientSignupSerializer,
@@ -30,10 +31,19 @@ class StaffSignupAPIView(APIView):
             serializer.save(is_staff=True)
 
             staff_member = User.objects.get(email=serializer.data["email"])
-            # print("user ", staff_member.email)
-            send_staff_signup_email(staff_member.email)
 
-            data = serializer.data
+            # send_staff_signup_email(staff_member)
+            refresh = RefreshToken.for_user(staff_member)
+            tokens = {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }
+            data = {
+                "user": serializer.data,
+                "tokens": tokens,
+            }
+            # serializer.data
+
             response = status.HTTP_201_CREATED
         else:
             data = ""
