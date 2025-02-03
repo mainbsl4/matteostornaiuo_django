@@ -114,6 +114,7 @@ class JobTemplate(models.Model):
 
 # job status 
 JOB_STATUS = (
+    ('PENDING', 'PENDING'),
     ('UPCOMMING', 'UPCOMMING'),
     ('ACCEPTED', 'ACCEPTED'),
     ('REJECTED', 'REJECTED'),
