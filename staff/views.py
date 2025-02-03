@@ -17,6 +17,7 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
+from client.models import Job 
 class StaffProfileView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         user = request.user
@@ -120,12 +121,7 @@ class StaffProfileView(APIView):
 
 class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
-        # todo:
-        # post vacancy as a job. 
-        # filter vacancy
-        # order by similar job role
-        pass
-
+        pass 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user
