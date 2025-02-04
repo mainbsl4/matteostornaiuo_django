@@ -64,13 +64,38 @@ class JobTemplateAdmin(ModelAdmin):
 
 
 
+
 @admin.register(JobApplication)
 class JobApplicationAdmin(ModelAdmin):
-    list_display = ('vacancy__job_title', 'applicant', 'created_at', 'is_approve')
+    list_display = ('applicant','vacancy__job_title', 'applicant__is_letme_staff', 'job_status',  'is_approve', 'created_at')
+    list_filter = ('is_approve', 'job_status', 'created_at')
+    search_fields = ('vacancy__job_title__name', 'applicant__user__first_name', 'applicant__user__email')
+    list_filter_sheet = False 
+    list_editable = ('is_approve',)
+    
+    # fieldset for checkin checout time 
+    fieldsets = (
+        ('Job Application Details', {
+            'fields': (
+                'applicant',
+                'vacancy',
+                'job_status',
+                'is_approve',
+                
+            )
+        }),
+        ('Check-in/Check-out Details', {
+            'fields': (
+                'in_time',
+                'out_time',
+                
+            ),
+        })
+        )
 
 @admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):
-    list_display = ('staff', 'vacancy', 'created_at', 'status')
+    list_display = ('staff', 'vacancy',  'created_at', 'status')
 
 @admin.register(Checkin)
 class CheckinAdmin(ModelAdmin):
