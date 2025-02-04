@@ -209,6 +209,7 @@ EMAIL_HOST_PASSWORD = "nmwk umma atdu sosv"
 EMAIL_PORT = 465  # SMTP port
 EMAIL_USE_SSL = True  # Use SSL for secure connection
 
+
 # Stripe settings
 PUBLISH_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
 STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
@@ -299,6 +300,11 @@ UNFOLD = {
                         "title": _("Job Ads"),
                         "icon": "ads_click",
                         "link": reverse_lazy("admin:client_jobads_changelist"),
+                    },
+                    {
+                        "title": _("Job Application"),
+                        "icon": "inventory",
+                        "link": reverse_lazy("admin:client_jobapplication_changelist"),
                     }
                 ]
             },
