@@ -241,6 +241,11 @@ class JobView(APIView):
 
 class JobApplicationAPI(APIView):
     def get(self, request, vacancy_id=None,pk=None):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+        else:
+            return Response({"error": "Only clients can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
         if pk:
             job_application = get_object_or_404(JobApplication, pk=pk)
             serializer = JobApplicationSerializer(job_application)
@@ -251,21 +256,28 @@ class JobApplicationAPI(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        
-        job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
+        try:
+            vacancy = Vacancy.objects.get(id=vacancy_id)
+        except Vacancy.DoesNotExist:
+            return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
+        job_applications = JobApplication.objects.filter(vacancy=vacancy).order_by('-created_at')
+        # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
         serializer = JobApplicationSerializer(job_applications, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job applications",
                 "data": serializer.data
-    
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request,vacancy_id=None):
+    def post(self, request,vacancy_id,pk):
         data = request.data
+        user = request.user 
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            
         staff = Staff.objects.filter(id=data['applicant']).first()
-        vacancy = Vacancy.objects.filter(id=vacancy_id).first()
+        # vacancy = Vacancy.objects.filter(id=vacancy_id).first()
         job_application = JobApplication.objects.create(vacancy=vacancy,applicant = staff)
         response = {
             "status": status.HTTP_201_CREATED,

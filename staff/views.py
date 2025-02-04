@@ -100,7 +100,7 @@ class StaffProfileView(APIView):
 class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         pass 
-    
+
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user
@@ -188,16 +188,24 @@ class ShiftCheckinView(APIView):
         staff = Staff.objects.filter(user=user).first()
 
         if pk:
-            daily_shift = DailyShift.objects.filter(id=pk, checkin_status=False).first()
-            response = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "Shift check-in request retrieved successfully",
-                "data": DailyShiftSerializer(daily_shift).data
-            }
-            return Response(response, status=status.HTTP_200_OK)
+            daily_shift = DailyShift.objects.filter(id=pk, staff=staff, status=True, checkin_status=False).first()
+            if daily_shift:
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Shift check-in request retrieved successfully",
+                    "data": DailyShiftSerializer(daily_shift).data
+                }
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                response = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Shift check-in request not found"
+                }
+                return Response(response, status=status.HTTP_404_NOT_FOUND)
         # return all not checkin shift
-        shifts = DailyShift.objects.filter(staff=staff, checkin_status=False)
+        shifts = DailyShift.objects.filter(staff=staff, status=True, checkin_status=False)
         serializer = DailyShiftSerializer(shifts, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -285,7 +293,7 @@ class ShiftCheckoutView(APIView):
         }
         return Response(response, status=status.HTTP_400_BAD_REQUEST)
     
-
+# done
 class JobApplicationView(APIView):
     def get(self, request, pk=None, **kwargs):
         user = request.user
@@ -293,7 +301,6 @@ class JobApplicationView(APIView):
             staff = Staff.objects.filter(user=user).first()
             if pk:
                 try:
-
                     application = JobApplication.objects.get(applicant=staff, id=pk)
                 except JobApplication.DoesNotExist:
                     response_data = {
@@ -302,6 +309,7 @@ class JobApplicationView(APIView):
                         "message": "Job application not found"
                     }
                     return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+                
                 serializer = JobApplicationSerializer(application)
                 response_data = {
                     "status": status.HTTP_200_OK,
