@@ -100,6 +100,7 @@ class StaffProfileView(APIView):
 class JobsView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         pass 
+    
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user
@@ -291,7 +292,16 @@ class JobApplicationView(APIView):
         if user.is_staff:
             staff = Staff.objects.filter(user=user).first()
             if pk:
-                application = JobApplication.objects.get(applicant=staff, id=pk)
+                try:
+
+                    application = JobApplication.objects.get(applicant=staff, id=pk)
+                except JobApplication.DoesNotExist:
+                    response_data = {
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "success": False,
+                        "message": "Job application not found"
+                    }
+                    return Response(response_data, status=status.HTTP_404_NOT_FOUND)
                 serializer = JobApplicationSerializer(application)
                 response_data = {
                     "status": status.HTTP_200_OK,
@@ -300,6 +310,7 @@ class JobApplicationView(APIView):
                     "data": serializer.data
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
+            
             # return all job application
             application = JobApplication.objects.filter(applicant=staff)
             serializer = JobApplicationSerializer(application, many=True)
@@ -318,19 +329,30 @@ class JobApplicationView(APIView):
         }
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
     
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        data = request.data
+    def post(self, request,pk=None, *args, **kwargs):
+        user = request.user 
         if user.is_staff:
             staff = Staff.objects.filter(user=user).first()
-            vacancy = Vacancy.objects.filter(id=data['vacancy']).first()
-            if vacancy is None:
+
+            # check vacancy exists  and not expired or closed
+            try:
+                vacancy = Vacancy.objects.get(id=pk)
+                if JobApplication.objects.filter(applicant=staff, vacancy_id=pk).exists():
+                    response_data = {
+                        "status": status.HTTP_400_BAD_REQUEST,
+                        "success": False,
+                        "message": "You have already submitted a job application for this vacancy"
+                    }
+                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+            except Vacancy.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_400_BAD_REQUEST,
                     "success": False,
                     "message": "Invalid vacancy"
                 }
                 return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            
             application = JobApplication.objects.create(
                 applicant = staff,
                 vacancy=vacancy
@@ -392,8 +414,17 @@ class StaffShiftView(APIView):
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             try:
-                myshift = Shifting.objects.get(shift_for=mystaff)
-                shifts = myshift.dailyshift_set.all()
+                myshift, created = Shifting.objects.get_or_create(shift_for=mystaff, company=mystaff.client )
+
+                if myshift.shifts.count() > 0:
+                    shifts = myshift.dailyshift_set.all()
+                else:
+                    response_data = {
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "success": False,
+                        "message": "No shift records found"
+                    }
+                    return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             except Shifting.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_404_NOT_FOUND,
