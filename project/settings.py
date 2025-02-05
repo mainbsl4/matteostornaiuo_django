@@ -269,7 +269,7 @@ UNFOLD = {
             {
                 "title": _("Company Profile"),
                 "icon": "apartment",
-                "collapsible": True, 
+                "collapsible": False, 
                 "items":[
                     {
                         "title": _("Profile"),
@@ -311,7 +311,7 @@ UNFOLD = {
             {
                 "title": _("Staff Profile"),
                 "icon": "apartment",
-                "collapsible": True, 
+                "collapsible": False, 
                 "items":[
                     {
                         "title": _("Staff"),
