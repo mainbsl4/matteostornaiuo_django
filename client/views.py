@@ -275,16 +275,41 @@ class JobApplicationAPI(APIView):
         user = request.user 
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
+            vacancy = Vacancy.objects.filter(id=vacancy_id, client=client).first()
             
-        staff = Staff.objects.filter(id=data['applicant']).first()
+        staff = Staff.objects.filter(id=data['staff_id']).first()
         # vacancy = Vacancy.objects.filter(id=vacancy_id).first()
-        job_application = JobApplication.objects.create(vacancy=vacancy,applicant = staff)
-        response = {
-            "status": status.HTTP_201_CREATED,
-            "message": "Job application created successfully",
-            "data": JobApplicationSerializer(job_application).data
-        }
-        return Response(response, status=status.HTTP_201_CREATED)
+        try:
+            job_application = JobApplication.objects.get(id=pk)
+            if job_application.vacancy.one_day_job:
+                pass # do it later  
+            if job_application.vacancy.participants == job_application.vacancy.number_of_staff:
+                return Response({"error": "All participants have already applied for this vacancy"}, status=status.HTTP_400_BAD_REQUEST)
+            elif staff in job_application.vacancy.participants.all():
+                return Response({"error": "You have already applied for this vacancy"}, status=status.HTTP_400_BAD_REQUEST)
+            if data['status'] == True:
+                job_application.vacancy.participants.add(staff)
+                job_application.is_approve = True 
+                job_application.job_status = 'UPCOMMING'
+                job_application.save()
+                # send notification to staff
+                Notification.objects.create(
+                    user = staff.user,
+                    message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date} in {vacancy.location} at {vacancy.start_time}",
+                )
+                return Response(status=status.HTTP_200_OK, data={"message": "Job application approved"})
+            else:
+                job_application.job_status = 'REJECTED'
+                job_application.save()
+                return Response(status=status.HTTP_200_OK, data={"message": "Job application rejected"})
+            
+        except Vacancy.DoesNotExist:
+            return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
+        except JobApplication.DoesNotExist:
+            return Response({"error": "Job Application not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+        
     
     def delete(self, request, pk=None):
         job_application = get_object_or_404(JobApplication, pk=pk)

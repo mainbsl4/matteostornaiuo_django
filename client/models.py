@@ -38,6 +38,7 @@ class Vacancy(models.Model):
     close_date = models.DateField(blank=True, null=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    location = models.CharField(max_length=255, blank=True, null=True)
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
     one_day_job = models.BooleanField(default=False)
