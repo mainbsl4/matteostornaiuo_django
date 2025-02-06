@@ -10,6 +10,14 @@ from .serializers import (
     ClientSignupSerializer,
     UserSerializer,
     StaffInvitationSerializer,
+    SkillSerializer,
+    JobRoleSerializer,
+    UniformSerializer
+)
+from .models import (
+    Skill, 
+    JobRole,
+    Uniform
 )
 from .email_service import send_staff_signup_email, send_client_signup_email, send_staff_invitation_email_from_client
 
@@ -113,3 +121,29 @@ class StaffInvitationList(APIView):
             # serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# skill api
+
+class SkillList(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        skills = Skill.objects.all()
+        serializer = SkillSerializer(skills, many=True)
+        return Response(serializer.data)
+
+class JobRoleList(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, format=None):
+        job_roles = JobRole.objects.all()
+        serializer = JobRoleSerializer(job_roles, many=True)
+        return Response(serializer.data)
+
+class UniformList(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, format=None):
+        uniforms = Uniform.objects.all()
+        serializer = UniformSerializer(uniforms, many=True)
+        return Response(serializer.data)
