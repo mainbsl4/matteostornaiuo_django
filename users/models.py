@@ -41,7 +41,8 @@ class Skill(models.Model):
 
 class JobRole(models.Model):
     name = models.CharField(max_length=200)
-    price_per_hour = models.IntegerField(default=0)
+    staff_price = models.IntegerField(default=0)
+    client_price = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -55,8 +56,7 @@ class JobRole(models.Model):
 
     # if the exactly this name exists raise error
     def save(self, *args, **kwargs):
-        # user can udpate the price_per_hour
-
+        # user can udpate the staff_price
         if self.name:
             if JobRole.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
                 raise ValidationError("Job role with this name already exists.")
