@@ -14,6 +14,7 @@ class CompanyProfile(models.Model):
     company_email = models.EmailField(max_length=50)
     billing_email = models.EmailField(max_length=50)
     company_address = models.CharField(max_length=200)
+    #geo_location = models.CharField(max_length=255 , blank=True, null=True)
     company_details  = models.TextField(blank=True)
     company_logo = models.ImageField(blank=True, null=True, upload_to='images/company/logo/')
 
@@ -28,6 +29,13 @@ class CompanyProfile(models.Model):
         verbose_name = 'Company Profile'
         verbose_name_plural = 'Company Profiles'
 
+JOB_STATUS = (
+    ('active', 'Active'),
+    ('progress', 'InProgress'),
+    ('draft', 'Draft'),
+    ('cancelled', 'Cancelled'),
+    ('finished', 'Finished'),
+)
 class Vacancy(models.Model):
     client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, blank=True, related_name='vacancies')
     job_title = models.ForeignKey(JobRole, on_delete=models.CASCADE, blank=True)
@@ -39,6 +47,8 @@ class Vacancy(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     location = models.CharField(max_length=255, blank=True, null=True)
+    # geo_location = models.CharField(max_length=255, blank=True, null=True)
+    job_status = models.CharField(max_length=255, choices=JOB_STATUS, default='active')
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
     one_day_job = models.BooleanField(default=False)

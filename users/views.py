@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny
+
 from .serializers import (
     StaffSignupSerializer,
     ClientSignupSerializer,
@@ -125,7 +127,7 @@ class StaffInvitationList(APIView):
 # skill api
 
 class SkillList(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, format=None):
         skills = Skill.objects.all()
@@ -133,7 +135,7 @@ class SkillList(APIView):
         return Response(serializer.data)
 
 class JobRoleList(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request, format=None):
         job_roles = JobRole.objects.all()
@@ -141,7 +143,7 @@ class JobRoleList(APIView):
         return Response(serializer.data)
 
 class UniformList(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     
     def get(self, request, format=None):
         uniforms = Uniform.objects.all()
