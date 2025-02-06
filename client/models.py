@@ -8,7 +8,7 @@ from staff.models import Staff
 User = get_user_model()
 
 class CompanyProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profiles')
     company_name = models.CharField(max_length=100)
     contact_number = models.CharField(max_length=20)
     company_email = models.EmailField(max_length=50)
@@ -71,7 +71,7 @@ class Vacancy(models.Model):
     def calculate_salary(self):
         # calculate hour form start and end time
         hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
-        self.salary = self.job_title.price_per_hour * hours
+        self.salary = self.job_title.staff_price * hours
         return self.salary
     
     # set salary in save method
@@ -116,7 +116,7 @@ class Job(models.Model):
         ]
     
 class JobTemplate(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
 
     def __str__(self):

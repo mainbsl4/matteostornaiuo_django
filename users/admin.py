@@ -36,7 +36,7 @@ class SkillAdmin(ModelAdmin):
 
 @admin.register(JobRole)
 class JobRoleAdmin(ModelAdmin):
-    list_display = ('name', 'price_per_hour')
+    list_display = ('name', 'staff_price', 'client_price')
     search_fields = ('name',)
     list_filter = ('name',)
     list_per_page = 20
