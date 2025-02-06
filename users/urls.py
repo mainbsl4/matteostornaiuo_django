@@ -1,5 +1,12 @@
 from django.urls import path
-from .views import StaffSignupAPIView, ClientSignupAPIView, StaffInvitationList
+from .views import (
+    StaffSignupAPIView, 
+    ClientSignupAPIView, 
+    StaffInvitationList,
+    SkillList,
+    JobRoleList,
+    UniformList
+    )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -13,5 +20,9 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("staffinvitation/", StaffInvitationList.as_view(), name="staff_invitation"),
+    
+    path('api/skills/', SkillList.as_view()),
+    path('api/jobroles/', JobRoleList.as_view()),
+    path('api/uniforms/', UniformList.as_view()),
     
 ]
