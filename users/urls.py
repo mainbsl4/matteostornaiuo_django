@@ -24,5 +24,6 @@ urlpatterns = [
     path('api/skills/', SkillList.as_view()),
     path('api/jobroles/', JobRoleList.as_view()),
     path('api/uniforms/', UniformList.as_view()),
-    
+
 ]
+# 

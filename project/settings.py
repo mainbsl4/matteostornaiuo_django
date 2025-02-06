@@ -112,6 +112,7 @@ import dj_database_url
 #         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
 DATABASES = {
     'default': dj_database_url.config(
         default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
