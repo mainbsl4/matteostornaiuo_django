@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from unfold.admin import ModelAdmin, TabularInline
+from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 
 from . models import (
     CompanyProfile,
@@ -39,12 +40,20 @@ class JobAdmin(ModelAdmin):
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
     list_display = ('job_title', 'client', 'salary', 'open_date','start_time', 'close_date','end_time', 'one_day_job')
-    list_filter = ('job_title','client__company_name')
+    # list_filter = ('job_title','client__company_name')
     search_fields = ('job_title__name', 'client__company_name')
     ordering = ('-created_at',)
     date_hierarchy = 'open_date'
     list_filter_sheet = False
     list_per_page = 50
+
+    list_filter_submit = True  # Submit button at the bottom of the filter
+    list_filter = (
+        'job_title',
+        'client__company_name',
+        ("open_date", RangeDateFilter),  # Date filter
+        # ("close_date", RangeDateFilter),  # Date filter
+    )
 
 
 @admin.register(FavouriteStaff)
