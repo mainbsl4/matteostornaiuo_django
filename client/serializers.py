@@ -63,7 +63,7 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
                 setattr(user, attr, value)
             user.save()
         return super().update(instance, validated_data)
-    
+
 
 
 class JobTemplateSerializer(serializers.ModelSerializer):
@@ -221,7 +221,7 @@ class JobSerializer(serializers.ModelSerializer):
                 continue
         
         if save_in_template:
-            job_template = JobTemplate.objects.create(user=user_, job=job)
+            job_template = JobTemplate.objects.create(client=user_.profiles, job=job)
 
         return job
     def update(self, instance, validated_data):
@@ -250,7 +250,7 @@ class JobSerializer(serializers.ModelSerializer):
         
         #job template have user and job field with foreign key relation
         if save_in_template:
-            job_template, created = JobTemplate.objects.get_or_create(user=user_, job=instance)
+            job_template, created = JobTemplate.objects.get_or_create(client=user_.profiles, job=instance)
             if created:
                 job_template.user = user_
                 job_template.job = instance
@@ -365,3 +365,7 @@ class MyStaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyStaff
         fields = '__all__'
+
+class JobTemplateSserializers(serializers.Serializer):
+    client = CompanyProfileSerializer(read_only=True)
+    job = JobSerializer(read_only=True)
