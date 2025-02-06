@@ -18,8 +18,8 @@ urlpatterns = [
     path('company/staff/own/', views.MyStaffView.as_view()),
     path('company/staff/own/<int:pk>/', views.MyStaffView.as_view()),
     # job application
-    path('jobs/<int:vacancy_id>/application/', views.JobApplicationAPI.as_view()), # post request from staff 
-    path('company/jobs/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
+    path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()), # post request from staff 
+    path('company/job/<int:vacancy_id>/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
     # application approve
     path('company/jobs/applications/<int:application_id>/add/', views.AcceptApplicantView.as_view()),
     path('company/jobs/vacancy/<int:vacancy_id>/checkin/', views.CheckInView.as_view()),
