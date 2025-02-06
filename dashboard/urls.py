@@ -9,6 +9,8 @@ urlpatterns = [
 
     path('dashboard/jobs/', views.FeedJobView.as_view()),
     path('dashboard/jobs/<int:pk>/', views.FeedJobView.as_view()),
-    
+
+    path('job/templates/', views.GetJobTemplateAPIView.as_view()),
+
     
 ]

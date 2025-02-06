@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     'whitenoise.runserver_nostatic',
+
     
     
 
@@ -118,6 +119,13 @@ DATABASES = {
         default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
     )
 }
+
+
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'UTC'
 
 
 SPECTACULAR_SETTINGS = {

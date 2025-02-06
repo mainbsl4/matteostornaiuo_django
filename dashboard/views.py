@@ -17,8 +17,8 @@ from . serializers import (
 
 )
 
-from client.models import CompanyProfile, Vacancy, Job
-from client.serializers import VacancySerializer
+from client.models import CompanyProfile, Vacancy, Job, JobTemplate
+from client.serializers import VacancySerializer, JobTemplateSserializers
 from staff.models import Staff
 from users.models import Skill
 
@@ -213,3 +213,19 @@ class FeedJobView(APIView):
             "data": serializer,
         }
         return Response(response, status=status.HTTP_200_OK)
+    
+
+class GetJobTemplateAPIView(APIView):
+    def get(self, request, pk=None):
+        user = request.user 
+        if user.is_client:
+            client = user.profiles 
+            job_template = JobTemplate.objects.filter(client=client)
+            serializer = JobTemplateSserializers(job_template, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "data": serializer.data,
+            }
+            return Response(response_data , status=status.HTTP_200_OK)
+            
