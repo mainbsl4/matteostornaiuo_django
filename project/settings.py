@@ -116,7 +116,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://djangodb_0bln_user:tjwPZx07SBQ7wyvvdnlxfm4CQPD9l61M@dpg-cufg3clumphs73b2b1j0-a.oregon-postgres.render.com/djangodb_0bln'
+        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
     )
 }
 
