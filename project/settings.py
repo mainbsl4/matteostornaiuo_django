@@ -21,6 +21,7 @@ ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
 # Application definition
 
 INSTALLED_APPS = [
+    "django_crontab",
     "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
@@ -107,18 +108,18 @@ WSGI_APPLICATION = "project.wsgi.application"
 
 import dj_database_url
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
 
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
@@ -233,6 +234,11 @@ from django.utils.translation import gettext_lazy as _
 # CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 # CELERY_ACCEPT_CONTENT = ['application/json']
 # CELERY_TASK_SERIALIZER = 'json'
+
+
+CRONJOBS = [
+    ('0 0 * * *', 'jobs.management.commands.expire_jobs.Command', '>> /tmp/cron_log.log 2>&1'),
+]
 
 
 UNFOLD = {
