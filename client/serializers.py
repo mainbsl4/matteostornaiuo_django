@@ -97,13 +97,13 @@ class VacancySerializer(serializers.ModelSerializer):
 class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
-    uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False)
-    invited_staff = serializers.ListField(write_only=True, required=False )
+    uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False, allow_null=True)
+    invited_staff = serializers.ListField(write_only=True, required=False)
     # participants = serializers.PrimaryKeyRelatedField(queryset=FavouriteStaff.objects.all(), many=True)
 
     class Meta:
         model = Vacancy
-        fields = ['client', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time', 'invited_staff']
+        fields = ['client', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'invited_staff']
         read_only_fields = ['client']
     
     def create(self, validated_data):
@@ -111,26 +111,27 @@ class CreateVacancySerializers(serializers.ModelSerializer):
         client = CompanyProfile.objects.get(user=user)
         validated_data['client'] = client
 
-        job_title = validated_data.get('job_title')
-        skills = validated_data.pop('skills')
+        # job_title = validated_data.get('job_title')
+        skills = validated_data.pop('skills',[])
 
         invited_staff_ids = validated_data.pop('invited_staff', [])
-        print('invited_staff_ids:', invited_staff_ids)
+        # print('invited_staff_ids:', invited_staff_ids)
 
         vacancy = Vacancy.objects.create(
             **validated_data
         )
         vacancy.skills.set(skills)
 
-        for invited in invited_staff_ids:
-            fav_staff = FavouriteStaff.objects.filter(id=invited).first()
-            print('invited staff', fav_staff)
-            StaffInvitation.objects.create(vacancy=vacancy,staff=fav_staff.staff)
-            # send notification
-            notification = Notification.objects.create(
-                user = user,
-                message = f"{user.companyprofile.company_name} has invited you to a {vacancy.job_title.name} job application."
-            )
+        if len(invited_staff_ids):
+            for invited in invited_staff_ids:
+                fav_staff = FavouriteStaff.objects.filter(id=invited).first()
+                # print('invited staff', fav_staff)
+                StaffInvitation.objects.create(vacancy=vacancy,staff=fav_staff.staff)
+                # send notification
+                notification = Notification.objects.create(
+                    user = user,
+                    message = f"{user.companyprofile.company_name} has invited you to a {vacancy.job_title.name} job application."
+                )
         # send notification to all staff that match with the job_role
         # staff_with_similar_role = StaffRole.objects.filter(role=job_title)
         # for staff_role in staff_with_similar_role:
@@ -367,5 +368,6 @@ class MyStaffSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class JobTemplateSserializers(serializers.Serializer):
+    name = serializers.StringRelatedField(read_only=True)
     client = CompanyProfileSerializer(read_only=True)
     job = JobSerializer(read_only=True)
