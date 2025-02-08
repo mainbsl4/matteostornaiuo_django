@@ -14,6 +14,7 @@ class CompanyProfile(models.Model):
     company_email = models.EmailField(max_length=50)
     billing_email = models.EmailField(max_length=50)
     company_address = models.CharField(max_length=200)
+    tax_number = models.PositiveIntegerField(blank=True, null=True)
     #geo_location = models.CharField(max_length=255 , blank=True, null=True)
     company_details  = models.TextField(blank=True)
     company_logo = models.ImageField(blank=True, null=True, upload_to='images/company/logo/')
