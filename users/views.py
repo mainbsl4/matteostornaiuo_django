@@ -73,8 +73,15 @@ class ClientSignupAPIView(APIView):
         confirm_password = request.POST.get("confirm_password", None)
         if password == confirm_password:
             serializer = ClientSignupSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(is_staff=True)
+            if serializer.is_valid():
+                serializer.save(is_staff=True)
+            else:
+                response = {
+                    # "status": status.HTTP_400_BAD_REQUEST,
+                    # "success": False,
+                    "errors": serializer.errors,
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
             staff_member = User.objects.get(email=serializer.data["email"])
             try:
