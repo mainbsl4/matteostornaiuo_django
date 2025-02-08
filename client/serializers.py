@@ -2,6 +2,7 @@ from rest_framework import serializers,status
 from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
+from datetime import datetime
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
@@ -42,7 +43,7 @@ User = get_user_model()
 
 # done
 class CompanyProfileSerializer(serializers.ModelSerializer):
-    user_data = serializers.JSONField(write_only=True, required=False)
+    user_data = serializers.JSONField(write_only=True, required=False, allow_null=True)
     class Meta:
         model = CompanyProfile
         # fields = '__all__'
@@ -80,16 +81,33 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 
 class VacancySerializer(serializers.ModelSerializer):
     client = CompanyProfileSerializer(read_only=True)
-    
+    status_count = serializers.SerializerMethodField()
     class Meta:
         model = Vacancy
         fields = [
             'id', 'jobs','client', 'job_title', 'number_of_staff', 'skills', 'uniform',
             'open_date', 'close_date', 'start_time', 'end_time',
-            'salary', 'participants', 'one_day_job', 'created_at'
+            'salary', 'participants', 'one_day_job','status_count', 'created_at'
         ]
         depth = 1
         # fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
+
+    # show number of accepted, rejected, expired and canceled jobs
+    def get_status_count(self, obj):
+        accepted = JobApplication.objects.filter(vacancy=obj, job_status='accepted').count()
+        rejected = JobApplication.objects.filter(vacancy=obj, job_status='rejected').count()
+        pending  = JobApplication.objects.filter(vacancy=obj, job_status='pending').count()
+        expired = JobApplication.objects.filter(vacancy=obj, job_status='expired').count()
+        print('Job status', accepted, rejected, pending, expired)
+        return {
+            'accepted': accepted,
+            'rejected': rejected,
+            'expired': expired,
+            'pending': pending
+        }
+        # extra_fields = {
+        #     'status_count': get_status_count
+        # }
 
     
 

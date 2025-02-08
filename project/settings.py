@@ -21,6 +21,7 @@ ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
 # Application definition
 
 INSTALLED_APPS = [
+    "django_crontab",
     "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
@@ -233,6 +234,11 @@ from django.utils.translation import gettext_lazy as _
 # CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 # CELERY_ACCEPT_CONTENT = ['application/json']
 # CELERY_TASK_SERIALIZER = 'json'
+
+
+CRONJOBS = [
+    ('0 0 * * *', 'jobs.management.commands.expire_jobs.Command', '>> /tmp/cron_log.log 2>&1'),
+]
 
 
 UNFOLD = {
