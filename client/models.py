@@ -136,11 +136,11 @@ class JobTemplate(models.Model):
 
 # job status 
 JOB_STATUS = (
-    ('PENDING', 'PENDING'),
-    ('UPCOMMING', 'UPCOMMING'),
-    ('ACCEPTED', 'ACCEPTED'),
-    ('REJECTED', 'REJECTED'),
-    ('EXPIRED', 'EXPIRED'),
+    ('pending', 'PENDING'),
+    ('upcomming', 'UPCOMMING'),
+    ('accepted', 'ACCEPTED'),
+    ('rejected', 'REJECTED'),
+    ('expired', 'EXPIRED'),
 )
 class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
@@ -149,7 +149,7 @@ class JobApplication(models.Model):
     in_time = models.DateTimeField(blank=True, null=True)
     out_time = models.DateTimeField(blank=True, null=True)
 
-    job_status = models.CharField(max_length=10, choices=JOB_STATUS, default='PENDING')
+    job_status = models.CharField(max_length=10, choices=JOB_STATUS, default='pending')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
