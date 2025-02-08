@@ -72,7 +72,7 @@ class Vacancy(models.Model):
     def calculate_salary(self):
         # calculate hour form start and end time
         hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
-        self.salary = self.job_title.staff_price * hours
+        self.salary = (self.job_title.staff_price * hours) * self.number_of_staff
         return self.salary
     
     # set salary in save method
@@ -84,13 +84,13 @@ class Vacancy(models.Model):
 
     
 
-JOB_STATUS = (
-    ('PUBLISHED', 'Published'),
-    ('DRAFT', 'Draft'),
-    ('ARCHIVED', 'Archived'),
-    ('EXPIRED', 'Expired'),
-    ('CLOSED', 'Closed')
-)
+# JOB_STATUS = (
+#     ('PUBLISHED', 'Published'),
+#     ('DRAFT', 'Draft'),
+#     ('ARCHIVED', 'Archived'),
+#     ('EXPIRED', 'Expired'),
+#     ('CLOSED', 'Closed')
+# )
 
 class Job(models.Model):
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='jobs')
@@ -98,7 +98,7 @@ class Job(models.Model):
     description = models.TextField(blank=True)
     vacancy = models.ManyToManyField(Vacancy, related_name='jobs', blank=True)
     
-    status = models.CharField(max_length=10, default='PUBLISHED')
+    status = models.BooleanField(default=True)
     save_template= models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -117,11 +117,21 @@ class Job(models.Model):
         ]
     
 class JobTemplate(models.Model):
+    name = models.CharField(max_length=200, blank=True)
     client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.job.title
+    
+    class Meta:
+        verbose_name = 'Job Template'
+        verbose_name_plural = 'Job Templates'
+    # add name from job title
+    def save(self, *args, **kwargs):
+        self.name = self.job.title
+        super().save(*args, **kwargs)
+
     
 
 # job status 

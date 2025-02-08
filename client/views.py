@@ -94,13 +94,20 @@ class CompanyProfileCreateView(generics.ListCreateAPIView):
             serializer.save()
             response = {
                 "status": status.HTTP_200_OK,
+                "success": True,
                 "message": "Company profile updated successfully",
                 "data": serializer.data
                 
             }
             return Response(response, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response = {
+                "status": status.HTTP_400_BAD_REQUEST,
+                "success": False,
+                "message": "Invalid data",
+                "data": serializer.errors
+            }
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 class VacancyView(APIView):
     def get(self, request, pk=None):
