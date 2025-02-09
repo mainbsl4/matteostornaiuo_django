@@ -3,52 +3,43 @@ from rest_framework import serializers
 
 from .models import (
     Staff,
-    StaffRole
+    Experience, 
+    BankDetails,
 )
 from users.models import User, JobRole, Skill
 from users.serializers import UserSerializer, SkillSerializer
 
-    
-class StaffRoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = StaffRole
-        fields = '__all__'
-    
 class CreateStaffSerializer(serializers.ModelSerializer):
-    role_id = serializers.ListField(
-        write_only=True,
-        required=False,
-        child=serializers.IntegerField()
-    )
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True)
-    user_data = serializers.JSONField(write_only=True, required=False)
+    user_data = serializers.JSONField(write_only=True, required=False, allow_null=True)
+    bank_details = serializers.JSONField(write_only=True, required=False, allow_null=True)
+    # experience = serializers.PrimaryKeyRelatedField(queryset=Experience.objects.all(), many=True)
+
     class Meta:
         model = Staff
-        fields = ['user_data','dob', 'address', 'phone', 'exp_year', 'cv', 'video_resume', 'role_id','skills']
+        fields = ['user_data','dob', 'address', 'phone', 'cv', 'video_cv', 'role','nid_number', 'about','skills', 'bank_details']
 
 
     def create(self, validated_data):
-        role_id = validated_data.pop('role_id',[])
         skills = validated_data.pop('skills', [])
+        experience = validated_data.pop('experience', [])
+        bank_details = validated_data.pop('bank_details',None)
 
         user = self.context['request'].user
+        user_data = validated_data.pop('user_data')
         # save staff profile 
         staff_profile = Staff.objects.create(user=user,**validated_data)
-        
-        # set staff role 
-        for i, role in enumerate(role_id):
-            role = JobRole.objects.get(id=role)
-            StaffRole.objects.get_or_create(staff=staff_profile, role=role, order=i+1)
-            staff_profile.role.add(role)
-        
         # check if any value in skills have 
         staff_profile.skills.set(skills)
+
+        # bank details 
+        if bank_details is not None:
+            bank, created = BankDetails.objects.get_or_create(staff=staff_profile,**bank_details)
         
         return staff_profile
     # update staff profile
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user_data')
-        job_role = validated_data.pop('role_id')
         skills = validated_data.pop('skills', [])
         # update user data
         # Update user data
@@ -63,18 +54,7 @@ class CreateStaffSerializer(serializers.ModelSerializer):
 
         instance.user = user
         instance.save()
-        
-        # update staff role
-        if len(job_role) > 0:
-            instance.role.clear()
 
-            for i, role in enumerate(job_role):
-                role = JobRole.objects.filter(id=role).first()
-                if not role:
-                    continue
-                StaffRole.objects.get_or_create(staff=instance, role=role, order=i+1)
-                instance.role.add(role)
-            
         # update skills
         if len(skills) > 0:
             instance.skills.clear()
