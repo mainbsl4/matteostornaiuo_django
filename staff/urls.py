@@ -18,8 +18,8 @@ urlpatterns =[
     path('staff/shift/<int:pk>/checkout/', views.ShiftCheckoutView.as_view()), # checkin details
     path('staff/shift/checkout/', views.ShiftCheckoutView.as_view()), # checkin details
 
-    path('action/job/application/', views.JobApplicationView.as_view()),
-    path('action/job/application/<int:pk>/', views.JobApplicationView.as_view()),
+    path('staff/job/apply/<int:pk>/', views.JobApplicationView.as_view()), #post
+    # path('action/job/application/<int:pk>/', views.JobApplicationView.as_view()),
 
 ]
 
