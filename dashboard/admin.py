@@ -7,7 +7,7 @@ from .models import  Notification, CompanyReview, StaffReview
 
 @admin.register(Notification)
 class NotificationAdmin(ModelAdmin):
-    list_display = ('user', 'created_at', 'is_read')
+    list_display = ('user', 'created_at', 'is_read', 'message')
     list_editable = ('is_read', )
 
 @admin.register(CompanyReview)
