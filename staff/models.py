@@ -12,13 +12,6 @@ from users.models import JobRole, Skill
 
 User = get_user_model()
 
-# class Review(models.Model):
-    # staff = 
-    # company = 
-    # rating
-    # message 
-    # tips_status
-    # tips_amount 
 
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -37,6 +30,7 @@ class Staff(models.Model):
 
     # role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
+    experience = models.ManyToManyField("Experience", blank=True, related_name="staff_experience")
     # review = 
     is_letme_staff = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,8 +65,9 @@ class BankDetails(models.Model):
         ordering = ['staff']
     
 
+
 class Experience (models.Model):
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='staff')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='experiences')
     job_role = models.ForeignKey(JobRole, models.SET_NULL, null=True)
     description = models.TextField(blank=True)
     start_date = models.DateField()
@@ -82,10 +77,9 @@ class Experience (models.Model):
     class Meta:
         verbose_name_plural = 'Experience'
         ordering = ['-start_date']
-        unique_together = ('staff', 'job_role')
     
     def __str__(self):
-        return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.job_role} {self.duration} '
+        return f'{self.user.first_name} {self.user.last_name} - {self.job_role} {self.duration} '
     # calculate experience duration
     def calcuate_duration(self):
         if self.present:
