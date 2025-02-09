@@ -7,11 +7,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import (
-    Staff
+    Staff,
+    Experience,
+    BankDetails
 )
 from .serializers import (
     StaffSerializer,
-    CreateStaffSerializer
+    CreateStaffSerializer,
+    BankAccountSerializer,
+    ExperienceSerializer
 
 )
 from shifting.models import Shifting, DailyShift
@@ -477,4 +481,56 @@ class StaffShiftView(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
+
+class ExperienceView(APIView):
+    def get(self, request, pk=None, *args, **kwargs):
+        user = request.user
         
+        if pk is not None:
+            try:
+                experience = Experience.objects.get(id=pk)
+                if experience.user == user:
+                    serializer = ExperienceSerializer(experience)
+                    response_data = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Experience record retrieved successfully",
+                        "data": serializer.data
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+            except Experience.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Experience record not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        experiences = Experience.objects.filter(user=user)
+        serializers = ExperienceSerializer(experiences, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Experience records retrieved successfully",
+            "data": serializers.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = ExperienceSerializer(data=request.data)
+        if serializer.is_valid():
+            obj = serializer.save(user=user)
+            # if user have staff then add it in experience list 
+            if user.is_staff:
+                staff = Staff.objects.filter(user=user).first()
+                if staff:
+                    staff.experience.add(obj)
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Experience record created successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
