@@ -124,7 +124,7 @@ class ClientSignupSerializer(serializers.ModelSerializer):
 class JobRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobRole
-        fields = ["id", "name", "staff_price"]
+        fields = ["id", "name"]
 
 
 class UniformSerializer(serializers.ModelSerializer):
