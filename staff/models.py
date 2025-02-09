@@ -1,7 +1,10 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from datetime import datetime
+from django.utils import timezone
+from django.core.validators import ValidationError
+from dateutil.relativedelta import relativedelta
 
 from users.models import JobRole, Skill
 
@@ -19,15 +22,20 @@ User = get_user_model()
 
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    dob = models.DateField(blank=True)
-    address = models.CharField(max_length=300, blank=True)
+    role = models.ForeignKey(JobRole, on_delete=models.SET_NULL, null=True)
+    nid_number = models.IntegerField(default=0)
     phone = models.CharField(max_length=20, blank=True)
-    exp_year = models.IntegerField(default=0)
+    address = models.CharField(max_length=300, blank=True)
+    dob = models.DateField(blank=True)
+    age = models.IntegerField(null=True, blank=True)
     avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
+    about = models.TextField(blank=True)
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
-    video_resume = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
+    video_cv = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
+    
 
-    role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
+
+    # role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
     # review = 
     is_letme_staff = models.BooleanField(default=True)
@@ -42,29 +50,64 @@ class Staff(models.Model):
         return f'{self.user.first_name} {self.user.last_name} '
     # calculate age in year
     def age_in_year(self):
-        from datetime import datetime
         today = datetime.now()
-        return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
-    # get staff role 
-    # @property
-    # def get_staff_role(self):
-    #     return self.role.first()
+        self.age = today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        return self.age
     
-class StaffRole(models.Model):
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    role = models.ForeignKey(JobRole, on_delete=models.CASCADE)
-    order = models.IntegerField(default=0)
-    is_primary = models.BooleanField(default=False)
+    def save(self, *args, **kwargs):
+        self.age_in_year()
+        super().save(*args, **kwargs)
 
-    created_at = models.DateTimeField(auto_now_add=True)
 
+class BankDetails(models.Model):
+    staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
+    card_holder_name = models.CharField(max_length=100)
+    account_number = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f'{self.staff.user.first_name} {self.staff.user.last_name} Bank Details'
     class Meta:
-        verbose_name_plural = 'Staff Roles'
-        ordering = ['order']
-        unique_together = (('staff', 'role'),)
+        verbose_name_plural = 'Bank Details'
+        ordering = ['staff']
+    
+
+class Experience (models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='staff')
+    job_role = models.ForeignKey(JobRole, models.SET_NULL, null=True)
+    description = models.TextField(blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
+    present = models.BooleanField(default=False)
+    duration = models.CharField(max_length=50, blank=True, null=True)
+    class Meta:
+        verbose_name_plural = 'Experience'
+        ordering = ['-start_date']
+        unique_together = ('staff', 'job_role')
     
     def __str__(self):
-        return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.role}'
-    
-    
+        return f'{self.staff.user.first_name} {self.staff.user.last_name} - {self.job_role} {self.duration} '
+    # calculate experience duration
+    def calcuate_duration(self):
+        if self.present:
+            today = timezone.now().date()
+            duration = relativedelta(today, self.start_date)
+        else:
+            duration = relativedelta(self.end_date, self.start_date)
+        year = duration.years
+        print(year)
+        months = duration.months
+        if year > 0:
+            if months > 0:
+                return  f'{year} year {months} month(s)'
+            else:
+                return  f'{year} year'
+        else:
+            return  f'{months} month(s)'
 
+    def save(self, *args, **kwargs):
+        # if self.end_date and self.end_date < self.start_date:
+        #     raise ValidationError("End date should not be earlier than start date")
+        if self.present:
+            self.end_date = timezone.now().date()
+        self.duration =self.calcuate_duration()
+        super().save(*args, **kwargs)
