@@ -267,7 +267,7 @@ class JobApplicationAPI(APIView):
             vacancy = Vacancy.objects.get(id=vacancy_id)
         except Vacancy.DoesNotExist:
             return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-        job_applications = JobApplication.objects.filter(vacancy=vacancy).order_by('-created_at')
+        job_applications = JobApplication.objects.filter(vacancy=vacancy).order_by('created_at')
         # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
         serializer = JobApplicationSerializer(job_applications, many=True)
         response_data = {
@@ -277,27 +277,29 @@ class JobApplicationAPI(APIView):
                 "data": serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request,vacancy_id,pk):
-        data = request.data
+    def post(self, request,vacancy_id,pk=None):
+        data = request.data # id, status
         user = request.user 
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
             vacancy = Vacancy.objects.filter(id=vacancy_id, client=client).first()
-            
-        staff = Staff.objects.filter(id=data['staff_id']).first()
+            if not vacancy:
+                return Response({"error": "Vacancy Not Found"})
+        
         # vacancy = Vacancy.objects.filter(id=vacancy_id).first()
         try:
-            job_application = JobApplication.objects.get(id=pk)
+            job_application = JobApplication.objects.get(id=data['id'])
+            staff = job_application.applicant
             if job_application.vacancy.one_day_job:
                 pass # do it later  
             if job_application.vacancy.participants == job_application.vacancy.number_of_staff:
                 return Response({"error": "All participants have already applied for this vacancy"}, status=status.HTTP_400_BAD_REQUEST)
             elif staff in job_application.vacancy.participants.all():
-                return Response({"error": "You have already applied for this vacancy"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "The staff is already selected for this job."}, status=status.HTTP_400_BAD_REQUEST)
             if data['status'] == True:
                 job_application.vacancy.participants.add(staff)
                 job_application.is_approve = True 
-                job_application.job_status = 'UPCOMMING'
+                job_application.job_status = 'accepted'
                 job_application.save()
                 # send notification to staff
                 Notification.objects.create(
@@ -306,7 +308,8 @@ class JobApplicationAPI(APIView):
                 )
                 return Response(status=status.HTTP_200_OK, data={"message": "Job application approved"})
             else:
-                job_application.job_status = 'REJECTED'
+                job_application.job_status = 'rejected'
+                job_application.is_approve = False
                 job_application.save()
                 return Response(status=status.HTTP_200_OK, data={"message": "Job application rejected"})
             
@@ -315,49 +318,46 @@ class JobApplicationAPI(APIView):
         except JobApplication.DoesNotExist:
             return Response({"error": "Job Application not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        
-        
+    # def delete(self, request, pk=None):
+    #     job_application = get_object_or_404(JobApplication, pk=pk)
+    #     job_application.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
     
-    def delete(self, request, pk=None):
-        job_application = get_object_or_404(JobApplication, pk=pk)
-        job_application.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    
-class AcceptApplicantView(APIView):
-    def post(self, request, application_id=None):
-        application = get_object_or_404(JobApplication, pk=application_id)
-        vacancy = application.vacancy
-        if vacancy.one_day_job:
-            daily_shift = DailyShift.objects.filter(
-                day=vacancy.open_date, 
-                start_time=vacancy.start_time, 
-                end_time=vacancy.end_time,
-                one_day_job = True
-                ).first()
-            if not daily_shift:
-                return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "No available daily shift"})
-            daily_shift.staff = application.applicant
-            daily_shift.status = True
-            daily_shift.save()
-            # send notification to staff
-            Notification.objects.create(
-                user = staff.user,
-                message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date}",
+# class AcceptApplicantView(APIView):
+#     def post(self, request, application_id=None):
+#         application = get_object_or_404(JobApplication, pk=application_id)
+#         vacancy = application.vacancy
+#         if vacancy.one_day_job:
+#             daily_shift = DailyShift.objects.filter(
+#                 day=vacancy.open_date, 
+#                 start_time=vacancy.start_time, 
+#                 end_time=vacancy.end_time,
+#                 one_day_job = True
+#                 ).first()
+#             if not daily_shift:
+#                 return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "No available daily shift"})
+#             daily_shift.staff = application.applicant
+#             daily_shift.status = True
+#             daily_shift.save()
+#             # send notification to staff
+#             Notification.objects.create(
+#                 user = staff.user,
+#                 message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date}",
                 
-            )
+#             )
 
 
-        application.status = True
-        staff = application.applicant
-        vacancy.participants.add(staff)
-        # send notification to applicant 
-        Notification.objects.create(
-            user = staff.user,
-            message = f"Your application for {vacancy.job_title} has been accepted",
+#         application.status = True
+#         staff = application.applicant
+#         vacancy.participants.add(staff)
+#         # send notification to applicant 
+#         Notification.objects.create(
+#             user = staff.user,
+#             message = f"Your application for {vacancy.job_title} has been accepted",
             
-        )
-        application.save()
-        return Response(status=status.HTTP_200_OK)
+#         )
+#         application.save()
+#         return Response(status=status.HTTP_200_OK)
     
 class CheckInView(APIView):
 
