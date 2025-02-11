@@ -234,9 +234,15 @@ class JobView(APIView):
     
     def delete(self, request, pk):
         try:
-            job = Job.objects.get(pk=pk)
+            user = request.user
+            client = CompanyProfile.objects.filter(user=user).first()
+            job = Job.objects.get(pk=pk,company=client)
         except Job.DoesNotExist:
             return Response({'error': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+        # also delete all the vacancy include with this job
+        for vacancy in job.vacancy.all():
+            vacancy.delete()
+        # delete job itself
         job.delete()
         response = {
             "status": status.HTTP_204_NO_CONTENT,
