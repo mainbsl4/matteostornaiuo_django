@@ -88,7 +88,7 @@ class StaffSignupSerializer(serializers.ModelSerializer):
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
-        exclude = ('created_at', 'updated_at')
+        fields = '__all__'
 
 
 class ClientSignupSerializer(serializers.ModelSerializer):
