@@ -39,7 +39,7 @@ class JobAdmin(ModelAdmin):
 
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
-    list_display = ('job_title', 'client', 'salary', 'open_date','start_time', 'close_date','end_time', 'one_day_job')
+    list_display = ('job_title', 'client', 'salary', 'open_date','start_time', 'close_date','end_time', 'shift_job', 'checkin_status', 'checkout_status')
     # list_filter = ('job_title','client__company_name')
     search_fields = ('job_title__name', 'client__company_name')
     ordering = ('-created_at',)
@@ -108,7 +108,7 @@ class StaffInvitationAdmin(ModelAdmin):
 
 @admin.register(Checkin)
 class CheckinAdmin(ModelAdmin):
-    list_display = ('staff', 'vacancy', 'in_time', 'status')
+    list_display = ('staff', 'vacancy', 'in_time', 'is_approved')
 @admin.register(Checkout)
 class CheckoutAdmin(ModelAdmin):
     list_display = ('staff', 'vacancy', 'out_time', 'status')
