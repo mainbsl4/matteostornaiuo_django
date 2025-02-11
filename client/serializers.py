@@ -87,7 +87,7 @@ class VacancySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'jobs','client', 'job_title', 'number_of_staff', 'skills', 'uniform',
             'open_date', 'close_date', 'start_time', 'end_time',
-            'salary', 'participants', 'one_day_job','status_count', 'created_at'
+            'salary', 'participants', 'shift_job', 'checkin_status', 'checkout_status','status_count', 'created_at'
         ]
         depth = 1
         # fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']

@@ -5,6 +5,8 @@ urlpatterns =[
     path('staff/profile/', views.StaffProfileView.as_view()),
     path('staff/profile/<int:pk>/', views.StaffProfileView.as_view()),
     
+    path('staff/jobs/<int:vacancy_id>/checkin/', views.JobCheckinView.as_view()),
+
     path('myshift/', views.StaffShiftView.as_view()), # 1
 
     path('staff/shift/checkin/', views.ShiftCheckinView.as_view()), # checkin details
