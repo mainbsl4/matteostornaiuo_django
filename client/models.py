@@ -52,8 +52,11 @@ class Vacancy(models.Model):
     job_status = models.CharField(max_length=255, choices=JOB_STATUS, default='active')
     salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
-    one_day_job = models.BooleanField(default=False)
+    shift_job = models.BooleanField(default=False)
 
+    checkin_status = models.BooleanField(default=False)
+    checkout_status = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -170,14 +173,23 @@ class StaffInvitation(models.Model):
         return f'{self.staff.user.email} -invited in {self.vacancy.job_title}'
 
 class Checkin(models.Model):
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
     in_time = models.DateTimeField()
-    status = models.BooleanField(default=False)
+    location =  models.CharField(max_length=255, blank=True, null=True)
+    distance = models.IntegerField(default=0, blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # calculate distance from vacancy.location to location
+    def calculate_distance(self):
+        # calculate distance using google map api
+        # use geocoder library for this
+        pass
+
     def __str__(self):
-        return f'{self.staff.user.email} - checked in at {self.in_time}'
+        return f'{self.staff.user.first_name} { self.staff.user.last_name } - checked in at {self.in_time}'
 
 class Checkout(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
