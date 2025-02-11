@@ -263,8 +263,68 @@ class JobCheckinView(APIView):
     #             staff=staff,
     #             vacancy=vacancy 
     #         )
-    pass 
+    def post(self, request,vacancy_id, *args, **kwargs):
+        user = request.user
+        data = request.data
+        if user.is_staff:
+            try:
+                staff = Staff.objects.get(user=user)
+            except Staff.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_403_FORBIDDEN,
+                    "success": False,
+                    "message": "You are not authorized to create this resource"
+                }
+                return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+            
+            vacancy = Vacancy.objects.get(id=vacancy_id)
+            
+            if vacancy.checkin_status == True:
+                response_data = {
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "success": False,
+                    "message": "Check-in status is already True",
+                    "data": {
+                        "checkin_status": vacancy.checkin_status
+                    }
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            
+            if staff in vacancy.participants.all():
+                
+                checkin = Checkin.objects.create(
+                    staff=staff,
+                    vacancy=vacancy,
+                    in_time = timezone.now(),
+                    location = data['location']
+                )
+                vacancy.checkin_status = True
+                vacancy.save()
+                # send notification to client 
+                notification = Notification.objects.create(
+                    user=vacancy.client.user,
+                    message=f'{staff} has checked in for {vacancy.job_title}'
+                )
 
+
+                response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Check-in created successfully",
+                "data": CheckinSerializer(checkin).data
+                }
+                return Response(response_data, status=status.HTTP_201_CREATED)
+        
+            else:
+                response_data = {
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "success": False,
+                    "message": "You are not a participant of this vacancy"
+                }
+                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+            
 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
