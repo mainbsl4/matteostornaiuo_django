@@ -95,8 +95,8 @@ class StaffSerializer(serializers.ModelSerializer):
         fields = ['user', 'role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_letme_staff']
         depth = 1
     
-    def to_representation(self, instance):
-        data =  super().to_representation(instance)
-        data['bank_details'] = BankAccountSerializer(instance.bankdetails).data
-        data['experience'] = ExperienceSerializer(instance.experience.all(), many=True).data
-        return data
+    # def to_representation(self, instance):
+    #     data =  super().to_representation(instance)
+    #     # data['bank_details'] = BankAccountSerializer(instance.bankdetails).data
+    #     # data['experience'] = ExperienceSerializer(instance.experience.all(), many=True).data
+    #     return data
