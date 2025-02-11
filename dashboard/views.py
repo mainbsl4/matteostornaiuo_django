@@ -202,7 +202,7 @@ class FeedJobView(APIView):
                 )
 
         # If the user is not a staff member, return all vacancies connected to jobs
-        vacancies = Vacancy.objects.filter(jobs__isnull=False).distinct().prefetch_related('skills', 'jobs')
+        vacancies = Vacancy.objects.all().exclude(job_status__in = ['cancelled', 'finished', 'draft']).distinct().prefetch_related('skills', 'jobs')
 
         # Serialize the data
         serializer = VacancySerializer(vacancies, many=True).data

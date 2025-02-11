@@ -220,49 +220,38 @@ class JobApplicationView(APIView):
     
 
 class JobCheckinView(APIView):
-    # def get(self, request, vacancy_id=None, *args, **kwargs):
-    #     user = request.user 
-    #     if user.is_staff:
-    #         staff = Staff.objects.get(user=user)
-    #         vacancy = Vacancy.objects.filter(id = vacancy_id)
+    def get(self, request, pk=None, *args, **kwargs):
+        user = request.user
+        staff = Staff.objects.get(user=user)
+        if pk:
+            try:
+                job_application = JobApplication.objects.get(staff=staff, id=pk)
+            except JobApplication.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Job not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
-            
-    #         my_checkins = Checkin.objects.filter(staff=staff, vacancy=vacancy)
-    #         serializer = CheckinSerializer(my_checkins, many=True)
-    #         response_data = {
-    #             "status": status.HTTP_200_OK,
-    #             "success": True,
-    #             "message": "My checkins retrieved successfully",
-    #             "data": serializer.data
-    #         }
-    #         return Response(response_data, status=status.HTTP_200_OK)
-    #     response_data = {
-    #         "status": status.HTTP_403_FORBIDDEN,
-    #         "success": False,
-    #         "message": "You are not authorized to view this resource"
-    #     }
-    #     return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+            serializer = JobApplicationSerializer(job_application)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job retrieved successfully",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        job_application = JobApplication.objects.filter(applicant=staff,is_approve=True)
 
-    # def post(self, request,vacancy_id *args, **kwargs):
-    #     user = request.user 
-    #     if user.is_staff:
-    #         staff = Staff.objects.get(user=user)
-    #         vacancy = Vacancy.objects.get(id=vacancy_id)
-    #         if vacancy and vacancy.checkin_status == True:
-    #             response_data = {
-    #                 "status": status.HTTP_200_OK,
-    #                 "success": True,
-    #                 "message": "Check-in status is already True",
-    #                 "data": {
-    #                     "checkin_status": vacancy.checkin_status
-    #                 }
-    #             }
-    #             return Response(response_data, status=status.HTTP_200_OK)
-            
-    #         checkin = Checkin.objects.create(
-    #             staff=staff,
-    #             vacancy=vacancy 
-    #         )
+        application_serializer = JobApplicationSerializer(job_application, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job applications retrieved successfully",
+            "data": application_serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request,vacancy_id, *args, **kwargs):
         user = request.user
         data = request.data
@@ -276,9 +265,17 @@ class JobCheckinView(APIView):
                     "message": "You are not authorized to create this resource"
                 }
                 return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-            
-            vacancy = Vacancy.objects.get(id=vacancy_id)
-            
+            try:
+                vacancy = Vacancy.objects.get(id=vacancy_id)
+            except Vacancy.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Vacancy not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+
+
             if vacancy.checkin_status == True:
                 response_data = {
                     "status": status.HTTP_400_BAD_REQUEST,
@@ -315,14 +312,19 @@ class JobCheckinView(APIView):
                 }
                 return Response(response_data, status=status.HTTP_201_CREATED)
         
-            else:
-                response_data = {
-                    "status": status.HTTP_400_BAD_REQUEST,
-                    "success": False,
-                    "message": "You are not a participant of this vacancy"
-                }
-                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-            
+            response_data = {
+                "status": status.HTTP_400_BAD_REQUEST,
+                "success": False,
+                "message": "You are not a participant of this vacancy"
+            }
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+        
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to create this resource"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
             
             
 
