@@ -201,7 +201,7 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     
 
 class JobSerializer(serializers.ModelSerializer):
-    vacancies = serializers.ListField(
+    vacancies = serializers.JSONField(
         write_only=True  # Use only for write operations
     )
     # company = serializers.StringRelatedField(read_only=True)
@@ -233,11 +233,10 @@ class JobSerializer(serializers.ModelSerializer):
         job = Job.objects.create(**validated_data)
         # job_vacancies = []
         for vacancy in vacancy_data:
-            vacancy_obj = Vacancy.objects.filter(id=vacancy).first()
-            if vacancy_obj:
+            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
+            if vacancy_serializer.is_valid():
+                vacancy_obj = vacancy_serializer.save()
                 job.vacancy.add(vacancy_obj)
-            else:
-                continue
         
         if save_in_template:
             job_template = JobTemplate.objects.create(client=user_.profiles, job=job)
