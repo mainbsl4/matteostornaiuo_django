@@ -228,7 +228,7 @@ class JobSerializer(serializers.ModelSerializer):
         validated_data['company'] = client
 
         vacancy_data = validated_data.pop('vacancies')
-        save_in_template = validated_data.get('save_template', False)
+        save_in_template = validated_data.get('save_template')
         
         job = Job.objects.create(**validated_data)
         # job_vacancies = []
@@ -252,18 +252,26 @@ class JobSerializer(serializers.ModelSerializer):
         validated_data['company'] = client
 
         vacancy_data = validated_data.pop('vacancies')
-        save_in_template = validated_data.get('save_template', False)
+        save_in_template = validated_data.get('save_template',False)
+        print('save in template: ', save_in_template)
+
         # update job objects 
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
         instance.status = validated_data.get('status', instance.status)
+        instance.save_template = save_in_template
         instance.save()
 
-        instance.vacancy.clear()
+        # instance.vacancy.clear()
+        for vacancy in instance.vacancy.all():
+            vacancy.delete()
+
         for vacancy in vacancy_data:
-            vacancy = Vacancy.objects.filter(id=vacancy).first()
-            if vacancy:
-                instance.vacancy.add(vacancy)
+            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
+            if vacancy_serializer.is_valid():
+                vacancy_obj = vacancy_serializer.save()
+                instance.vacancy.add(vacancy_obj)
+
         
         
         #job template have user and job field with foreign key relation
