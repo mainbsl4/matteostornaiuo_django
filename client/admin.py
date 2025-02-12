@@ -86,8 +86,8 @@ class JobApplicationAdmin(ModelAdmin):
     fieldsets = (
         ('Job Application Details', {
             'fields': (
-                'applicant',
                 'vacancy',
+                'applicant',
                 'job_status',
                 'is_approve',
                 
@@ -97,6 +97,11 @@ class JobApplicationAdmin(ModelAdmin):
             'fields': (
                 'in_time',
                 'out_time',
+                'checkin_location',
+                'checkout_location',
+                'checkin_approve', 
+                'checkout_approve',
+                "total_working_hours"
                 
             ),
         })
