@@ -201,7 +201,7 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     
 
 class JobSerializer(serializers.ModelSerializer):
-    vacancies = serializers.JSONField(
+    vacancies = serializers.ListField(
         write_only=True  # Use only for write operations
     )
     # company = serializers.StringRelatedField(read_only=True)
@@ -232,11 +232,12 @@ class JobSerializer(serializers.ModelSerializer):
         
         job = Job.objects.create(**validated_data)
         # job_vacancies = []
-        for vacancy in vacancy_data:
-            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
-            if vacancy_serializer.is_valid():
-                vacancy_obj = vacancy_serializer.save()
-                job.vacancy.add(vacancy_obj)
+        # for vacancy in vacancy_data:
+        #     vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
+        #     if vacancy_serializer.is_valid():
+        #         vacancy_obj = vacancy_serializer.save()
+        #         job.vacancy.add(vacancy_obj)
+        job.vacancy.set(vacancy_data)
         
         if save_in_template:
             job_template = JobTemplate.objects.create(client=user_.profiles, job=job)
@@ -262,15 +263,16 @@ class JobSerializer(serializers.ModelSerializer):
         instance.save_template = save_in_template
         instance.save()
 
-        # instance.vacancy.clear()
-        for vacancy in instance.vacancy.all():
-            vacancy.delete()
+        instance.vacancy.clear()
+        instance.vacancy.set(vacancy_data)
+        # for vacancy in instance.vacancy.all():
+        #     vacancy.delete()
 
-        for vacancy in vacancy_data:
-            vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
-            if vacancy_serializer.is_valid():
-                vacancy_obj = vacancy_serializer.save()
-                instance.vacancy.add(vacancy_obj)
+        # for vacancy in vacancy_data:
+        #     vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
+        #     if vacancy_serializer.is_valid():
+        #         vacancy_obj = vacancy_serializer.save()
+        #         instance.vacancy.add(vacancy_obj)
 
         
         
