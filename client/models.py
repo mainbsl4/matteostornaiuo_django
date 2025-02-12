@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
+from datetime import datetime
+from django.utils import timezone
 
 from users.models import Skill, Uniform, JobRole
 from staff.models import Staff
@@ -140,10 +142,10 @@ class JobTemplate(models.Model):
 # job status 
 JOB_STATUS = (
     ('pending', 'PENDING'),
-    ('upcomming', 'UPCOMMING'),
     ('accepted', 'ACCEPTED'),
     ('rejected', 'REJECTED'),
     ('expired', 'EXPIRED'),
+    ('completed', 'COMPLETED')
 )
 class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
@@ -151,15 +153,31 @@ class JobApplication(models.Model):
     is_approve = models.BooleanField(default=False)
     in_time = models.DateTimeField(blank=True, null=True)
     out_time = models.DateTimeField(blank=True, null=True)
-
+    checkin_location = models.CharField(max_length=255, blank=True, null=True)
+    checkout_location = models.CharField(max_length=255, blank=True, null=True)
+    
     job_status = models.CharField(max_length=10, choices=JOB_STATUS, default='pending')
+    checkin_approve = models.BooleanField(default=False)
+    checkout_approve = models.BooleanField(default=False)
+    
+    total_working_hours = models.DurationField(null=True, blank=True, default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # calculate total working hours
+    def calculate_total_working_hours(self):
+        if self.in_time and self.out_time:
+            self.total_working_hours = self.out_time - self.in_time
+            return self.total_working_hours
+
+    # set delay in save method
+    def save(self, *args, **kwargs):
+        self.calculate_total_working_hours()
+        super().save(*args, **kwargs)
     def __str__(self):
         return f'{self.applicant.user.email} - {self.vacancy.job_title}'
-    
+
 
 class StaffInvitation(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)

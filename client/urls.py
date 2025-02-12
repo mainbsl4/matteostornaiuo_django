@@ -17,16 +17,21 @@ urlpatterns = [
     # my staff
     path('company/staff/own/', views.MyStaffView.as_view()),
     path('company/staff/own/<int:pk>/', views.MyStaffView.as_view()),
+    
     # job application
-    path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()), # post request from staff 
+    path('company/job/applications/', views.JobApplicationAPI.as_view()), # post request from staff 
+    path('company/job/applications/<int:pk>/', views.JobApplicationAPI.as_view()), # post request from staff 
+    path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()),
     path('company/job/<int:vacancy_id>/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
-    # application approve
-    # path('company/jobs/applications/<int:application_id>/add/', views.AcceptApplicantView.as_view()),
-    path('company/jobs/vacancy/<int:vacancy_id>/checkin/', views.CheckInView.as_view()),
-    path('company/jobs/vacancy/<int:vacancy_id>/checkout/', views.CheckOutView.as_view()),
-    # checkin application
-    path('company/jobs/vacancy/<int:vacancy_id>/checkin/approve/', views.ApproveCheckinView.as_view()),
-    path('company/jobs/vacancy/<int:vacancy_id>/checkout/approve/', views.ApproveCheckoutView.as_view()),
+    
+    # job checkin 
+    path('company/job/applications/checkin/', views.CheckInView.as_view()),
+    path('company/job/applications/checkin/<int:pk>/', views.CheckInView.as_view()),
+    
+    # job checkout
+    path('company/job/applications/checkout/', views.CheckOutView.as_view()),
+    path('company/job/applications/checkout/<int:pk>/', views.CheckOutView.as_view()),
+
     # job ads
     path('company/job/ads/', views.JobAdsView.as_view()),
     path('company/job/ads/<int:pk>/', views.JobAdsView.as_view()),
