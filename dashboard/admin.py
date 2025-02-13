@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from unfold.admin import ModelAdmin
 
-from .models import  Notification, CompanyReview, StaffReview
+from .models import  Notification, CompanyReview
 
 
 @admin.register(Notification)
@@ -13,6 +13,3 @@ class NotificationAdmin(ModelAdmin):
 @admin.register(CompanyReview)
 class CompanyReviewAdmin(ModelAdmin):
     list_display = ('profile', 'staff', 'vacancy', 'rating', 'created_at')
-@admin.register(StaffReview)
-class StaffReviewAdmin(ModelAdmin):
-    list_display = ('staff', 'profile', 'vacancy', 'rating', 'created_at')

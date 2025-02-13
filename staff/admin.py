@@ -23,3 +23,5 @@ class BankDetailsAdmin(ModelAdmin):
 @admin.register(Experience)
 class ExperienceAdmin(ModelAdmin):
     list_display = ('user','job_role', 'start_date', 'end_date', 'duration')
+
+    

@@ -278,6 +278,11 @@ UNFOLD = {
                         "icon": "person_apron",
                         "link": reverse_lazy("admin:users_uniform_changelist"),
                     },
+                    {
+                        "title": _("Notifications"),
+                        "icon": "notifications_active",
+                        "link": reverse_lazy("admin:dashboard_notification_changelist"),
+                    },
                 ],
             },
             {
@@ -319,6 +324,11 @@ UNFOLD = {
                         "title": _("Job Application"),
                         "icon": "inventory",
                         "link": reverse_lazy("admin:client_jobapplication_changelist"),
+                    },
+                    {
+                        "title": _("Job Report"),
+                        "icon": "work_history",
+                        "link": reverse_lazy("admin:client_jobreport_changelist"),
                     }
                 ]
             },
@@ -336,6 +346,11 @@ UNFOLD = {
                         "title": _("Create Jobs"),
                         "icon": "work",
                         "link": reverse_lazy("admin:client_job_add"),
+                    },
+                    {
+                        "title": _("Staff Review"),
+                        "icon": "reviews",
+                        "link": reverse_lazy("admin:client_staffreview_changelist"),
                     }
                 ]
             },
