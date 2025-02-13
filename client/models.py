@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from datetime import datetime
 from django.utils import timezone
+from django.core.validators import ValidationError
 
 from users.models import Skill, Uniform, JobRole
 from staff.models import Staff
@@ -160,7 +161,7 @@ class JobApplication(models.Model):
     checkin_approve = models.BooleanField(default=False)
     checkout_approve = models.BooleanField(default=False)
     
-    total_working_hours = models.DurationField(null=True, blank=True, default=0)
+    total_working_hours = models.DurationField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -299,3 +300,75 @@ class FavouriteStaff(models.Model):
     
     def __str__(self):
         return f'{self.company.company_name}'
+    
+
+class JobReport(models.Model):
+    job_application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True)
+    working_hour = models.IntegerField(null=True, blank=True)
+    extra_hour = models.IntegerField(null=True, blank=True)
+    regular_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)
+    overtime_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)
+    tax = models.DecimalField(null=True,  decimal_places=2, max_digits=10, default=25)
+    total_pay = models.DecimalField(max_digits=50, decimal_places=2, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Job Report - {self.job_application}'
+
+    def generate_report(self):
+        if self.job_application.total_working_hours:
+            self.working_hour = int(self.job_application.total_working_hours.total_seconds() / 3600)  # Convert timedelta to hours
+            base_rate = self.job_application.vacancy.job_title.staff_price  # Get hourly pay rate
+            
+            # Calculate overtime (if work > 8 hours)
+            if self.working_hour > 8:
+                self.extra_hour = self.working_hour - 8
+            else:
+                self.extra_hour = 0
+            
+            # Regular Pay: First 8 hours at base rate
+            self.regular_pay = base_rate * min(self.working_hour, 8)
+            
+            # Overtime Pay: Extra hours at 1.4x the base rate
+            self.overtime_pay = self.extra_hour * base_rate * 1.4
+            
+            # Tax (25% of total earnings before tax)
+            total_earnings = self.regular_pay + self.overtime_pay
+            self.tax = total_earnings * 0.25  # 25% tax
+            
+            # Final Total Pay after deducting tax
+            self.total_pay = total_earnings - self.tax
+
+    class Meta:
+        verbose_name_plural = 'Job Reports'
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        self.generate_report()
+        super().save(*args, **kwargs)
+
+
+
+
+class StaffReview(models.Model):
+    job_application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, blank=True, null=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    job_role = models.ForeignKey(JobRole, on_delete=models.SET_NULL, null=True, blank=True)
+    rating = models.IntegerField(default=0)
+    message = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.job_application.applicant.user.first_name} {self.job_application.applicant.user.last_name} - Review for {self.job_application.vacancy.job_title}'
+    class Meta:
+        verbose_name_plural = 'Staff Reviews'
+        ordering = ['-created_at']
+    
+    def save(self, *args, **kwargs):
+        self.job_role =  self.job_application.vacancy.job_title
+        if self.rating < 0 or self.rating > 5:
+            raise ValidationError("Rating should be between 0 and 5")
+        super().save(*args, **kwargs)
+

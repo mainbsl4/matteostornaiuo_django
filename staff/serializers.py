@@ -5,7 +5,9 @@ from .models import (
     Staff,
     Experience, 
     BankDetails,
+    
 )
+
 from users.models import User, JobRole, Skill
 from users.serializers import UserSerializer, SkillSerializer, JobRoleSerializer
 class CreateStaffSerializer(serializers.ModelSerializer):
@@ -92,11 +94,7 @@ class StaffSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Staff
-        fields = ['user', 'role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_letme_staff']
+        fields = ['id','user', 'role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_letme_staff']
         depth = 1
     
-    # def to_representation(self, instance):
-    #     data =  super().to_representation(instance)
-    #     # data['bank_details'] = BankAccountSerializer(instance.bankdetails).data
-    #     # data['experience'] = ExperienceSerializer(instance.experience.all(), many=True).data
-    #     return data
+

@@ -14,6 +14,8 @@ urlpatterns =[
 
 
 
+
+
     path('myshift/', views.StaffShiftView.as_view()), # 1
 
     path('staff/shift/checkin/', views.ShiftCheckinView.as_view()), # checkin details

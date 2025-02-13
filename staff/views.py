@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
 
+
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,20 +10,22 @@ from rest_framework.views import APIView
 from .models import (
     Staff,
     Experience,
-    BankDetails
+    BankDetails,
+
 )
 from .serializers import (
     StaffSerializer,
     CreateStaffSerializer,
     BankAccountSerializer,
-    ExperienceSerializer
+    ExperienceSerializer,
+
 
 )
 from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout
+from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole
 from client.serializers import JobApplicationSerializer, CheckinSerializer, CheckOutSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -294,6 +297,11 @@ class JobCheckinView(APIView): # jobapplication
                         "message": "Shift checked in successfully",
                         # "data": JobApplicationSerializer(application).data
                     }
+                    # send notification to the client 
+                    notification = Notification.objects.create(
+                        user=application.vacancy.client.user,
+                        message=f'{staff} has checked in for {application.vacancy.job_title}! Approve the checkin request.'
+                    )
                     return Response(response_data, status=status.HTTP_200_OK)
                 elif data['type'] == 'checkout' and application.out_time is None:
                     application.out_time = timezone.now()
@@ -305,6 +313,11 @@ class JobCheckinView(APIView): # jobapplication
                         "message": "Shift checked out successfully",
                         # "data": JobApplicationSerializer(application).data
                     }
+                    # send notification to the client
+                    notification = Notification.objects.create(
+                        user=application.vacancy.client.user,
+                        message=f'{staff} has checked out for {application.vacancy.job_title}! Approve the checkout request.'
+                    )
                     return Response(response_data, status=status.HTTP_200_OK)
                 else:
                     response_data = {
@@ -313,11 +326,12 @@ class JobCheckinView(APIView): # jobapplication
                         "message": "Shift already checked in/out"
                     }
                     return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-    response_data = {
-        "status": status.HTTP_400_BAD_REQUEST,
-        "success": False,
-        "message": "Invalid request"
-    }
+        response_data = {
+            "status": status.HTTP_400_BAD_REQUEST,
+            "success": False,
+            "message": "Invalid request"
+        }
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
@@ -628,4 +642,3 @@ class ExperienceView(APIView):
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    

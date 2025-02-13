@@ -18,9 +18,14 @@ urlpatterns = [
     path('company/staff/own/', views.MyStaffView.as_view()),
     path('company/staff/own/<int:pk>/', views.MyStaffView.as_view()),
     
-    # job application
-    path('company/job/applications/', views.JobApplicationAPI.as_view()), # post request from staff 
-    path('company/job/applications/<int:pk>/', views.JobApplicationAPI.as_view()), # post request from staff 
+    path('staff/review/', views.StaffReviewView.as_view()), # staff profile 
+    path('job/vacancy/<int:application_id>/review/', views.StaffReviewView.as_view()),
+
+    # application list in job detail view
+    path('company/job/applications/', views.JobApplicationAPI.as_view()),
+    path('company/job/applications/<int:pk>/', views.JobApplicationAPI.as_view()), # application details / approve application 
+
+    # application list in pending action view
     path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()),
     path('company/job/<int:vacancy_id>/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
     

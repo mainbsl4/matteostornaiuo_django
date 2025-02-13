@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
+from import_export.admin import ImportExportModelAdmin
+from import_export import resources, fields
 
 from . models import (
     CompanyProfile,
@@ -13,7 +15,9 @@ from . models import (
     Checkout,
     Checkin,
     JobAds,
-    MyStaff, FavouriteStaff
+    MyStaff, FavouriteStaff,
+    JobReport,
+    StaffReview
 
 
 )
@@ -133,3 +137,34 @@ class MyStaffAdmin(ModelAdmin):
     list_filter_sheet = False
     search_fields = ('client__company_name', 'staff__user__first_name', 'staff__user__last_name', 'status')
     list_filter = ('status', 'client__company_name')
+
+@admin.register(StaffReview)
+class StaffReviewAdmin(ModelAdmin):
+    pass 
+
+
+class JobReportResource(resources.ModelResource):
+    applicant_name = fields.Field(column_name='Applicant Name')
+
+    def dehydrate_applicant_name(self, job_report):
+        return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
+
+    vacancy_title = fields.Field(column_name='Vacancy Title', attribute='job_application__vacancy__job_title')
+    working_hour = fields.Field(column_name='Working Hour', attribute='working_hour')
+    extra_hour = fields.Field(column_name='Extra Hour', attribute='extra_hour')
+    regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
+    overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
+    total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
+
+    class Meta:
+        model = JobReport
+        fields = ('applicant_name', 'vacancy_title', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'total_pay')
+
+@admin.register(JobReport)
+class JobReportAdmin(ModelAdmin,ImportExportModelAdmin):
+    resource_class = JobReportResource
+
+    list_display = ('job_application__applicant', 'job_application__vacancy', 'working_hour', 'extra_hour', 'regular_pay','overtime_pay', 'total_pay')
+    list_filter = ('job_application__vacancy__client','job_application__applicant')
+    search_fields = ('job_application__applicant__user__first_name', 'job_application__applicant__user__last_name', 'job_application__vacancy__job_title')
+    list_filter_sheet = False

@@ -20,7 +20,9 @@ from .models import (
     Checkout,
     JobAds,
     FavouriteStaff,
-    MyStaff
+    MyStaff,
+    StaffReview,
+    JobReport
 
 
 )
@@ -36,7 +38,8 @@ from .serializers import (
     CheckOutSerializer,
     PermanentJobsSerializer,
     FavouriteStaffSerializer,
-    MyStaffSerializer
+    MyStaffSerializer,
+    StaffReviewSerializer
 
 )
 
@@ -502,6 +505,11 @@ class CheckOutView(APIView):
                 
         application.job_status = 'completed'
         application.checkout_approve = True
+        # create report 
+        report = JobReport.objects.create(
+            job_application = application,
+        )
+        
         application.save()
         
         # send notification to staff
@@ -782,3 +790,59 @@ class MyStaffView(APIView):
         return Response(response, status=status.HTTP_200_OK)
     
 
+
+class StaffReviewView(APIView):
+    def get(self, request, pk=None):
+        user = request.user
+        if user.is_staff:
+            staff = Staff.objects.get(user=user)
+            reviews = StaffReview.objects.filter(staff=staff)
+            serializer = StaffReviewSerializer(reviews, many=True)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "List of staff reviews",
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        return Response({"message":"You can not access this endpoint."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, application_id, *args, **kwargs):
+        user = request.user
+        if user.is_client:
+            try:
+                client = CompanyProfile.objects.get(user=user)
+            except CompanyProfile.DoesNotExist:
+                return Response({"message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            try:
+                application = JobApplication.objects.get(id=application_id)
+                if application.vacancy.client != client:
+                    return Response({"message": "Application does not belong to this client"}, status=status.HTTP_400_BAD_REQUEST)
+            except JobApplication.DoesNotExist:
+                return Response({"message": "Application not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # check if already reviewed from this vacancy.
+            if StaffReview.objects.filter(job_application=application, staff=application.applicant).exists():
+                return Response({"message": "You have already reviewed this staff"}, status=status.HTTP_400_BAD_REQUEST)
+            data = request.data
+            review = StaffReview.objects.create(
+                job_application = application,
+                staff = application.applicant,
+                rating = data['rating'],
+                message = data['message']
+            )
+            # send notification to staff
+            notification = Notification.objects.create(
+                user = application.applicant.user,
+                message = f"You have received a new review from {application.client}."
+            )
+            response = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Review submitted successfully",
+                "data": StaffReviewSerializer(review).data
+            }
+            return Response(response, status=status.HTTP_201_CREATED)
+        return Response({"message":"You can not access this endpoint."}, status=status.HTTP_400_BAD_REQUEST)
+    
