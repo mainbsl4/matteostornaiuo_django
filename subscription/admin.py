@@ -12,4 +12,10 @@ class PackageAdmin(ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(ModelAdmin):
-    pass 
+    list_display = ('user', 'package__name', 'status', 'start_date', 'end_date')
+    list_filter = ('package__name', 'status', 'user')
+    list_filter_sheet = False
+    search_fields = ('user__first_name', 'user__last_name', 'package__name')
+    date_hierarchy ='start_date'
+    ordering = ['-created_at']
+    
