@@ -4,10 +4,15 @@ from . import views
 urlpatterns =[
     path('staff/profile/', views.StaffProfileView.as_view()),
     path('staff/profile/<int:pk>/', views.StaffProfileView.as_view()),
-    
-    path('staff/jobs/', views.JobCheckinView.as_view()),
-    path('staff/jobs/<int:vacancy_id>/', views.JobCheckinView.as_view()),
-    path('staff/jobs/<int:vacancy_id>/checkin/', views.JobCheckinView.as_view()),
+    # apply to the job
+    path('staff/job/apply/<int:pk>/', views.JobApplicationView.as_view()), #post
+    # upcoming jobs, checkin and checkout 
+    path('staff/jobs/', views.JobCheckinView.as_view()), # assigned list 
+    path('staff/jobs/<int:pk>/', views.JobCheckinView.as_view()),
+    path('staff/jobs/<int:pk>/checkin/', views.JobCheckinView.as_view()),
+    path('staff/jobs/<int:pk>/checkout/', views.JobCheckinView.as_view()),
+
+
 
 
 
@@ -24,7 +29,6 @@ urlpatterns =[
     path('staff/shift/<int:pk>/checkout/', views.ShiftCheckoutView.as_view()), # checkin details
     path('staff/shift/checkout/', views.ShiftCheckoutView.as_view()), # checkin details
 
-    path('staff/job/apply/<int:pk>/', views.JobApplicationView.as_view()), #post
     # path('action/job/application/<int:pk>/', views.JobApplicationView.as_view()),
 
     path('staff/experiences/', views.ExperienceView.as_view()),
