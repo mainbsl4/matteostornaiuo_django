@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
 
+
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,20 +10,22 @@ from rest_framework.views import APIView
 from .models import (
     Staff,
     Experience,
-    BankDetails
+    BankDetails,
+
 )
 from .serializers import (
     StaffSerializer,
     CreateStaffSerializer,
     BankAccountSerializer,
-    ExperienceSerializer
+    ExperienceSerializer,
+
 
 )
 from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout
+from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole
 from client.serializers import JobApplicationSerializer, CheckinSerializer, CheckOutSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -219,13 +222,21 @@ class JobApplicationView(APIView):
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
     
 
-class JobCheckinView(APIView):
+class JobCheckinView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
         user = request.user
-        staff = Staff.objects.get(user=user)
+        try:
+            staff = Staff.objects.get(user=user)
+        except Staff.DoesNotExist:
+            response_data = {
+                "status": status.HTTP_403_FORBIDDEN,
+                "success": False,
+                "message": "You are not authorized to view this resource"
+            }
+            return Response(response_data, status=status.HTTP_403_FORBIDDEN)
         if pk:
             try:
-                job_application = JobApplication.objects.get(staff=staff, id=pk)
+                job_application = JobApplication.objects.get(applicant=staff, id=pk)
             except JobApplication.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_404_NOT_FOUND,
@@ -242,8 +253,8 @@ class JobCheckinView(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
+        
         job_application = JobApplication.objects.filter(applicant=staff,is_approve=True)
-
         application_serializer = JobApplicationSerializer(job_application, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -252,7 +263,7 @@ class JobCheckinView(APIView):
             "data": application_serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request,vacancy_id, *args, **kwargs):
+    def post(self, request,pk, *args, **kwargs):
         user = request.user
         data = request.data
         if user.is_staff:
@@ -266,67 +277,61 @@ class JobCheckinView(APIView):
                 }
                 return Response(response_data, status=status.HTTP_403_FORBIDDEN)
             try:
-                vacancy = Vacancy.objects.get(id=vacancy_id)
-            except Vacancy.DoesNotExist:
+                application = JobApplication.objects.get(id=pk, applicant=staff)
+            except JobApplication.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_404_NOT_FOUND,
                     "success": False,
-                    "message": "Vacancy not found"
+                    "message": "JobApplication not found"
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
-
-            if vacancy.checkin_status == True:
-                response_data = {
-                    "status": status.HTTP_400_BAD_REQUEST,
-                    "success": False,
-                    "message": "Check-in status is already True",
-                    "data": {
-                        "checkin_status": vacancy.checkin_status
+            if application.is_approve:
+                if data['type'] == 'checkin' and application.in_time is None:
+                    application.in_time = timezone.now()
+                    application.checkin_location = data['location']
+                    application.save()
+                    response_data = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Shift checked in successfully",
+                        # "data": JobApplicationSerializer(application).data
                     }
-                }
-                return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-            
-            if staff in vacancy.participants.all():
-                
-                checkin = Checkin.objects.create(
-                    staff=staff,
-                    vacancy=vacancy,
-                    in_time = timezone.now(),
-                    location = data['location']
-                )
-                vacancy.checkin_status = True
-                vacancy.save()
-                # send notification to client 
-                notification = Notification.objects.create(
-                    user=vacancy.client.user,
-                    message=f'{staff} has checked in for {vacancy.job_title}'
-                )
-
-
-                response_data = {
-                "status": status.HTTP_201_CREATED,
-                "success": True,
-                "message": "Check-in created successfully",
-                "data": CheckinSerializer(checkin).data
-                }
-                return Response(response_data, status=status.HTTP_201_CREATED)
-        
-            response_data = {
-                "status": status.HTTP_400_BAD_REQUEST,
-                "success": False,
-                "message": "You are not a participant of this vacancy"
-            }
-            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
-        
+                    # send notification to the client 
+                    notification = Notification.objects.create(
+                        user=application.vacancy.client.user,
+                        message=f'{staff} has checked in for {application.vacancy.job_title}! Approve the checkin request.'
+                    )
+                    return Response(response_data, status=status.HTTP_200_OK)
+                elif data['type'] == 'checkout' and application.out_time is None:
+                    application.out_time = timezone.now()
+                    application.checkout_location = data['location']
+                    application.save()
+                    response_data = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Shift checked out successfully",
+                        # "data": JobApplicationSerializer(application).data
+                    }
+                    # send notification to the client
+                    notification = Notification.objects.create(
+                        user=application.vacancy.client.user,
+                        message=f'{staff} has checked out for {application.vacancy.job_title}! Approve the checkout request.'
+                    )
+                    return Response(response_data, status=status.HTTP_200_OK)
+                else:
+                    response_data = {
+                        "status": status.HTTP_400_BAD_REQUEST,
+                        "success": False,
+                        "message": "Shift already checked in/out"
+                    }
+                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         response_data = {
-            "status": status.HTTP_403_FORBIDDEN,
+            "status": status.HTTP_400_BAD_REQUEST,
             "success": False,
-            "message": "You are not authorized to create this resource"
+            "message": "Invalid request"
         }
-        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-            
-            
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
@@ -637,4 +642,3 @@ class ExperienceView(APIView):
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    

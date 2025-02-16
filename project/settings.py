@@ -220,9 +220,12 @@ EMAIL_USE_SSL = True  # Use SSL for secure connection
 
 
 # Stripe settings
-PUBLISH_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
+STRIPE_PUBLIC_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
 STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
-WEBHOOK_KEY = ""
+STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
+
+STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
+STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 
 from django.templatetags.static import static
 from django.urls import reverse_lazy
@@ -278,6 +281,11 @@ UNFOLD = {
                         "icon": "person_apron",
                         "link": reverse_lazy("admin:users_uniform_changelist"),
                     },
+                    {
+                        "title": _("Notifications"),
+                        "icon": "notifications_active",
+                        "link": reverse_lazy("admin:dashboard_notification_changelist"),
+                    },
                 ],
             },
             {
@@ -319,6 +327,11 @@ UNFOLD = {
                         "title": _("Job Application"),
                         "icon": "inventory",
                         "link": reverse_lazy("admin:client_jobapplication_changelist"),
+                    },
+                    {
+                        "title": _("Job Report"),
+                        "icon": "work_history",
+                        "link": reverse_lazy("admin:client_jobreport_changelist"),
                     }
                 ]
             },
@@ -336,6 +349,11 @@ UNFOLD = {
                         "title": _("Create Jobs"),
                         "icon": "work",
                         "link": reverse_lazy("admin:client_job_add"),
+                    },
+                    {
+                        "title": _("Staff Review"),
+                        "icon": "reviews",
+                        "link": reverse_lazy("admin:client_staffreview_changelist"),
                     }
                 ]
             },
