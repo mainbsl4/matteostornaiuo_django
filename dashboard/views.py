@@ -11,7 +11,6 @@ from .models import  CompanyReview, Notification
 from . serializers import (
 
     CompanyReviewSerializer, 
-    StaffReviewSerializer, 
     NotificationSerializer, 
     SkillSerializer,
 
@@ -46,30 +45,6 @@ class CompanyReviewView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class StaffReviewView(APIView):
-    def get(self, request, vacancy_id=None, pk=None, *args, **kwargs):
-        if pk:
-            review = get_object_or_404(CompanyReview, pk=pk)
-            serializer = StaffReviewSerializer(review)
-            return Response(serializer.data)
-        
-        reviews = CompanyReview.objects.filter(vacancy__id=vacancy_id)
-        serializer = StaffReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request, staff_id=None, *args, **kwargs):
-        vacancy_id = request.data['vacancy_id']
-        
-        staff = Staff.objects.filter(id=staff_id).first()
-        vacancy = Vacancy.objects.get(id=vacancy_id)
-        company = vacancy.vacancies.first().company
-        
-        
-        serializer = StaffReviewSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save(staff=staff,vacancy=vacancy, profile=company)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class NotificationView(APIView):

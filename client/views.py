@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
+from django.db.models import Q
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -19,7 +20,9 @@ from .models import (
     Checkout,
     JobAds,
     FavouriteStaff,
-    MyStaff
+    MyStaff,
+    StaffReview,
+    JobReport
 
 
 )
@@ -35,7 +38,8 @@ from .serializers import (
     CheckOutSerializer,
     PermanentJobsSerializer,
     FavouriteStaffSerializer,
-    MyStaffSerializer
+    MyStaffSerializer,
+    StaffReviewSerializer
 
 )
 
@@ -252,7 +256,7 @@ class JobView(APIView):
         return Response(response, status=status.HTTP_204_NO_CONTENT)
     
 
-class JobApplicationAPI(APIView):
+class JobApplicationAPI(APIView): # pending actions page approve job
     def get(self, request, vacancy_id=None,pk=None):
         user = request.user
         if user.is_client:
@@ -260,7 +264,9 @@ class JobApplicationAPI(APIView):
         else:
             return Response({"error": "Only clients can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
         if pk:
-            job_application = get_object_or_404(JobApplication, pk=pk)
+            job_application = JobApplication.objects.filter(pk=pk, vacancy__client=client, is_approve = False).first()
+            if not job_application:
+                return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
             serializer = JobApplicationSerializer(job_application)
             response_data = {
                 "status": status.HTTP_200_OK,
@@ -269,13 +275,29 @@ class JobApplicationAPI(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        try:
-            vacancy = Vacancy.objects.get(id=vacancy_id)
-        except Vacancy.DoesNotExist:
-            return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-        job_applications = JobApplication.objects.filter(vacancy=vacancy).order_by('created_at')
+        if vacancy_id:
+            try:
+                vacancy = Vacancy.objects.get(id=vacancy_id)
+            except Vacancy.DoesNotExist:
+                return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
+            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).order_by('created_at')
+
+            serializer = JobApplicationSerializer(job_applications, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job applications",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+
+        # get all vacancy that job_status is active and progress
+        vacancy_list = Vacancy.objects.filter(client=client, job_status__in=['active', 'progress'])
+
+        applications = JobApplication.objects.filter(vacancy__in=vacancy_list, is_approve=False).order_by('created_at')
         # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
-        serializer = JobApplicationSerializer(job_applications, many=True)
+        serializer = JobApplicationSerializer(applications, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
                 "success": True,
@@ -283,135 +305,219 @@ class JobApplicationAPI(APIView):
                 "data": serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request,vacancy_id,pk=None):
+    def post(self, request,vacancy_id=None,pk=None):
         data = request.data # id, status
         user = request.user 
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
-            vacancy = Vacancy.objects.filter(id=vacancy_id, client=client).first()
-            if not vacancy:
-                return Response({"error": "Vacancy Not Found"})
-        
-        # vacancy = Vacancy.objects.filter(id=vacancy_id).first()
-        try:
-            job_application = JobApplication.objects.get(id=data['id'])
-            staff = job_application.applicant
-            if job_application.vacancy.one_day_job:
-                pass # do it later  
-            if job_application.vacancy.participants == job_application.vacancy.number_of_staff:
-                return Response({"error": "All participants have already applied for this vacancy"}, status=status.HTTP_400_BAD_REQUEST)
-            elif staff in job_application.vacancy.participants.all():
-                return Response({"error": "The staff is already selected for this job."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                job_application = JobApplication.objects.get(id=pk)
+            except JobApplication.DoesNotExist:
+                return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            if job_application.vacancy.client!= client:
+                return Response({"error": "Only client can approve this job application"}, status=status.HTTP_403_FORBIDDEN)
+            # when accept job from job detail view
+            if vacancy_id:
+                try:
+                    vacancy = Vacancy.objects.get(id=vacancy_id)
+                    application = JobApplication.objects.get(id=pk)
+                except Vacancy.DoesNotExist:
+                    return Response({"error": "Vacancy/application not found"}, status=status.HTTP_404_NOT_FOUND)
+                if vacancy.client!= client:
+                    return Response({"error": "Only client can approve the job request"}, status=status.HTTP_403_FORBIDDEN)
+                if vacancy.participants.count() >= vacancy.number_of_staff:
+                    # no space response
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "No space for applicants"})
+                
+                if data['status'] == True:
+                    vacancy.participants.add(application.applicant)
+
+                    application.job_status = 'accepted'
+                    application.is_approve = True
+                    application.save()
+                    # send notification to staff
+                    Notification.objects.create(
+                        user = application.applicant.user,
+                        message = f"Your application for {application.vacancy.job_title} has been accepted",
+                    )
+                    return Response(status=status.HTTP_200_OK, data={"message": "Job application accepted"})
+                    
+                elif data['status'] == False:
+                    job_application.job_status ='rejected'
+                    job_application.is_approve = False
+                    job_application.save()
+                    # send notification to staff
+                    # Notification.objects.create(
+                    #     user = job_application.applicant.user,
+                    #     message = f"Your application for {job_application.vacancy.job_title} has been declined",
+                    # )
+                    return Response(status=status.HTTP_200_OK, data={"message": "Job application declined"})
+            
             if data['status'] == True:
-                job_application.vacancy.participants.add(staff)
-                job_application.is_approve = True 
+                vacancy = job_application.vacancy
+                if vacancy.participants.count() >= vacancy.number_of_staff:
+                    # no space response
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "No space for applicants"})
+                vacancy.participants.add(job_application.applicant)
                 job_application.job_status = 'accepted'
+                job_application.is_approve = True
                 job_application.save()
+
                 # send notification to staff
                 Notification.objects.create(
-                    user = staff.user,
-                    message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date} in {vacancy.location} at {vacancy.start_time}",
+                    user = job_application.applicant.user,
+                    message = f"Your application for {job_application.vacancy.job_title} has been approved",
                 )
                 return Response(status=status.HTTP_200_OK, data={"message": "Job application approved"})
-            else:
+            elif data['status'] == False:
                 job_application.job_status = 'rejected'
                 job_application.is_approve = False
                 job_application.save()
-                return Response(status=status.HTTP_200_OK, data={"message": "Job application rejected"})
+                # send notification to staff
+                # Notification.objects.create(
+                #     user = job_application.applicant.user,
+                #     message = f"Your application for {job_application.vacancy.job_title} has been declined",
+                # )
+                return Response(status=status.HTTP_200_OK, data={"message": "Job application declined"})
             
-        except Vacancy.DoesNotExist:
-            return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-        except JobApplication.DoesNotExist:
-            return Response({"error": "Job Application not found"}, status=status.HTTP_404_NOT_FOUND)
         
     # def delete(self, request, pk=None):
     #     job_application = get_object_or_404(JobApplication, pk=pk)
     #     job_application.delete()
     #     return Response(status=status.HTTP_204_NO_CONTENT)
     
-# class AcceptApplicantView(APIView):
-#     def post(self, request, application_id=None):
-#         application = get_object_or_404(JobApplication, pk=application_id)
-#         vacancy = application.vacancy
-#         if vacancy.one_day_job:
-#             daily_shift = DailyShift.objects.filter(
-#                 day=vacancy.open_date, 
-#                 start_time=vacancy.start_time, 
-#                 end_time=vacancy.end_time,
-#                 one_day_job = True
-#                 ).first()
-#             if not daily_shift:
-#                 return Response(status=status.HTTP_404_NOT_FOUND, data={"message": "No available daily shift"})
-#             daily_shift.staff = application.applicant
-#             daily_shift.status = True
-#             daily_shift.save()
-#             # send notification to staff
-#             Notification.objects.create(
-#                 user = staff.user,
-#                 message = f"You have been assigned to {vacancy.job_title} on {vacancy.open_date}",
-                
-#             )
 
-
-#         application.status = True
-#         staff = application.applicant
-#         vacancy.participants.add(staff)
-#         # send notification to applicant 
-#         Notification.objects.create(
-#             user = staff.user,
-#             message = f"Your application for {vacancy.job_title} has been accepted",
-            
-#         )
-#         application.save()
-#         return Response(status=status.HTTP_200_OK)
-    
 class CheckInView(APIView):
 
-    def get(self, request, vacancy_id=None, *args, **kwargs):
-        checkins = Checkin.objects.filter(vacancy__id=vacancy_id)
-        serializer = CheckinSerializer(checkins, many=True)
+    def get(self, request, vacancy_id=None, pk=None, *args, **kwargs):
+        user = request.user
+        client = CompanyProfile.objects.get(user=user)
+
+        if vacancy_id:
+            try:
+                vacancy = Vacancy.objects.get(id=vacancy_id)
+            except Vacancy.DoesNotExist:
+                return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
+            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False)
+            serializer = JobApplicationSerializer(applications, many=True)
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job checkin request",
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+
+        vacancy = Vacancy.objects.filter(client=client, job_status__in=['active', 'progress', 'finished'])
+
+        try:
+            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkin_approve=False)
+        except JobApplication.DoesNotExist:
+            return Response({"error": "No job checkin request found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = JobApplicationSerializer(applications, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "List of checkins",
+            "message": "Job Checkin Request",
             "data": serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
-    def post(self, request, vacancy_id=None):
-        data = request.data
-        user = request.user
-        staff = Staff.objects.filter(user=user).first()
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        serializer = CheckinSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save(staff=staff, vacancy=vacancy)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     
+    def post(self, request, vacancy_id=None, pk=None, *args, **kwargs):
+        user = request.user
+        try:
+            client = CompanyProfile.objects.get(user=user)
+        except CompanyProfile.DoesNotExist:
+            return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            application = JobApplication.objects.get(id=pk)
+        except JobApplication.DoesNotExist:
+            return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
+        if application.vacancy.client!= client:
+            return Response({"error": "Only client can check in this job application"}, status=status.HTTP_403_FORBIDDEN)
+        if application.checkin_approve:
+            return Response({"error": "Job check-in request has already been approved"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not application.is_approve:
+            return Response({"error": "Job application has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+        if not application.in_time or not application.checkin_location:
+            return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        application.checkin_approve = True
+        application.save()
+        # send notification to staff
+        Notification.objects.create(
+            user = application.applicant.user,
+            message = f"Your check-in request for {application.vacancy.job_title} has been approved",
+        )
+        return Response(status=status.HTTP_200_OK, data={"message": "Job check-in request approved"})
+    
+
 class CheckOutView(APIView):
-    def post(self, request, vacancy_id=None):
-        data = request.data
+    def get(self, request, pk=None, *args, **kwargs):
         user = request.user
-        staff = Staff.objects.filter(user=user).first()
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        serializer = CheckOutSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save(staff=staff, vacancy=vacancy)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-    def get(self, request,vacancy_id=None, pk=None, *args, **kwargs):
-        if pk:
-            checkout = get_object_or_404(Checkout, pk=pk)
-            serializer = CheckOutSerializer(checkout)
-            return Response(serializer.data)
-        checkout = get_object_or_404(Checkout, vacancy__id=vacancy_id)
-        serializer = CheckOutSerializer(checkout)
+        try:
+            client = CompanyProfile.objects.get(user=user)
+        except CompanyProfile.DoesNotExist:
+            return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
+        
+        vacancy = Vacancy.objects.filter(client=client, job_status__in=['active', 'progress', 'finished'])
+        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy,checkin_approve=True, job_status='accepted')
+        
+        serializer = JobApplicationSerializer(job_application, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "Check-out details",
+            "message": "List of pending check-out requests",
             "data": serializer.data
         }
         return Response(response_data, status=status.HTTP_200_OK)
+    
+    def post(self, request, pk, **kwargs):
+        user = request.user
+        try:
+            client = CompanyProfile.objects.get(user=user)
+        except CompanyProfile.DoesNotExist:
+            return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            application = JobApplication.objects.get(id=pk)
+            if application.vacancy.client!= client:
+                return Response({"error": "Only client can check out this job application"}, status=status.HTTP_403_FORBIDDEN)
+        except JobApplication.DoesNotExist:
+            return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not application.checkin_approve:
+            return Response({"error": "Job check-in request has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if application.vacancy.client != client:
+            return Response({"error": "Only client can check out this job application"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if not application.out_time or not application.checkout_location:
+            return Response({"error": "Job application has not been checked out yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if application.checkout_approve:
+            return Response({"error": "Job check-out request has already been completed"}, status=status.HTTP_400_BAD_REQUEST)
+                
+        application.job_status = 'completed'
+        application.checkout_approve = True
+        # create report 
+        report = JobReport.objects.create(
+            job_application = application,
+        )
+        
+        application.save()
+        
+        # send notification to staff
+        Notification.objects.create(
+            user = application.applicant.user,
+            message = f"Your check-out request for {application.vacancy.job_title} has been completed",
+        )
+        return Response(status=status.HTTP_200_OK, data={"message": "Job check-out request completed"})
     
 # approval check in checkout request
 
@@ -684,3 +790,59 @@ class MyStaffView(APIView):
         return Response(response, status=status.HTTP_200_OK)
     
 
+
+class StaffReviewView(APIView):
+    def get(self, request, pk=None):
+        user = request.user
+        if user.is_staff:
+            staff = Staff.objects.get(user=user)
+            reviews = StaffReview.objects.filter(staff=staff)
+            serializer = StaffReviewSerializer(reviews, many=True)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "List of staff reviews",
+                "data": serializer.data
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        return Response({"message":"You can not access this endpoint."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, application_id, *args, **kwargs):
+        user = request.user
+        if user.is_client:
+            try:
+                client = CompanyProfile.objects.get(user=user)
+            except CompanyProfile.DoesNotExist:
+                return Response({"message": "Client not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            try:
+                application = JobApplication.objects.get(id=application_id)
+                if application.vacancy.client != client:
+                    return Response({"message": "Application does not belong to this client"}, status=status.HTTP_400_BAD_REQUEST)
+            except JobApplication.DoesNotExist:
+                return Response({"message": "Application not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # check if already reviewed from this vacancy.
+            if StaffReview.objects.filter(job_application=application, staff=application.applicant).exists():
+                return Response({"message": "You have already reviewed this staff"}, status=status.HTTP_400_BAD_REQUEST)
+            data = request.data
+            review = StaffReview.objects.create(
+                job_application = application,
+                staff = application.applicant,
+                rating = data['rating'],
+                message = data['message']
+            )
+            # send notification to staff
+            notification = Notification.objects.create(
+                user = application.applicant.user,
+                message = f"You have received a new review from {application.client}."
+            )
+            response = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Review submitted successfully",
+                "data": StaffReviewSerializer(review).data
+            }
+            return Response(response, status=status.HTTP_201_CREATED)
+        return Response({"message":"You can not access this endpoint."}, status=status.HTTP_400_BAD_REQUEST)
+    
