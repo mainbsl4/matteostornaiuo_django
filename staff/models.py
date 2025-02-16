@@ -105,3 +105,5 @@ class Experience (models.Model):
             self.end_date = timezone.now().date()
         self.duration =self.calcuate_duration()
         super().save(*args, **kwargs)
+
+

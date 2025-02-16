@@ -41,4 +41,4 @@ class Subscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.user.username} - {self.package.name}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.package.name}"
