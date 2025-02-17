@@ -18,93 +18,27 @@ class CompanyProfile(models.Model):
     billing_email = models.EmailField(max_length=50)
     company_address = models.CharField(max_length=200)
     tax_number = models.PositiveIntegerField(blank=True, null=True)
-    #geo_location = models.CharField(max_length=255 , blank=True, null=True)
     company_details  = models.TextField(blank=True)
     company_logo = models.ImageField(blank=True, null=True, upload_to='images/company/logo/')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # invite_staff = models.ManyToManyField(Staff, blank=True, related_name='staff')
     def __str__(self):
         return self.company_name
     
     class Meta:
         verbose_name = 'Company Profile'
         verbose_name_plural = 'Company Profiles'
-
-JOB_STATUS = (
-    ('active', 'Active'),
-    ('progress', 'InProgress'),
-    ('draft', 'Draft'),
-    ('cancelled', 'Cancelled'),
-    ('finished', 'Finished'),
-)
-class Vacancy(models.Model):
-    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, blank=True, related_name='vacancies')
-    job_title = models.ForeignKey(JobRole, on_delete=models.CASCADE, blank=True)
-    number_of_staff = models.IntegerField(default=1)
-    skills = models.ManyToManyField(Skill, related_name='skills', blank=True)  
-    uniform = models.ForeignKey(Uniform, on_delete=models.SET_NULL, blank=True, null=True)
-    open_date = models.DateField(blank=True, null=True)
-    close_date = models.DateField(blank=True, null=True)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    location = models.CharField(max_length=255, blank=True, null=True)
-    # geo_location = models.CharField(max_length=255, blank=True, null=True)
-    job_status = models.CharField(max_length=255, choices=JOB_STATUS, default='active')
-    salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
-    shift_job = models.BooleanField(default=False)
-
-    checkin_status = models.BooleanField(default=False)
-    checkout_status = models.BooleanField(default=False)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return self.job_title.name
-    
-    class Meta:
-        verbose_name = 'Job Vacancy'
-        verbose_name_plural = 'Job Vacancy'
         ordering = ['-created_at']
-        # add indexes to start_date field
-        indexes = [
-            models.Index(fields=['open_date', 'close_date', 'start_time', 'end_time']),
-        ]
-    # calculate salary, jobreole ahve price per hour, salary is salary_per_hour x hours (start time and end time)
-    def calculate_salary(self):
-        # calculate hour form start and end time
-        hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
-        self.salary = (self.job_title.staff_price * hours) * self.number_of_staff
-        return self.salary
-    
-    # set salary in save method
-    def save(self, *args, **kwargs):
-        self.calculate_salary()
-        if not self.close_date:
-            self.one_day_job = True
-        super().save(*args, **kwargs)
-
-    
-
-# JOB_STATUS = (
-#     ('PUBLISHED', 'Published'),
-#     ('DRAFT', 'Draft'),
-#     ('ARCHIVED', 'Archived'),
-#     ('EXPIRED', 'Expired'),
-#     ('CLOSED', 'Closed')
-# )
 
 class Job(models.Model):
     company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, related_name='jobs')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    vacancy = models.ManyToManyField(Vacancy, related_name='jobs', blank=True)
+    # vacancy = models.ManyToManyField(Vacancy, related_name='jobs', blank=True)
     
-    status = models.BooleanField(default=True)
+    status = models.BooleanField(default=True) # is_published
     save_template= models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -121,6 +55,62 @@ class Job(models.Model):
     indexes = [
             models.Index(fields=['created_at']),
         ]
+
+
+JOB_STATUS = (
+    ('active', 'Active'),
+    ('progress', 'InProgress'),
+    ('draft', 'Draft'),
+    ('cancelled', 'Cancelled'),
+    ('finished', 'Finished'),
+)
+class Vacancy(models.Model):
+    # client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE, blank=True, related_name='vacancies')
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="vacancies")
+    job_title = models.ForeignKey(JobRole, on_delete=models.SET_NULL, null=True)
+    number_of_staff = models.IntegerField(default=1)
+    skills = models.ManyToManyField(Skill, related_name='skills', blank=True)  
+    uniform = models.ForeignKey(Uniform, on_delete=models.SET_NULL, blank=True, null=True)
+    
+    open_date = models.DateField()
+    close_date = models.DateField(blank=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    location = models.CharField(max_length=255, blank=True, null=True)
+    job_status = models.CharField(max_length=255, choices=JOB_STATUS, default='active')
+    
+    salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    participants = models.ManyToManyField(Staff, related_name='participants', blank=True)
+    shift_job = models.BooleanField(default=False)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.job_title.name
+    
+    class Meta:
+        verbose_name = 'Job Vacancy'
+        verbose_name_plural = 'Job Vacancy'
+        ordering = ['-created_at']
+    
+        indexes = [
+            models.Index(fields=['open_date', 'close_date', 'start_time', 'end_time']),
+        ]
+
+    def calculate_salary(self):
+        # calculate hour form start and end time
+        hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
+        self.salary = (self.job_title.staff_price * hours) * self.number_of_staff
+        return self.salary
+    
+    # set salary in save method
+    def save(self, *args, **kwargs):
+        self.calculate_salary()
+        super().save(*args, **kwargs)
+
+
+
     
 class JobTemplate(models.Model):
     name = models.CharField(max_length=200, blank=True)
@@ -371,4 +361,6 @@ class StaffReview(models.Model):
         if self.rating < 0 or self.rating > 5:
             raise ValidationError("Rating should be between 0 and 5")
         super().save(*args, **kwargs)
+
+
 

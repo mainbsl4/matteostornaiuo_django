@@ -148,7 +148,6 @@ def package_checkout(request,pkg_id):
 def webhook(request):
     print('webhook called')
     payload = request.body
-    print('this is payload', payload)
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
     event = None
@@ -226,5 +225,4 @@ def webhook(request):
 
     return HttpResponse(status=403)
 
-    
 

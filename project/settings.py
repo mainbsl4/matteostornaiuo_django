@@ -107,18 +107,18 @@ WSGI_APPLICATION = "project.wsgi.application"
 
 import dj_database_url
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
 
 
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
@@ -222,7 +222,8 @@ EMAIL_USE_SSL = True  # Use SSL for secure connection
 # Stripe settings
 STRIPE_PUBLIC_KEY = "pk_test_51MhVdoSI80DUGvJVmqHGBD9DUrbFnouO2ikPJxyWj4tpELlnViPbK2niqEgmxDvmXwjiUqNHzMXs8sfQsoW6RNM700HLRJ0ekb"
 STRIPE_SECRET_KEY  = "sk_test_51MhVdoSI80DUGvJV2cJX44q7luc0y6updGFvyxOR5kG6blPQk2AXXg5QNNyWn7hBU8k3u6oZEDlufGbaD6ytufcJ00n6mgp4Os"
-STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
+# STRIPE_WEBHOOK_SECRET = "whsec_3fbae828a232d2c22cfbe6e170fb1d26869fca7e6d3bf66acb81390e20a3f204"
+STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
