@@ -7,7 +7,6 @@ from datetime import datetime
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
 
-
 from django.contrib.auth import get_user_model
 
 from .models import (
@@ -16,15 +15,12 @@ from .models import (
     Job,
     Vacancy,
     JobApplication,
-    StaffInvitation,
     Checkin,
     Checkout,
     JobAds,
     FavouriteStaff,
     MyStaff,
     StaffReview
-
-
 
 )
 from users.models import (
@@ -37,6 +33,7 @@ from users.models import (
 from dashboard.models import  Notification
 
 from users.serializers import UserSerializer
+
 from staff.serializers import StaffSerializer
 from staff.models import Staff
 
@@ -66,218 +63,122 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
             user.save()
         return super().update(instance, validated_data)
 
-
-
 class JobTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobTemplate
         fields = '__all__'
         # read_only_fields = ['profile']
 
-# class JobSerializerForVacancy(serializers.ModelSerializer):
-#     company = CompanyProfileSerializer(read_only=True)
-#     class Meta:
-#         model = Job
-#         fields = '__all__'
 
 class VacancySerializer(serializers.ModelSerializer):
-    client = CompanyProfileSerializer(read_only=True)
-    status_count = serializers.SerializerMethodField()
     class Meta:
         model = Vacancy
-        fields = [
-            'id', 'jobs','client', 'job_title', 'number_of_staff', 'skills', 'uniform',
-            'open_date', 'close_date', 'start_time', 'end_time',
-            'salary','location', 'participants', 'shift_job', 'checkin_status', 'checkout_status','status_count', 'created_at'
-        ]
-        depth = 1
-        # fields = ['user', 'job_title','number_of_staff', 'skills', 'uniform','open_date','close_date', 'start_time', 'end_time','salary', 'participants', 'staff_ids','jobs']
-
-    # show number of accepted, rejected, expired and canceled jobs
-    def get_status_count(self, obj):
-        accepted = JobApplication.objects.filter(vacancy=obj, job_status='accepted').count()
-        rejected = JobApplication.objects.filter(vacancy=obj, job_status='rejected').count()
-        pending  = JobApplication.objects.filter(vacancy=obj, job_status='pending').count()
-        expired = JobApplication.objects.filter(vacancy=obj, job_status='expired').count()
-        print('Job status', accepted, rejected, pending, expired)
-        return {
-            'accepted': accepted,
-            'rejected': rejected,
-            'expired': expired,
-            'pending': pending
-        }
-        # extra_fields = {
-        #     'status_count': get_status_count
-        # }
-
+        fields = "__all__"
+        depth = 2
     
+    
+
 
 
 class CreateVacancySerializers(serializers.ModelSerializer):
+    job = serializers.PrimaryKeyRelatedField(queryset=Job.objects.all())
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
     uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False, allow_null=True)
-    invited_staff = serializers.ListField(write_only=True, required=False)
-    # participants = serializers.PrimaryKeyRelatedField(queryset=FavouriteStaff.objects.all(), many=True)
 
     class Meta:
         model = Vacancy
-        fields = ['client', 'job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'invited_staff']
-        read_only_fields = ['client']
+        fields = ['id','job','job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'job_status']
+
     
     def create(self, validated_data):
-        user = self.context['request'].user
-        client = CompanyProfile.objects.get(user=user)
-        validated_data['client'] = client
-
-        # job_title = validated_data.get('job_title')
         skills = validated_data.pop('skills',[])
-
-        invited_staff_ids = validated_data.pop('invited_staff', [])
-        # print('invited_staff_ids:', invited_staff_ids)
-
+        # invited_staff_ids = validated_data.pop('invited_staff', [])
         vacancy = Vacancy.objects.create(
             **validated_data
         )
         vacancy.skills.set(skills)
 
-        if len(invited_staff_ids):
-            for invited in invited_staff_ids:
-                fav_staff = FavouriteStaff.objects.filter(id=invited).first()
-                # print('invited staff', fav_staff)
-                StaffInvitation.objects.create(vacancy=vacancy,staff=fav_staff.staff)
-                # send notification
-                notification = Notification.objects.create(
-                    user = user,
-                    message = f"{user.companyprofile.company_name} has invited you to a {vacancy.job_title.name} job application."
-                )
-        # send notification to all staff that match with the job_role
-        # staff_with_similar_role = StaffRole.objects.filter(role=job_title)
-        # for staff_role in staff_with_similar_role:
-        #     staff = staff_role.staff
-        #     notification = Notification.objects.create(
-        #         user = staff.user,
-        #         message = f"{user.companyprofile.company_name} has posted a new job for '{job_title}'."
-        #     )
-        
         return vacancy
-    
-    # update as similar create function
-    def update(self, instance, validated_data):
-        user = self.context['request'].user
-        client = CompanyProfile.objects.get(user=user)
-        validated_data['client'] = client
-        
-        job_title = validated_data.get('job_title')
-        skills = validated_data.pop('skills')
-        invited_staff_ids = validated_data.pop('invited_staff', [])
-
-        vacancy = Vacancy.objects.get(pk=instance.pk)
-        # Update the instance with validated data
-        for attr, value in validated_data.items():
-            setattr(vacancy, attr, value)
-        
-        vacancy.save()
-        vacancy.skills.set(skills)
-        
-        for invited in invited_staff_ids:
-            fav_staff = FavouriteStaff.objects.filter(id=invited).first()
-            print('invited staff', fav_staff)
-            StaffInvitation.objects.create(vacancy=instance, staff=fav_staff.staff)
-            # send notification
-            notification = Notification.objects.create(
-                user = user,
-                message = f"{user.companyprofile.company_name} has invited you to a {instance.job_title} job application."
-            )
-            # send notification to all staff that match with the job_role
-            # staff_with_similar_role = StaffRole.objects.filter(role=job_title)
-            # for staff_role in staff_with_similar_role:
-            #     staff = staff_role.staff
-            #     notification = Notification.objects.create(
-            #         user = staff.user,
-            #         message = f"{user.companyprofile.company_name} has posted a new job for '{job_title}'."
-            #     )
-        
-        return vacancy
-    
-
 class JobSerializer(serializers.ModelSerializer):
-    vacancies = serializers.ListField(
-        write_only=True  # Use only for write operations
+    vacancy_data = serializers.ListField(
+        write_only=True 
     )
-    # company = serializers.StringRelatedField(read_only=True)
+    vacancies = VacancySerializer(read_only=True, many=True)
+    
     class Meta:
         model = Job
-        fields = ['id','company' , 'title', 'description', 'status', 'save_template', 'vacancies']
+        fields = ['id','company' , 'title', 'description', 'status', 'save_template', 'vacancies', 'vacancy_data']
         read_only_fields = ['company']
         depth = 1    
-    # to represantation for showing all the vacancy serializers data
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # Add the vacancy serializers data to the data
-        data['vacancy'] = VacancySerializer(instance.vacancy, many=True).data
-        # data['company'] = CompanyProfileSerializer(instance.company, read_only=True).data
-        return data
-
 
     def create(self, validated_data):
-        user_ = self.context['request'].user
-        # user must be is client
-        if not user_.is_client:
-            return None
-        client = CompanyProfile.objects.filter(user=user_).first()
-        validated_data['company'] = client
-
-        vacancy_data = validated_data.pop('vacancies')
+        user = self.context['request'].user
+        vacancy_data = validated_data.pop('vacancy_data',[])
         save_in_template = validated_data.get('save_template')
+        # user must be is client
+        if not user.is_client:
+            return serializers.ValidationError("Only clients can update jobs.")
+        client = CompanyProfile.objects.filter(user=user).first()
+        validated_data['company'] = client
         
         job = Job.objects.create(**validated_data)
-        # job_vacancies = []
-        # for vacancy in vacancy_data:
-        #     vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
-        #     if vacancy_serializer.is_valid():
-        #         vacancy_obj = vacancy_serializer.save()
-        #         job.vacancy.add(vacancy_obj)
-        job.vacancy.set(vacancy_data)
         
+        for vacancy in vacancy_data:
+            vacancy['job'] = job.id
+            vacancy_serializer = CreateVacancySerializers(data=vacancy)
+            if vacancy_serializer.is_valid():
+                vacancy_serializer.save()
+            else:
+                # raise error
+                return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         if save_in_template:
-            job_template = JobTemplate.objects.create(client=user_.profiles, job=job)
+            JobTemplate.objects.create(client=user.profiles, job=job)
 
         return job
     def update(self, instance, validated_data):
         user_ = self.context['request'].user
-        # job = Job.objects.get(pk=instance.pk)
-        # user must be is client
+        vacancy_data = validated_data.pop('vacancy_data',[])
+        save_in_template = validated_data.get('save_template',False)
+
         if not user_.is_client:
-            return None
+            raise serializers.ValidationError("Only clients can update jobs.")
         client = CompanyProfile.objects.filter(user=user_).first()
         validated_data['company'] = client
 
-        vacancy_data = validated_data.pop('vacancies')
-        save_in_template = validated_data.get('save_template',False)
-        print('save in template: ', save_in_template)
-
-        # update job objects 
-        instance.title = validated_data.get('title', instance.title)
-        instance.description = validated_data.get('description', instance.description)
-        instance.status = validated_data.get('status', instance.status)
-        instance.save_template = save_in_template
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         instance.save()
 
-        instance.vacancy.clear()
-        instance.vacancy.set(vacancy_data)
-        # for vacancy in instance.vacancy.all():
-        #     vacancy.delete()
+        if vacancy_data:
+            for vacancy_item in vacancy_data:
+                vacancy_id = vacancy_item.get('id', None)
+                if vacancy_id is not None:
+                    vacancy_obj = Vacancy.objects.filter(id=vacancy_id).first()
 
-        # for vacancy in vacancy_data:
-        #     vacancy_serializer = CreateVacancySerializers(data=vacancy, context=self.context)
-        #     if vacancy_serializer.is_valid():
-        #         vacancy_obj = vacancy_serializer.save()
-        #         instance.vacancy.add(vacancy_obj)
+                    if not vacancy_obj:
+                        vacancy_id = None
 
-        
-        
-        #job template have user and job field with foreign key relation
+                    # update vacancy using vacancy serializer 
+                    vacancy_serializer = CreateVacancySerializers(instance=vacancy_obj, data=vacancy_item, partial=True)
+                    if vacancy_serializer.is_valid():
+                        vacancy_serializer.save()
+                    else:
+                        # raise error
+                        raise serializers.ValidationError(vacancy_serializer.errors)
+                else:
+                    print('instance', instance, instance.pk)
+                    # create new vacancy
+                    vacancy_item['job'] = instance.id
+                    vacancy_serializer = CreateVacancySerializers(data=vacancy_item)
+                    if vacancy_serializer.is_valid():
+                        vacancy_serializer.save()
+                    else:
+                        # raise error
+                        raise serializers.ValidationError(vacancy_serializer.errors)
+                    
+                    
         if save_in_template:
             job_template, created = JobTemplate.objects.get_or_create(client=user_.profiles, job=instance)
             if created:
@@ -412,3 +313,8 @@ class StaffReviewSerializer(serializers.ModelSerializer):
         data['client'] = CompanyProfileSerializer(instance.job_application.vacancy.client).data
         return data
     
+
+
+
+
+        

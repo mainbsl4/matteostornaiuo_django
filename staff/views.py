@@ -104,47 +104,37 @@ class StaffProfileView(APIView):
         }, status=status.HTTP_404_NOT_FOUND)
     
 class JobApplicationView(APIView):
-    # def get(self, request, pk=None, **kwargs):
-    #     user = request.user
-    #     if user.is_staff:
-    #         staff = Staff.objects.filter(user=user).first()
-    #         if pk:
-    #             try:
-    #                 application = JobApplication.objects.get(applicant=staff, id=pk)
-    #             except JobApplication.DoesNotExist:
-    #                 response_data = {
-    #                     "status": status.HTTP_404_NOT_FOUND,
-    #                     "success": False,
-    #                     "message": "Job application not found"
-    #                 }
-    #                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
-                
-    #             serializer = JobApplicationSerializer(application)
-    #             response_data = {
-    #                 "status": status.HTTP_200_OK,
-    #                 "success": True,
-    #                 "message": "Job application retrieved successfully",
-    #                 "data": serializer.data
-    #             }
-    #             return Response(response_data, status=status.HTTP_200_OK)
-            
-    #         # return all job application
-    #         application = JobApplication.objects.filter(applicant=staff)
-    #         serializer = JobApplicationSerializer(application, many=True)
-    #         response_data = {
-    #             "status": status.HTTP_200_OK,
-    #             "success": True,
-    #             "message": "Job applications retrieved successfully",
-    #             "data": serializer.data
-    #         }
-    #         return Response(response_data, status=status.HTTP_200_OK)
-    #     # user must be a staff instance
-    #     response_data = {
-    #         "status": status.HTTP_403_FORBIDDEN,
-    #         "success": False,
-    #         "message": "You are not authorized to view this resource"
-    #     }
-    #     return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+    def get(self, request, pk=None, *args, **kwargs):
+        user = request.user
+        if not user.is_staff:
+            return Response ({
+                "status": status.HTTP_403_FORBIDDEN,
+                "message": "Only staff can access this endpoint"
+            })
+        try:
+            staff = Staff.objects.filter(user=user).first()
+        except Staff.DoesNotExist:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": "Staff not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        applications = JobApplication.objects.filter(applicant=staff)
+        if not applications:
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "No job applications found"
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        serializer = JobApplicationSerializer(applications, many=True)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job applications retrieved successfully",
+            "data": serializer.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
     def post(self, request,pk=None, *args, **kwargs):
         user = request.user 
@@ -202,7 +192,7 @@ class JobApplicationView(APIView):
             )
             # send notification to client
             notification = Notification.objects.create(
-                user=vacancy.client.user,
+                user=vacancy.job.company.user,
                 message=f'{staff} has submitted a job application for {vacancy.job_title}'
             )
             
@@ -299,7 +289,7 @@ class JobCheckinView(APIView): # jobapplication
                     }
                     # send notification to the client 
                     notification = Notification.objects.create(
-                        user=application.vacancy.client.user,
+                        user=application.vacancy.job.company.user,
                         message=f'{staff} has checked in for {application.vacancy.job_title}! Approve the checkin request.'
                     )
                     return Response(response_data, status=status.HTTP_200_OK)
@@ -315,7 +305,7 @@ class JobCheckinView(APIView): # jobapplication
                     }
                     # send notification to the client
                     notification = Notification.objects.create(
-                        user=application.vacancy.client.user,
+                        user=application.vacancy.job.company.user,
                         message=f'{staff} has checked out for {application.vacancy.job_title}! Approve the checkout request.'
                     )
                     return Response(response_data, status=status.HTTP_200_OK)
