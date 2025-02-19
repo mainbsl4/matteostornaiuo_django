@@ -76,6 +76,7 @@ class VacancySerializer(serializers.ModelSerializer):
         fields = "__all__"
         depth = 2
     
+    
 
 
 

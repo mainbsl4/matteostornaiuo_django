@@ -5,6 +5,8 @@ urlpatterns =[
     path('staff/profile/', views.StaffProfileView.as_view()),
     path('staff/profile/<int:pk>/', views.StaffProfileView.as_view()),
     # apply to the job
+    
+    path('staff/job/apply/', views.JobApplicationView.as_view()), #post
     path('staff/job/apply/<int:pk>/', views.JobApplicationView.as_view()), #post
     # upcoming jobs, checkin and checkout 
     path('staff/jobs/', views.JobCheckinView.as_view()), # assigned list 
