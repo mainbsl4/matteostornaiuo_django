@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from unfold.admin import ModelAdmin, TabularInline
+from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
@@ -17,7 +17,8 @@ from . models import (
     JobAds,
     MyStaff, FavouriteStaff,
     JobReport,
-    StaffReview
+    StaffReview,
+
 
 
 )
@@ -27,10 +28,18 @@ class CompanyProfileAdmin(ModelAdmin):
     list_display = ('company_name', 'contact_number', 'company_email','company_address')
     search_fields = ('company_name', 'contact_number', 'company_email', 'company_address')
 
-    
-class VacancyInline(TabularInline):  # or admin.StackedInline for a different layout
-    model = Job.vacancy.through  # ManyToMany relation requires using `through`
-    extra = 1  # Number of empty forms to display
+class VacancyInline(StackedInline):  # or admin.StackedInline for a different layout
+    model = Vacancy  
+    extra = 0
+    fields = (
+        'job_title', 'number_of_staff', 'skills', 'uniform', 'open_date', 'close_date',
+        'start_time', 'end_time', 'location', 'job_status', 'salary', 'participants', 'shift_job'
+    )
+    readonly_fields = ('salary',)
+    show_change_link = True
+    def get_queryset(self, request):
+        # Optimize the queryset to reduce database queries
+        return super().get_queryset(request).select_related('job_title', 'uniform').prefetch_related('skills', 'participants')
 
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
@@ -39,25 +48,22 @@ class JobAdmin(ModelAdmin):
     search_fields = ('title', 'description', 'company__name')
     ordering = ('-created_at',)
     inlines = [VacancyInline]
-    filter_horizontal = ('vacancy',)  # Improves ManyToMany selection UI
+    # filter_horizontal = ('vacancy',)  # Improves ManyToMany selection UI
 
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
-    list_display = ('job_title', 'client', 'salary', 'open_date','start_time', 'close_date','end_time', 'shift_job', 'checkin_status', 'checkout_status')
+    list_display = ('job_title', 'salary', 'open_date','start_time', 'close_date','end_time', 'shift_job')
     # list_filter = ('job_title','client__company_name')
-    search_fields = ('job_title__name', 'client__company_name')
+    search_fields = ('job_title__name',)
     ordering = ('-created_at',)
     date_hierarchy = 'open_date'
     list_filter_sheet = False
     list_per_page = 50
+    readonly_fields = ('salary',)
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('job','job_title', 'uniform').prefetch_related('skills','participants')
 
-    list_filter_submit = True  # Submit button at the bottom of the filter
-    list_filter = (
-        'job_title',
-        'client__company_name',
-        ("open_date", RangeDateFilter),  # Date filter
-        # ("close_date", RangeDateFilter),  # Date filter
-    )
 
 
 @admin.register(FavouriteStaff)
@@ -143,28 +149,32 @@ class StaffReviewAdmin(ModelAdmin):
     pass 
 
 
-class JobReportResource(resources.ModelResource):
-    applicant_name = fields.Field(column_name='Applicant Name')
+# class JobReportResource(resources.ModelResource):
+#     applicant_name = fields.Field(column_name='Applicant Name')
 
-    def dehydrate_applicant_name(self, job_report):
-        return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
+#     def dehydrate_applicant_name(self, job_report):
+#         return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
 
-    vacancy_title = fields.Field(column_name='Vacancy Title', attribute='job_application__vacancy__job_title')
-    working_hour = fields.Field(column_name='Working Hour', attribute='working_hour')
-    extra_hour = fields.Field(column_name='Extra Hour', attribute='extra_hour')
-    regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
-    overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
-    total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
+#     vacancy_title = fields.Field(column_name='Vacancy Title', attribute='job_application__vacancy__job_title')
+#     working_hour = fields.Field(column_name='Working Hour', attribute='working_hour')
+#     extra_hour = fields.Field(column_name='Extra Hour', attribute='extra_hour')
+#     regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
+#     overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
+#     total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
 
-    class Meta:
-        model = JobReport
-        fields = ('applicant_name', 'vacancy_title', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'total_pay')
+#     class Meta:
+#         model = JobReport
+#         fields = ('applicant_name', 'vacancy_title', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'total_pay')
 
 @admin.register(JobReport)
-class JobReportAdmin(ModelAdmin,ImportExportModelAdmin):
-    resource_class = JobReportResource
+class JobReportAdmin(ModelAdmin):
+    pass
+#     resource_class = JobReportResource
 
-    list_display = ('job_application__applicant', 'job_application__vacancy', 'working_hour', 'extra_hour', 'regular_pay','overtime_pay', 'total_pay')
-    list_filter = ('job_application__vacancy__client','job_application__applicant')
-    search_fields = ('job_application__applicant__user__first_name', 'job_application__applicant__user__last_name', 'job_application__vacancy__job_title')
-    list_filter_sheet = False
+#     list_display = ('job_application__applicant', 'job_application__vacancy', 'working_hour', 'extra_hour', 'regular_pay','overtime_pay', 'total_pay')
+#     list_filter = ('job_application__vacancy__client','job_application__applicant')
+#     search_fields = ('job_application__applicant__user__first_name', 'job_application__applicant__user__last_name', 'job_application__vacancy__job_title')
+#     list_filter_sheet = False
+
+
+
