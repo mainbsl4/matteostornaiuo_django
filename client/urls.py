@@ -7,7 +7,8 @@ urlpatterns = [
     path('company/profile/<int:pk>/', views.CompanyProfileCreateView.as_view()), # put, delete
     # vacancy
     path('company/vacancy/', views.VacancyView.as_view(), name='company_vacancy'),
-    path('company/vacancy/<int:pk>/', views.VacancyView.as_view()),
+    path('company/<int:job_id>/vacancy/', views.VacancyView.as_view()), #post
+    path('company/vacancy/<int:pk>/', views.VacancyView.as_view()), # put, delete
     # jobs
     path('company/jobs/', views.JobView.as_view()), 
     path('company/jobs/<int:pk>/', views.JobView.as_view()),
@@ -24,11 +25,10 @@ urlpatterns = [
     # application list in job detail view
     path('company/job/applications/', views.JobApplicationAPI.as_view()),
     path('company/job/applications/<int:pk>/', views.JobApplicationAPI.as_view()), # application details / approve application 
-
     # application list in pending action view
     path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()),
     path('company/job/<int:vacancy_id>/applications/<int:pk>/', views.JobApplicationAPI.as_view()),
-    
+
     # job checkin 
     path('company/job/applications/checkin/', views.CheckInView.as_view()),
     path('company/job/applications/checkin/<int:pk>/', views.CheckInView.as_view()),
@@ -43,6 +43,9 @@ urlpatterns = [
     # shifting
     path('company/shifting/<int:shifting_id>/request/', views.ShiftCheckinAcceptView.as_view()),
     path('company/shifting/<int:shifting_id>/accept/<int:pk>/', views.ShiftCheckinAcceptView.as_view()),
+
+
+
 
 
 
