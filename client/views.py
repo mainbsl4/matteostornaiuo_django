@@ -2,6 +2,10 @@ from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -392,6 +396,28 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 job_application.job_status = 'accepted'
                 job_application.is_approve = True
                 job_application.save()
+
+                full_name = job_application.applicant.user.first_name + ' ' + job_application.applicant.user.last_name
+                time = f'{vacancy.open_date} at {vacancy.start_time}'
+                html_message = render_to_string(
+                    'contact.html', {
+                    'staff_name': full_name,
+                    'vacancy_name': vacancy.job_title.name,
+                    'starting_date_time': time,
+                    'price_per_hour': vacancy.job_title.staff_price,
+                    'location': vacancy.location,
+                    'company_name': vacancy.job.company,
+                    'company_website': 'https://www.example.com',
+                    'year': '2025',
+                })
+
+                send_mail(
+                    subject='Job Contict File',
+                    message=strip_tags(html_message),  # Plain text version
+                    from_email= settings.EMAIL_HOST_USER,
+                    recipient_list=[job_application.applicant.user.email],
+                    html_message=html_message,  # HTML version
+                )
 
                 # send notification to staff
                 Notification.objects.create(
