@@ -101,7 +101,7 @@ class Vacancy(models.Model):
     def calculate_salary(self):
         # calculate hour form start and end time
         hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
-        self.salary = (self.job_title.staff_price * hours) * self.number_of_staff
+        self.salary = (self.job_title.staff_price * hours) 
         return self.salary
     
     # set salary in save method
