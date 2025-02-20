@@ -87,7 +87,7 @@ ROOT_URLCONF = "project.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ['templates'],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -246,11 +246,12 @@ CRONJOBS = [
 
 
 UNFOLD = {
+    "DASHBOARD_CALLBACK": "homedashbord.views.dashboard_callback",
 
      "SIDEBAR": {
         "show_search": True,  # Search in applications and models names
         "show_all_applications": True, 
-         "DASHBOARD_CALLBACK": "homedashbord.views.dashboard_callback",
+         
          "navigation": [
             {
                 "title": _("Super Admin"), 
