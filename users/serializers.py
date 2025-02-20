@@ -38,10 +38,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class StaffSignupSerializer(serializers.ModelSerializer):
+    client_invitation_code = serializers.CharField(max_length=6, write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "password"]
+        fields = ["id", "email", "phone_number", "first_name", "last_name", "client_invitation_code", "password"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -62,6 +63,7 @@ class StaffSignupSerializer(serializers.ModelSerializer):
             user = User.objects.create(
                 # username=validated_data["username"],
                 email=validated_data["email"],
+                phone_number = validated_data["phone_number"],
                 first_name=validated_data["first_name"],
                 last_name=validated_data["last_name"],
                 password=password,
@@ -135,7 +137,8 @@ class UniformSerializer(serializers.ModelSerializer):
 
 #  invite staff from clients
 class InviteSerializer(serializers.ModelSerializer):
-    job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+    # job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+    job_role = serializers.SlugRelatedField(queryset=JobRole.objects.all(), slug_field="name")
 
     class Meta:
         model = Invitation
