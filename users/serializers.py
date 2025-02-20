@@ -137,7 +137,8 @@ class UniformSerializer(serializers.ModelSerializer):
 
 #  invite staff from clients
 class InviteSerializer(serializers.ModelSerializer):
-    job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+    # job_role = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
+    job_role = serializers.SlugRelatedField(queryset=JobRole.objects.all(), slug_field="name")
 
     class Meta:
         model = Invitation
