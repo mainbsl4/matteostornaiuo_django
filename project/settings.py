@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     'whitenoise.runserver_nostatic',
+    "homedashbord"
 
     
     
@@ -249,6 +250,7 @@ UNFOLD = {
      "SIDEBAR": {
         "show_search": True,  # Search in applications and models names
         "show_all_applications": True, 
+         "DASHBOARD_CALLBACK": "homedashbord.views.dashboard_callback",
          "navigation": [
             {
                 "title": _("Super Admin"), 
