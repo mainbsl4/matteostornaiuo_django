@@ -115,7 +115,13 @@ class StaffInvitationList(APIView):
     def get(self, request, format=None):
         staffInvitation = StaffInvitation.objects.filter(user=request.user)
         serializer = StaffInvitationSerializer(staffInvitation, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of staff invitations",
+            "data": serializer.data
+        }
+        return Response(response_data)
 
     def post(self, request, format=None):
         serializer = StaffInvitationSerializer(data=request.data)
@@ -128,7 +134,14 @@ class StaffInvitationList(APIView):
 
             serializer.save(user=request.user)
             # serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            response_data = {
+                "message": "Staff invitations sent successfully.",
+                "status": 200,
+                "success": True,
+                "data": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # skill api
@@ -139,7 +152,13 @@ class SkillList(APIView):
     def get(self, request, format=None):
         skills = Skill.objects.all()
         serializer = SkillSerializer(skills, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of skills",
+            "data": serializer.data
+        }
+        return Response(response_data)
 
 class JobRoleList(APIView):
     permission_classes = [AllowAny]
@@ -147,7 +166,13 @@ class JobRoleList(APIView):
     def get(self, request, format=None):
         job_roles = JobRole.objects.all()
         serializer = JobRoleSerializer(job_roles, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of job roles",
+            "data": serializer.data
+        }
+        return Response(response_data)
 
 class UniformList(APIView):
     permission_classes = [AllowAny]
@@ -155,4 +180,10 @@ class UniformList(APIView):
     def get(self, request, format=None):
         uniforms = Uniform.objects.all()
         serializer = UniformSerializer(uniforms, many=True)
-        return Response(serializer.data)
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of uniforms",
+            "data": serializer.data
+        }
+        return Response(response_data)
