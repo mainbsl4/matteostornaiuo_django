@@ -1,6 +1,6 @@
 # calculate distance 
 from geopy.distance import geodesic
-
+from django.template.loader import render_to_string
 def calculate_distance(lat1, lon1, lat2, lon2, radius=25):
     # Create tuples for coordinates
     coord1 = (lat1, lon1)
