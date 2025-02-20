@@ -239,9 +239,9 @@ from django.utils.translation import gettext_lazy as _
 # CELERY_TASK_SERIALIZER = 'json'
 
 
-CRONJOBS = [
-    ('0 0 * * *', 'jobs.management.commands.expire_jobs.Command', '>> /tmp/cron_log.log 2>&1'),
-]
+# CRONJOBS = [
+#     ('0 0 * * *', 'jobs.management.commands.expire_jobs.Command', '>> /tmp/cron_log.log 2>&1'),
+# ]
 
 
 UNFOLD = {
