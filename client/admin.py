@@ -17,7 +17,6 @@ from . models import (
     JobAds,
     MyStaff, FavouriteStaff,
     JobReport,
-    StaffReview,
 
 
 
@@ -143,10 +142,6 @@ class MyStaffAdmin(ModelAdmin):
     list_filter_sheet = False
     search_fields = ('client__company_name', 'staff__user__first_name', 'staff__user__last_name', 'status')
     list_filter = ('status', 'client__company_name')
-
-@admin.register(StaffReview)
-class StaffReviewAdmin(ModelAdmin):
-    pass 
 
 
 # class JobReportResource(resources.ModelResource):
