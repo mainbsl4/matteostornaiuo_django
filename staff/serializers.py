@@ -19,7 +19,7 @@ class CreateStaffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Staff
-        fields = ['user_data','dob', 'address', 'phone', 'cv', 'video_cv', 'role','nid_number', 'about','skills', 'bank_details', 'experience']
+        fields = ['user_data','dob', 'address', 'phone', 'cv', 'video_cv', 'role','nid_number', 'gender','about','country','post_code','skills', 'bank_details', 'experience']
 
 
     def create(self, validated_data):
