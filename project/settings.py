@@ -354,11 +354,6 @@ UNFOLD = {
                         "icon": "work",
                         "link": reverse_lazy("admin:client_job_add"),
                     },
-                    {
-                        "title": _("Staff Review"),
-                        "icon": "reviews",
-                        "link": reverse_lazy("admin:client_staffreview_changelist"),
-                    }
                 ]
             },
             
