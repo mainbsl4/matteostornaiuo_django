@@ -7,10 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 # Create your views here.
-from .models import  CompanyReview, Notification
+from .models import  Notification
 from . serializers import (
-
-    CompanyReviewSerializer, 
     NotificationSerializer, 
     SkillSerializer,
 
@@ -23,35 +21,10 @@ from users.models import Skill
 
 
 
-
-class CompanyReviewView(APIView):
-    def get(self, request, vacancy_id=None, pk=None, *args, **kwargs):
-        if pk:
-            review = get_object_or_404(CompanyReview, pk=pk)
-            serializer = CompanyReviewSerializer(review)
-            return Response(serializer.data)
-        
-        reviews = CompanyReview.objects.filter(vacancy__id=vacancy_id)
-        serializer = CompanyReviewSerializer(reviews, many=True)
-        return Response(serializer.data)
-    def post(self, request, vacancy_id=None):
-        user = request.user
-        staff = Staff.objects.filter(user=user).first()
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        company = vacancy.vacancies.first().company
-        serializer = CompanyReviewSerializer(data=request.data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save(staff=staff, vacancy=vacancy, profile = company )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-
 class NotificationView(APIView):
     def get(self, request):
         user = request.user
         
-
         notifications = Notification.objects.filter(user=user).order_by('-created_at')
         
         serializer = NotificationSerializer(notifications, many=True)

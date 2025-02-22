@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     'whitenoise.runserver_nostatic',
+    "homedashbord"
 
     
     
@@ -86,7 +87,7 @@ ROOT_URLCONF = "project.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ['templates'],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -245,10 +246,12 @@ from django.utils.translation import gettext_lazy as _
 
 
 UNFOLD = {
+    "DASHBOARD_CALLBACK": "homedashbord.views.dashboard_callback",
 
      "SIDEBAR": {
         "show_search": True,  # Search in applications and models names
         "show_all_applications": True, 
+         
          "navigation": [
             {
                 "title": _("Super Admin"), 
