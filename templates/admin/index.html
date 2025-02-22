@@ -1,0 +1,26 @@
+{% extends 'unfold/layouts/base_simple.html' %}
+
+{% load i18n %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+
+    {{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+
+
+{% block content %}
+
+    <p>Total user: {{total_users}}</p>
+    <p>Total total superusers: {{total_superusers}}</p>
+    <p>Total total client: {{total_clients}}</p>
+    <p>Total total staff: {{total_staff}}</p>
+
+
+    {% comment %} Start creating your own Tailwind components here {% endcomment %}
+{% endblock %}

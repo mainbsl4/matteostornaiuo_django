@@ -46,11 +46,12 @@ class StaffSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
 
-        if invited_user:
-            invited_user[0].invitation_code = None
-            invited_user[0].save()
+        # # for removing otp 
+        # invited_user = Invitation.objects.filter(staff_email=validated_data["email"])
+        # if invited_user:
+        #     invited_user[0].invitation_code = None
+        #     invited_user[0].save()
 
         try:
             validate_password(validated_data["password"])  # Validate the password
@@ -126,7 +127,7 @@ class ClientSignupSerializer(serializers.ModelSerializer):
 class JobRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobRole
-        fields = ["id", "name"]
+        fields = ["id", "name","staff_price"]
 
 
 class UniformSerializer(serializers.ModelSerializer):
