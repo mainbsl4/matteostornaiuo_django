@@ -340,27 +340,11 @@ class JobReport(models.Model):
 
 
 
-
-class StaffReview(models.Model):
-    job_application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, blank=True, null=True)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    job_role = models.ForeignKey(JobRole, on_delete=models.SET_NULL, null=True, blank=True)
-    rating = models.IntegerField(default=0)
-    message = models.TextField(blank=True)
+class ClientReview(models.Model):
+    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
+    reviewed_by =  models.ForeignKey(Staff, on_delete=models.CASCADE)
+    content = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
-    
     def __str__(self):
-        return f'{self.job_application.applicant.user.first_name} {self.job_application.applicant.user.last_name} - Review for {self.job_application.vacancy.job_title}'
-    class Meta:
-        verbose_name_plural = 'Staff Reviews'
-        ordering = ['-created_at']
-    
-    def save(self, *args, **kwargs):
-        self.job_role =  self.job_application.vacancy.job_title
-        if self.rating < 0 or self.rating > 5:
-            raise ValidationError("Rating should be between 0 and 5")
-        super().save(*args, **kwargs)
-
-
-
+        return f'Review by {self.reviewed_by.user.email} on {self.client.company_name}'
