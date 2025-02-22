@@ -19,8 +19,7 @@ from .models import (
     Checkout,
     JobAds,
     FavouriteStaff,
-    MyStaff,
-    StaffReview
+    MyStaff
 
 )
 from users.models import (
@@ -300,21 +299,3 @@ class JobTemplateSserializers(serializers.Serializer):
     name = serializers.StringRelatedField(read_only=True)
     client = CompanyProfileSerializer(read_only=True)
     job = JobSerializer(read_only=True)
-
-class StaffReviewSerializer(serializers.ModelSerializer):
-    staff = serializers.StringRelatedField(read_only=True)
-    class Meta:
-        model = StaffReview
-        fields = '__all__'
-    
-    # show client from jobapplication.vacancy.client by to_representation
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['client'] = CompanyProfileSerializer(instance.job_application.vacancy.client).data
-        return data
-    
-
-
-
-
-        
