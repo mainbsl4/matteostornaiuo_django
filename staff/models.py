@@ -23,6 +23,9 @@ class Staff(models.Model):
     age = models.IntegerField(null=True, blank=True)
     avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
     about = models.TextField(blank=True)
+    gender = models.CharField(max_length=5, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    post_code = models.CharField(max_length=20, blank=True, null=True)
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
     video_cv = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
     
@@ -57,6 +60,9 @@ class BankDetails(models.Model):
     staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
     card_holder_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=20)
+    swift_code = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    post_code = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f'{self.staff.user.first_name} {self.staff.user.last_name} Bank Details'
