@@ -36,6 +36,8 @@ urlpatterns = [
     path('api/', include('chat.urls')),
     path('api/', include('shifting.urls')),
     path('api/', include('subscription.urls')),
+    path('api/', include('homedashbord.urls')),
+
     
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
