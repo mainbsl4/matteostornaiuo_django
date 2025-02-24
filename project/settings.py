@@ -336,6 +336,11 @@ UNFOLD = {
                         "title": _("Job Report"),
                         "icon": "work_history",
                         "link": reverse_lazy("admin:client_jobreport_changelist"),
+                    },
+                    {
+                        "title": _("Review"),
+                        "icon": "reviews",
+                        "link": reverse_lazy("admin:client_companyreview_changelist"),
                     }
                 ]
             },
@@ -350,10 +355,15 @@ UNFOLD = {
                         "link": reverse_lazy("admin:staff_staff_changelist"),
                     },
                     {
-                        "title": _("Create Jobs"),
-                        "icon": "work",
-                        "link": reverse_lazy("admin:client_job_add"),
+                        "title": _("Experiences"),
+                        "icon": "emoji_objects",
+                        "link": reverse_lazy("admin:staff_experience_changelist"),
                     },
+                    {
+                        "title": _("Review"),
+                        "icon": "reviews",
+                        "link": reverse_lazy ("admin:staff_staffreview_changelist"),
+                    }
                 ]
             },
             
