@@ -14,7 +14,9 @@ urlpatterns =[
     path('staff/jobs/<int:pk>/checkin/', views.JobCheckinView.as_view()),
     path('staff/jobs/<int:pk>/checkout/', views.JobCheckinView.as_view()),
 
-
+    path('staff/reviews/', views.StaffReviewView.as_view()), #post
+    path('vacancy/<int:application_id>/review/', views.StaffReviewView.as_view()), #post
+    
 
 
 
