@@ -2,6 +2,7 @@ from rest_framework import serializers,status
 from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from datetime import datetime
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
@@ -19,7 +20,8 @@ from .models import (
     Checkout,
     JobAds,
     FavouriteStaff,
-    MyStaff
+    MyStaff,
+    CompanyReview
 
 )
 from users.models import (
@@ -41,6 +43,8 @@ User = get_user_model()
 # done
 class CompanyProfileSerializer(serializers.ModelSerializer):
     user_data = serializers.JSONField(write_only=True, required=False, allow_null=True)
+    avg_rating = serializers.SerializerMethodField(read_only=True, required=False)
+
     class Meta:
         model = CompanyProfile
         # fields = '__all__'
@@ -52,6 +56,14 @@ class CompanyProfileSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['user'] = UserSerializer(instance.user).data
         return data
+    
+    def get_avg_rating(self, obj):
+        reviews = CompanyReview.objects.filter(review_for=obj).aggregate(Avg('rating'))['rating__avg']
+        if reviews:
+            return reviews
+        else:
+            return 0
+        
         
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user_data', None)
@@ -299,3 +311,10 @@ class JobTemplateSserializers(serializers.Serializer):
     name = serializers.StringRelatedField(read_only=True)
     client = CompanyProfileSerializer(read_only=True)
     job = JobSerializer(read_only=True)
+
+
+class CompanyReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompanyReview
+        fields = '__all__'
+        depth = 1

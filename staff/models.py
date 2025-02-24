@@ -10,6 +10,7 @@ from users.models import JobRole, Skill
 
 
 
+
 User = get_user_model()
 
 
@@ -35,6 +36,7 @@ class Staff(models.Model):
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
     experience = models.ManyToManyField("Experience", blank=True, related_name="staff_experience")
     # review = 
+    is_available = models.BooleanField(default=True)
     is_letme_staff = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -113,3 +115,33 @@ class Experience (models.Model):
         super().save(*args, **kwargs)
 
 
+class StaffReview(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    vacancy = models.OneToOneField("client.Vacancy", on_delete=models.SET_NULL, null=True)
+    job_role = models.CharField(max_length=100, blank=True, null=True)
+    review_by = models.ForeignKey("client.CompanyProfile", on_delete=models.SET_NULL,blank=True, null=True)
+    rating = models.PositiveIntegerField(validators=[ MaxValueValidator(5)])
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f'{self.rating} Star rating on {self.vacancy}'
+    class Meta:
+        verbose_name_plural = 'Staff Reviews'
+        ordering = ['-created_at']
+
+        # add a constrains for check rating max value
+        constraints= [
+            models.CheckConstraint(
+                check=models.Q(rating__gte=1, rating__lte=5),
+                name="rating_check"
+            )
+            
+        ]
+    # set job role from vacancy.job_title.name in save method
+    def save(self, *args, **kwargs):
+        if self.vacancy:
+            self.job_role = self.vacancy.job_title.name
+            self.review_by = self.vacancy.job.company
+        super().save(*args, **kwargs)
+
+    

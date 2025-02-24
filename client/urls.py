@@ -34,6 +34,10 @@ urlpatterns = [
     path('company/job/applications/checkout/', views.CheckOutView.as_view()),
     path('company/job/applications/checkout/<int:pk>/', views.CheckOutView.as_view()),
 
+    # company review 
+    path('company/review/', views.CompanyReviewView.as_view()),
+    path('company/<int:application_id>/review/', views.CompanyReviewView.as_view()),
+
     # job ads
     path('company/job/ads/', views.JobAdsView.as_view()),
     path('company/job/ads/<int:pk>/', views.JobAdsView.as_view()),
