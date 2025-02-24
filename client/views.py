@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -27,6 +27,7 @@ from .models import (
     FavouriteStaff,
     MyStaff,
     JobReport,
+    CompanyReview
 
 
 
@@ -44,6 +45,7 @@ from .serializers import (
     PermanentJobsSerializer,
     FavouriteStaffSerializer,
     MyStaffSerializer,
+    CompanyReviewSerializer
 
 
 
@@ -314,9 +316,9 @@ class JobApplicationAPI(APIView): # pending actions page approve job
 
 
         # get all vacancy that job_status is active and progress
-        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress'])
+        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'accepted'])
 
-        applications = JobApplication.objects.filter(vacancy__in=vacancy_list, is_approve=False).order_by('created_at')
+        applications = JobApplication.objects.filter(vacancy__in=vacancy_list).order_by('created_at')
         # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
         serializer = JobApplicationSerializer(applications, many=True)
         response_data = {
@@ -842,3 +844,63 @@ class MyStaffView(APIView):
             "data": serializer.data
         }
         return Response(response, status=status.HTTP_200_OK)
+
+
+
+class CompanyReviewView(APIView):
+    def get(self, request):
+        user = request.user
+        if user.is_client:
+            client = get_object_or_404(CompanyProfile, user=user)
+            reviews = CompanyReview.objects.filter(review_for=client)
+            # calculate avg rating 
+            avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+            serializer = CompanyReviewSerializer(reviews, many=True)
+
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Client's reviews",
+                "data": [serializer.data,avg_rating]
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        response = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to view this client's reviews"
+        }
+        return Response(response, status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request, application_id):
+        try:
+            application = JobApplication.objects.get(id=application_id)
+        except JobApplication.DoesNotExist:
+            response = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Job application not found"
+            }
+            return Response(response, status=status.HTTP_404_NOT_FOUND)
+        
+        if application.applicant.user == request.user:
+            data = request.data 
+            review = CompanyReview.objects.create(
+                review_by = application.applicant,
+                review_for = application.vacancy.job.company,
+                rating = data['rating'],
+                content = data['content']
+            )
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Review submitted successfully",
+                "data": CompanyReviewSerializer(review).data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        response = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to review this client"
+        }
+        return Response(response, status=status.HTTP_403_FORBIDDEN)
+    

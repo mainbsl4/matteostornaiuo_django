@@ -11,6 +11,7 @@ from .models import (
     Staff,
     Experience,
     BankDetails,
+    StaffReview
 
 )
 from .serializers import (
@@ -18,6 +19,7 @@ from .serializers import (
     CreateStaffSerializer,
     BankAccountSerializer,
     ExperienceSerializer,
+    StaffReviewSerializer
 
 
 )
@@ -632,3 +634,78 @@ class ExperienceView(APIView):
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffReviewView(APIView):
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if user and user.is_staff:
+            staff = Staff.objects.filter(user=user).first()
+            if staff:
+                reviews = StaffReview.objects.filter(staff=staff)
+                serializer = StaffReviewSerializer(reviews, many=True)
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Reviews retrieved successfully",
+                    "data": serializer.data
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Staff not found"
+            }
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Unauthorized access"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+    
+    def post(self, request, application_id, *args, **kwargs):
+        user = request.user
+        data = request.data
+        if user and user.is_client:
+            application = JobApplication.objects.get(id=application_id)
+            if application.vacancy.job.company.user == user:
+                if StaffReview.objects.filter(staff=application.applicant, vacancy=application.vacancy).exists():
+                    review = StaffReview.objects.get(staff=application.applicant, vacancy=application.vacancy)
+                    review.rating = data['rating']
+                    review.content = data['content']
+                    review.save()
+                    response_data = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Review updated successfully",
+                        "data": StaffReviewSerializer(review).data
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+                review = StaffReview.objects.create(
+                    staff=application.applicant,
+                    vacancy = application.vacancy,
+                    rating = data['rating'],
+                    content = data['content']
+                )
+            else:
+                response_data = {
+                    "status": status.HTTP_403_FORBIDDEN,
+                    "success": False,
+                    "message": "Unauthorized access"
+                }
+                return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Review submitted successfully",
+                "data": StaffReviewSerializer(review).data
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Unauthorized access"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+    

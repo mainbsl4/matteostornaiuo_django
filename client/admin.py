@@ -17,6 +17,7 @@ from . models import (
     JobAds,
     MyStaff, FavouriteStaff,
     JobReport,
+    CompanyReview
 
 
 
@@ -173,3 +174,23 @@ class JobReportAdmin(ModelAdmin):
 
 
 
+@admin.register(CompanyReview)
+class CompanyReviewAdmin(ModelAdmin):
+    list_display = ('review_for', 'review_by', 'rating', 'content', 'created_at')
+    list_filter = ('review_for__company_name',"rating")
+    search_fields = ('review_for__company_name', 'review_by__user__first_name', 'review_by__user__last_name')
+    list_filter_sheet = True
+    list_per_page = 50
+    search_help_text = "Search by company name"
+    # list_display_links = None
+    def has_add_permission(self, request):
+        """Disable the add button."""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Disable the edit button."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Disable the delete button."""
+        return True
