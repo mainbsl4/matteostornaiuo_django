@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
+from django.db.models import Avg
 
 from .models import (
     Staff,
     Experience, 
     BankDetails,
+    StaffReview
     
 )
 
@@ -91,10 +93,21 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
 class StaffSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    
+    avg_rating = serializers.SerializerMethodField(read_only=True, required=False)
     class Meta:
         model = Staff
-        fields = ['id','user', 'role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_letme_staff']
+        fields = ['id','user', 'avg_rating','role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_available','is_letme_staff']
         depth = 1
     
+    def get_avg_rating(self, obj):
+        reviews = StaffReview.objects.filter(staff=obj).aggregate(Avg('rating'))['rating__avg']
+        if reviews:
+            return reviews
+        else:
+            return 0
 
+class StaffReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StaffReview
+        fields = '__all__'
+        
