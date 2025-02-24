@@ -340,11 +340,16 @@ class JobReport(models.Model):
 
 
 
-class ClientReview(models.Model):
-    client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
-    reviewed_by =  models.ForeignKey(Staff, on_delete=models.CASCADE)
-    content = models.TextField()
+class CompanyReview(models.Model):
+    review_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True)
+    review_for = models.ForeignKey(CompanyProfile, on_delete=models.SET_NULL, null=True)
+    rating = models.IntegerField(default=0, validators=[MaxValueValidator(5)])
+    content = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        return f'Review by {self.reviewed_by.user.email} on {self.client.company_name}'
+        return f'{self.rating} Star rating from {self.review_by}'
+
+    class Meta:
+        verbose_name_plural = 'Company Reviews'
+        ordering = ['-created_at']
