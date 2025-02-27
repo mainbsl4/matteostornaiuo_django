@@ -38,6 +38,12 @@ urlpatterns = [
     path('company/review/', views.CompanyReviewView.as_view()),
     path('company/<int:application_id>/review/', views.CompanyReviewView.as_view()),
 
+    # give tips 
+    path('vacancy/<int:report_id>/tips/', views.TipView.as_view()),
+
+
+
+
     # job ads
     path('company/job/ads/', views.JobAdsView.as_view()),
     path('company/job/ads/<int:pk>/', views.JobAdsView.as_view()),
