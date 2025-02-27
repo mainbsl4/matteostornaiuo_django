@@ -52,7 +52,7 @@ class JobAdmin(ModelAdmin):
 
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
-    list_display = ('job_title', 'salary', 'open_date','start_time', 'close_date','end_time', 'shift_job')
+    list_display = ('job_title', 'salary', 'job_status', 'open_date','start_time', 'close_date','end_time', 'shift_job')
     # list_filter = ('job_title','client__company_name')
     search_fields = ('job_title__name',)
     ordering = ('-created_at',)
@@ -164,7 +164,11 @@ class MyStaffAdmin(ModelAdmin):
 
 @admin.register(JobReport)
 class JobReportAdmin(ModelAdmin):
-    pass
+    list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
+    search_fields = ('job_application__vacancy__job_title__name','job_application__applicant__user__first_name', 'job_application__applicant__user__last_name')
+    list_filter_sheet = False
+    list_filter = ('job_application__vacancy', 'job_application__applicant')
+
 #     resource_class = JobReportResource
 
 #     list_display = ('job_application__applicant', 'job_application__vacancy', 'working_hour', 'extra_hour', 'regular_pay','overtime_pay', 'total_pay')

@@ -904,3 +904,27 @@ class CompanyReviewView(APIView):
         }
         return Response(response, status=status.HTTP_403_FORBIDDEN)
     
+
+class TipView(APIView):
+    def post(self,request, report_id):
+        user = request.user
+        data = request.data
+        report = get_object_or_404(JobReport, id=report_id)
+        if report.job_application.vacancy.job.company.user == user:
+            data = request.data
+            report.tips += data['tips']
+            report.save()
+
+            response_data = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Tip added to staff working report sheet successfully"
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
+        response = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "You are not authorized to submit a tip for this report"
+        }
+        return Response(response, status=status.HTTP_403_FORBIDDEN)
+    

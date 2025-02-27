@@ -300,6 +300,7 @@ class JobReport(models.Model):
     overtime_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)
     tax = models.DecimalField(null=True,  decimal_places=2, max_digits=10, default=25)
     total_pay = models.DecimalField(max_digits=50, decimal_places=2, blank=True, null=True)
+    tips = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -325,6 +326,8 @@ class JobReport(models.Model):
             
             # Tax (25% of total earnings before tax)
             total_earnings = self.regular_pay + self.overtime_pay
+            if self.tips > 0:
+                total_earnings += self.tips  # Add tips to total earnings
             self.tax = total_earnings * 0.25  # 25% tax
             
             # Final Total Pay after deducting tax
