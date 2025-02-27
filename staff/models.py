@@ -29,8 +29,6 @@ class Staff(models.Model):
     post_code = models.CharField(max_length=20, blank=True, null=True)
     cv = models.FileField(blank=True, null=True, upload_to='staff/cv/')
     video_cv = models.FileField(blank=True, null=True, upload_to='staff/video_resume/')
-    
-
 
     # role = models.ManyToManyField(JobRole, blank=True, related_name='staff_roles')
     skills = models.ManyToManyField(Skill, blank=True, related_name="staff_skill")
