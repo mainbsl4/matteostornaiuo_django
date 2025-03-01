@@ -4,7 +4,8 @@ from users.models import User
 from client.models import CompanyProfile
 
 def home(request):
-    return HttpResponse("jkldsf")
+    # return HttpResponse("jkldsf")
+    return render(request, 'home.html')
 
 
 def dashboard_callback(request, context):
