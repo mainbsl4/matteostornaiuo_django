@@ -82,12 +82,22 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 
 
 class VacancySerializer(serializers.ModelSerializer):
+    application_status = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Vacancy
         fields = "__all__"
         depth = 2
     
-    
+    def get_application_status(self, obj):
+        # return the count of each job status 
+        job_application = JobApplication.objects.filter(vacancy=obj)
+        print(job_application)
+        pending = job_application.filter(job_status='pending').count()
+        accepted = job_application.filter(job_status='accepted').count()
+        rejected = job_application.filter(job_status='rejected').count()
+        expierd = job_application.filter(job_status='expired').count()
+        return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+        
 
 
 
@@ -297,7 +307,7 @@ class FavouriteStaffSerializer(serializers.ModelSerializer):
     company = serializers.StringRelatedField(read_only=True)
     class Meta:
         model = FavouriteStaff
-        fields = "__all__"
+        fields = ['staff', 'company']
     
 
 class MyStaffSerializer(serializers.ModelSerializer):
