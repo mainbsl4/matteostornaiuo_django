@@ -281,7 +281,7 @@ class FavouriteStaff(models.Model):
     staff = models.ManyToManyField(Staff, blank=True, related_name='favourites_staff')
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+
     
     class Meta:
         verbose_name_plural = 'Favourite Staff'
