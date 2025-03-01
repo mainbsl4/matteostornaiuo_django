@@ -18,12 +18,47 @@ from .models import (
 # Register your models here.
 @admin.register(User)
 class UserAdmin(ModelAdmin):
-    list_display = ('email','first_name','last_name', 'is_client', 'is_staff', 'is_active', 'date_joined')
+    list_display = ('serial_number', 'email', 'first_name', 'last_name', 'is_client', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('is_client', 'is_staff', 'is_active')
-    search_fields = ('email','first_name','last_name')
-    ordering = ('-date_joined',)
+    search_fields = ('email', 'first_name', 'last_name')
+    ordering = ('date_joined',)
     list_per_page = 20  
-    list_filter_sheet = True
+    # Note: 'list_filter_sheet' is not a valid attribute in Django admin; did you mean something else?
+
+    def serial_number(self, obj):
+        """Generate a serial number for each row."""
+        # Get the current queryset and calculate the position
+        queryset = self.get_queryset(self.request)
+        index = queryset.filter(pk__lte=obj.pk).count()
+        # Adjust for pagination
+        page = self.get_page_number()
+        if page > 1:
+            return ((page - 1) * self.list_per_page) + index
+        return index
+
+    serial_number.short_description = 'S.No.'
+    serial_number.admin_order_field = '-date_joined'  
+
+    def get_queryset(self, request):
+        """Store the request for use in serial_number."""
+        self.request = request
+        return super().get_queryset(request)
+
+    def get_page_number(self):
+        """Helper to get the current page number from the request."""
+        try:
+            return int(self.request.GET.get('p', 1))  # 'p' is the pagination param in admin
+        except ValueError:
+            return 1
+
+
+
+
+
+
+
+
+
 
 
 @admin.register(Skill)
