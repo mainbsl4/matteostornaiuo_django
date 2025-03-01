@@ -91,7 +91,6 @@ class VacancySerializer(serializers.ModelSerializer):
     def get_application_status(self, obj):
         # return the count of each job status 
         job_application = JobApplication.objects.filter(vacancy=obj)
-        print(job_application)
         pending = job_application.filter(job_status='pending').count()
         accepted = job_application.filter(job_status='accepted').count()
         rejected = job_application.filter(job_status='rejected').count()
