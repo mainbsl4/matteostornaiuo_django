@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from django.db.models import Avg
+from django.db.models import Avg, Count
 
 from .models import (
     Staff,
@@ -100,9 +100,23 @@ class StaffSerializer(serializers.ModelSerializer):
         depth = 1
     
     def get_avg_rating(self, obj):
-        # get total average rating and job_role base rating 
-        rating = StaffReview.objects.filter(staff=obj).values('job_role').annotate(avg_rating=Avg('rating'))
-        return rating
+
+        total_avg = StaffReview.objects.filter(staff=obj).aggregate(total_avg_rating=Avg('rating'))['total_avg_rating']
+
+        rating = (
+            StaffReview.objects
+            .filter(staff=obj)
+            .values('job_role')
+            .annotate(
+                avg_rating=Avg('rating'), 
+                review_count=Count('id') 
+            )
+        )
+
+        return {
+            'total_avg_rating': total_avg,  
+            'job_role_ratings': list(rating)  
+        }
 
 class StaffReviewSerializer(serializers.ModelSerializer):
     class Meta:
