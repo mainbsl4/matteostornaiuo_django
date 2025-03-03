@@ -100,11 +100,9 @@ class StaffSerializer(serializers.ModelSerializer):
         depth = 1
     
     def get_avg_rating(self, obj):
-        reviews = StaffReview.objects.filter(staff=obj).aggregate(Avg('rating'))['rating__avg']
-        if reviews:
-            return reviews
-        else:
-            return 0
+        # get total average rating and job_role base rating 
+        rating = StaffReview.objects.filter(staff=obj).values('job_role').annotate(avg_rating=Avg('rating'))
+        return rating
 
 class StaffReviewSerializer(serializers.ModelSerializer):
     class Meta:
