@@ -577,61 +577,61 @@ class CheckOutView(APIView):
     
 # approval check in checkout request
 
-class ApproveCheckinView(APIView):
+# class ApproveCheckinView(APIView):
 
-    # get request
-    def get(self, request, vacancy_id=None, *args, **kwargs):
-        checkins = Checkin.objects.filter(vacancy__id=vacancy_id) # add status = false
-        serializer = CheckinSerializer(checkins, many=True)
-        response_data = {
-            "status": status.HTTP_200_OK,
-            "success": True,
-            "message": "List of pending check-in requests",
-            "data": serializer.data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request, vacancy_id=None, pk=None):
-        staff_id = request.data['staff_id']
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        checkin = get_object_or_404(Checkin, vacancy=vacancy, staff__id=staff_id)
-        checkin.status = True
-        checkin.save()
-        # send notification to staff
-        notification = Notification.objects.create(
-            user = checkin.staff.user,
-            message = f"Your check-in request for {vacancy.job_title} has been approved",
+#     # get request
+#     def get(self, request, vacancy_id=None, *args, **kwargs):
+#         checkins = Checkin.objects.filter(vacancy__id=vacancy_id) # add status = false
+#         serializer = CheckinSerializer(checkins, many=True)
+#         response_data = {
+#             "status": status.HTTP_200_OK,
+#             "success": True,
+#             "message": "List of pending check-in requests",
+#             "data": serializer.data
+#         }
+#         return Response(response_data, status=status.HTTP_200_OK)
+#     def post(self, request, vacancy_id=None, pk=None):
+#         staff_id = request.data['staff_id']
+#         vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+#         checkin = get_object_or_404(Checkin, vacancy=vacancy, staff__id=staff_id)
+#         checkin.status = True
+#         checkin.save()
+#         # send notification to staff
+#         notification = Notification.objects.create(
+#             user = checkin.staff.user,
+#             message = f"Your check-in request for {vacancy.job_title} has been approved",
             
-        )
-        return Response(status=status.HTTP_200_OK)
+#         )
+#         return Response(status=status.HTTP_200_OK)
     
-class ApproveCheckoutView(APIView):
+# class ApproveCheckoutView(APIView):
 
-    # get request
-    def get(self, request, vacancy_id=None, *args, **kwargs):
-        """ list of pending checkout list."""
-        checkouts = Checkout.objects.filter(vacancy__id=vacancy_id) # add status = false
-        serializer = CheckOutSerializer(checkouts, many=True)
-        response_data = {
-            "status": status.HTTP_200_OK,
-            "success": True,
-            "message": "List of pending check-out requests",
-            "data": serializer.data
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
-    def post(self, request, vacancy_id=None, pk=None):
-        staff_id = request.data['staff_id']
-        vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
-        checkout = get_object_or_404(Checkout, vacancy=vacancy, staff__id=staff_id)
+#     # get request
+#     def get(self, request, vacancy_id=None, *args, **kwargs):
+#         """ list of pending checkout list."""
+#         checkouts = Checkout.objects.filter(vacancy__id=vacancy_id) # add status = false
+#         serializer = CheckOutSerializer(checkouts, many=True)
+#         response_data = {
+#             "status": status.HTTP_200_OK,
+#             "success": True,
+#             "message": "List of pending check-out requests",
+#             "data": serializer.data
+#         }
+#         return Response(response_data, status=status.HTTP_200_OK)
+#     def post(self, request, vacancy_id=None, pk=None):
+#         staff_id = request.data['staff_id']
+#         vacancy = get_object_or_404(Vacancy, pk=vacancy_id)
+#         checkout = get_object_or_404(Checkout, vacancy=vacancy, staff__id=staff_id)
 
-        checkout.status = True
-        checkout.save()
-        # send notification to staff
-        notification = Notification.objects.create(
-            user = checkout.staff.user,
-            message = f"Your check-out request for {vacancy.job_title} has been approved",
+#         checkout.status = True
+#         checkout.save()
+#         # send notification to staff
+#         notification = Notification.objects.create(
+#             user = checkout.staff.user,
+#             message = f"Your check-out request for {vacancy.job_title} has been approved",
             
-        )
-        return Response(status=status.HTTP_200_OK)
+#         )
+#         return Response(status=status.HTTP_200_OK)
     
 
 class JobAdsView(APIView):
@@ -795,7 +795,6 @@ class FavouriteStaffView(APIView):
                 return Response(response,status=status.HTTP_404_NOT_FOUND)
         
         favourites = FavouriteStaff.objects.filter(company = company)
-        print('favaourites ', favourites, len(favourites))
         serializer = FavouriteStaffSerializer(favourites, many=True)
 
         response = {
@@ -808,9 +807,15 @@ class FavouriteStaffView(APIView):
     
     def post(self, request, pk=None):
         user = request.user
+        if not user.is_client:
+            response = {
+                "status": status.HTTP_403_FORBIDDEN,
+                "success": False,
+                "message": "Only clients can add staff to their favourites"
+            }
+            return Response(response, status=status.HTTP_403_FORBIDDEN)
         company = get_object_or_404(CompanyProfile, user=user)
         favourite_staff,_ = FavouriteStaff.objects.get_or_create(company=company)
-        data = request.data        
         try:
             staff = Staff.objects.get(id=pk)
         except Staff.DoesNotExist:
@@ -821,28 +826,48 @@ class FavouriteStaffView(APIView):
             }
             return Response(response,status=status.HTTP_404_NOT_FOUND)
         
-        if data['action'] == 'add':
-            # check is staff already added
-            if staff in favourite_staff.staff.all():
-                response = {
-                    "status": status.HTTP_400_BAD_REQUEST,
-                    "success": False,
-                    "message": "Staff is already a favourite"
-                }
-                return Response(response,status=status.HTTP_400_BAD_REQUEST)
+        # if data['action'] == 'add':
+        #     # check is staff already added
+        #     if staff in favourite_staff.staff.all():
+        #         response = {
+        #             "status": status.HTTP_400_BAD_REQUEST,
+        #             "success": False,
+        #             "message": "Staff is already a favourite"
+        #         }
+        #         return Response(response,status=status.HTTP_400_BAD_REQUEST)
             
+        #     favourite_staff.staff.add(staff)
+        #     response = {
+        #         "status": status.HTTP_201_CREATED,
+        #         "success": True,
+        #         "message": "Staff added to favourites successfully"
+        #     }
+        #     return Response(response,status=status.HTTP_201_CREATED)
+        # elif data['action'] =='remove':
+        #     if staff in favourite_staff.staff.all():
+        #         favourite_staff.staff.remove(staff)
+        #         return Response({"message": "Favourite staff removed successfully"})
+        #     return Response({"message": "Staff is not a favourite"})
+        
+        if not staff in favourite_staff.staff.all():
             favourite_staff.staff.add(staff)
             response = {
                 "status": status.HTTP_201_CREATED,
                 "success": True,
                 "message": "Staff added to favourites successfully"
             }
-            return Response(response,status=status.HTTP_201_CREATED)
-        elif data['action'] =='remove':
-            if staff in favourite_staff.staff.all():
-                favourite_staff.staff.remove(staff)
-                return Response({"message": "Favourite staff removed successfully"})
-            return Response({"message": "Staff is not a favourite"})
+            return Response(response, status=status.HTTP_201_CREATED)
+        elif staff in favourite_staff.staff.all():
+            favourite_staff.staff.remove(staff)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Favourite staff removed successfully"
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        
+
+
     # def delete(self, request, pk, *args, **kwargs):
     #     user = request.user
     #     company = get_object_or_404(CompanyProfile, user=user)
