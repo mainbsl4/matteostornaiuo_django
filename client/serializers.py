@@ -302,12 +302,11 @@ class PermanentJobsSerializer(serializers.ModelSerializer):
     
 
 class FavouriteStaffSerializer(serializers.ModelSerializer):
-    staff = serializers.StringRelatedField(read_only=True)
     company = serializers.StringRelatedField(read_only=True)
+    staff = StaffSerializer(read_only=True, many=True)
     class Meta:
         model = FavouriteStaff
-        fields = ['staff', 'company']
-    
+        fields = ['staff', 'company']    
 
 class MyStaffSerializer(serializers.ModelSerializer):
     staff = StaffSerializer(read_only=True)
