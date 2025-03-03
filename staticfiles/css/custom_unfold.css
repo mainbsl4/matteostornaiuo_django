@@ -8,9 +8,10 @@
 }
 
 .card {
-  background: #ffffff;
+    border: 1px solid gray;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
   padding: 20px;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -29,12 +30,14 @@
 
 .card-title {
   font-size: 1rem;
-  color: #6b7280;
   margin-bottom: 5px;
 }
 
 .card-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #1e293b;
 }
+
+
+
+

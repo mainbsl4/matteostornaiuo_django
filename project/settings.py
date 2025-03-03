@@ -377,4 +377,9 @@ UNFOLD = {
         lambda request: static("css/custom_unfold.css"),
     ],
 
+    "SCRIPTS": [
+        lambda request: static("js/custom_unfold.js"),
+        lambda request: static("js/pie_chart_unfold.js"),
+    ],
+
 }

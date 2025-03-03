@@ -22,7 +22,7 @@
       <div class="card-icon"><i class="fas fa-users"></i></div>
       <div class="card-content">
         <p class="card-title">Total Users</p>
-        <p class="card-value">{{total_users}}</p>
+        <p class="card-value">{{user_dashbord_data.total_users}}</p>
       </div>
     </div>
   
@@ -30,7 +30,7 @@
       <div class="card-icon"><i class="fas fa-user-shield"></i></div>
       <div class="card-content">
         <p class="card-title">Total Superusers</p>
-        <p class="card-value">{{total_superusers}}</p>
+        <p class="card-value">{{user_dashbord_data.total_superusers}}</p>
       </div>
     </div>
   
@@ -38,7 +38,7 @@
       <div class="card-icon"><i class="fas fa-user-tie"></i></div>
       <div class="card-content">
         <p class="card-title">Total Clients</p>
-        <p class="card-value">{{total_clients}}</p>
+        <p class="card-value">{{user_dashbord_data.total_clients}}</p>
       </div>
     </div>
   
@@ -46,9 +46,31 @@
       <div class="card-icon"><i class="fas fa-user-cog"></i></div>
       <div class="card-content">
         <p class="card-title">Total Staff</p>
-        <p class="card-value">{{total_staff}}</p>
+        <p class="card-value">{{user_dashbord_data.total_staff}}</p>
       </div>
     </div>
   </div>
+
+
+  <div class="chart-container" style="width: 50%; margin: auto;">
+    <canvas id="userChart"></canvas>
+  </div>
+
+
+
+<!-- Include Chart.js -->
+<script id="userData" type="application/json">
+  {
+      "total_superusers": {{ user_dashbord_data.total_superusers }},
+      "total_clients": {{ user_dashbord_data.total_clients }},
+      "total_staff": {{ user_dashbord_data.total_staff }}
+  }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+
     {% comment %} Start creating your own Tailwind components here {% endcomment %}
 {% endblock %}
