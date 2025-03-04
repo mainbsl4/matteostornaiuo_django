@@ -315,10 +315,13 @@ class MyStaffSerializer(serializers.ModelSerializer):
         model = MyStaff
         fields = '__all__'
 
-class JobTemplateSserializers(serializers.Serializer):
+class JobTemplateSserializers(serializers.ModelSerializer):
     name = serializers.StringRelatedField(read_only=True)
     client = CompanyProfileSerializer(read_only=True)
     job = JobSerializer(read_only=True)
+    class Meta:
+        model = JobTemplate
+        fields = ['id','name', 'client', 'job']
 
 
 class CompanyReviewSerializer(serializers.ModelSerializer):
