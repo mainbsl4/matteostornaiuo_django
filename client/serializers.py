@@ -105,7 +105,7 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
     uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False, allow_null=True)
-
+    
     class Meta:
         model = Vacancy
         fields = ['id','job','job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'job_status']
