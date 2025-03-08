@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     'whitenoise.runserver_nostatic',
-    "homedashbord"
+    "homedashbord",
+    "celeryapi",
 
     
     
