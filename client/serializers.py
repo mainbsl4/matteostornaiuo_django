@@ -105,19 +105,32 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     job_title = serializers.PrimaryKeyRelatedField(queryset=JobRole.objects.all())
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
     uniform = serializers.PrimaryKeyRelatedField(queryset=Uniform.objects.all(), required=False, allow_null=True)
+    invited_staff = serializers.ListField(required=False, allow_null=True)
     
     class Meta:
         model = Vacancy
-        fields = ['id','job','job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'job_status']
+        fields = ['id','job','job_title','number_of_staff','skills','uniform', 'open_date', 'close_date', 'start_time', 'end_time','location', 'job_status','invited_staff']
 
     
     def create(self, validated_data):
         skills = validated_data.pop('skills',[])
+        invited_staff_id = validated_data.pop('invited_staff',[])
         # invited_staff_ids = validated_data.pop('invited_staff', [])
         vacancy = Vacancy.objects.create(
             **validated_data
         )
         vacancy.skills.set(skills)
+
+        for staff in invited_staff_id:
+            # send notifications to the invited staff
+            staff = Staff.objects.filter(id=staff).first()
+            print('send invitation to', staff)
+            if staff:
+                Notification.objects.create(
+                    user= staff.user,
+                    message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+                )
+
 
         return vacancy
 class JobSerializer(serializers.ModelSerializer):
