@@ -83,10 +83,19 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 
 class VacancySerializer(serializers.ModelSerializer):
     application_status = serializers.SerializerMethodField(read_only=True)
+    # def __init__(self, *args, **kwargs):
+    #     fields = kwargs.pop('fields', None)  # Get dynamic fields if provided
+    #     super().__init__(*args, **kwargs)
+
+    #     if fields:
+    #         allowed = set(fields)
+    #         existing = set(self.fields.keys())
+    #         for field_name in existing - allowed:
+    #             self.fields.pop(field_name)
     class Meta:
         model = Vacancy
         fields = "__all__"
-        depth = 2
+        # depth = 2
     
     def get_application_status(self, obj):
         # return the count of each job status 
@@ -230,6 +239,15 @@ class JobViewSerializers(serializers.ModelSerializer):
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
+    # def __init__(self, *args, **kwargs):
+    #     fields = kwargs.pop('fields', None)  # Get dynamic fields if provided
+    #     super().__init__(*args, **kwargs)
+
+    #     if fields:
+    #         allowed = set(fields)
+    #         existing = set(self.fields.keys())
+    #         for field_name in existing - allowed:
+    #             self.fields.pop(field_name)
     class Meta:
         model = JobApplication
         fields = '__all__'
