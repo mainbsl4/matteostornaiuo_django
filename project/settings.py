@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -107,20 +108,19 @@ WSGI_APPLICATION = "project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-import dj_database_url
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-    )
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
 
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0' 
