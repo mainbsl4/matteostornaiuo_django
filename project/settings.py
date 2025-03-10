@@ -2,13 +2,13 @@ from pathlib import Path
 import os
 from datetime import timedelta
 import dj_database_url
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^"
@@ -18,8 +18,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
 
-
-# Application definition
 
 INSTALLED_APPS = [
     "unfold",  # before django.contrib.admin
@@ -82,6 +80,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # pagination 
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 ROOT_URLCONF = "project.urls"
@@ -109,18 +110,18 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
 # DATABASES = {
-#     'default': dj_database_url.config(
-#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-#     )
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
 # }
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+    )
+}
 
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0' 
@@ -229,9 +230,6 @@ STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 
-from django.templatetags.static import static
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
 
 # celety configuration
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
