@@ -51,8 +51,72 @@
     </div>
   </div>
 
+  <div class="table-section">
+    <table class="dashboard_user_table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>John Doe</td>
+                <td>john.doe@example.com</td>
+                <td>Admin</td>
+                <td>New</td>
+            </tr>
+            <tr>
+                <td>Jane Smith</td>
+                <td>jane.smith@example.com</td>
+                <td>User</td>
+                <td>Yesterday</td>
+            </tr>
+            <tr>
+                <td>Emily Davis</td>
+                <td>emily.davis@example.com</td>
+                <td>Editor</td>
+                <td>Last Week</td>
+            </tr>
+        </tbody>
+    </table>
 
-  <div class="chart-container" style="width: 50%; margin: auto;">
+    <table class="dashboard_user_table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Michael Brown</td>
+                <td>michael.brown@example.com</td>
+                <td>Manager</td>
+                <td>New</td>
+            </tr>
+            <tr>
+                <td>Olivia Wilson</td>
+                <td>olivia.wilson@example.com</td>
+                <td>Analyst</td>
+                <td>Yesterday</td>
+            </tr>
+            <tr>
+                <td>James Lee</td>
+                <td>james.lee@example.com</td>
+                <td>Developer</td>
+                <td>Last Week</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+  <div class="chart-container" style="width: 400px; border: 1px solid gray; border-radius: 5px; margin-top: 10px; padding: 10px;">
     <canvas id="userChart"></canvas>
   </div>
 
@@ -67,10 +131,10 @@
   }
 </script>
 
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-
 
     {% comment %} Start creating your own Tailwind components here {% endcomment %}
 {% endblock %}
