@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from staff.models import Staff
+from client.models import JobApplication
 
 
 class StaffInfoSerializer(serializers.ModelSerializer):
@@ -16,4 +17,3 @@ class StaffInfoSerializer(serializers.ModelSerializer):
         return obj.user.email
     def get_swift_code(self, obj):
         return f'{obj.bankdetails.swift_code}'
-    
