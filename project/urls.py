@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/', include('shifting.urls')),
     path('api/', include('subscription.urls')),
     path('api/', include('homedashbord.urls')),
-    path('api/havijavi/', include('celeryapi.urls')),
+    path('api/', include('celeryapi.urls')),
 
     
 
