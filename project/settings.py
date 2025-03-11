@@ -120,10 +120,22 @@ WSGI_APPLICATION = "project.wsgi.application"
 #     }
 # }
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
+
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'matteostornaiuo',
+        'USER': 'matteostornaiuo',
+        'PASSWORD': 'matteostornaiuo@AA',
+        'HOST': '51.20.35.242',
+        'PORT': '5432',
+    }
 }
 
 
