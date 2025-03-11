@@ -1,3 +1,6 @@
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -117,10 +120,22 @@ WSGI_APPLICATION = "project.wsgi.application"
 #     }
 # }
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
+
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'matteostornaiuo',
+        'USER': 'matteostornaiuo',
+        'PASSWORD': 'matteostornaiuo@AA',
+        'HOST': '51.20.35.242',
+        'PORT': '5432',
+    }
 }
 
 
@@ -172,7 +187,8 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATICFILE_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
@@ -231,6 +247,7 @@ STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 
 
+
 # celety configuration
 # CELERY_BROKER_URL = 'redis://localhost:6379/0'
 # CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
@@ -244,6 +261,8 @@ STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 
 
 UNFOLD = {
+    
+    
     "DASHBOARD_CALLBACK": "homedashbord.views.dashboard_callback",
 
      "SIDEBAR": {
@@ -367,6 +386,14 @@ UNFOLD = {
             
         ],
     },
-    
+
+    "STYLES": [
+        lambda request: static("css/custom_unfold.css"),
+    ],
+
+    "SCRIPTS": [
+        lambda request: static("js/custom_unfold.js"),
+        lambda request: static("js/pie_chart_unfold.js"),
+    ],
 
 }
