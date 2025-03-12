@@ -133,15 +133,13 @@ class CreateVacancySerializers(serializers.ModelSerializer):
         for staff in invited_staff_id:
             # send notifications to the invited staff
             staff = Staff.objects.filter(id=staff).first()
-            print('send invitation to', staff)
             if staff:
                 Notification.objects.create(
                     user= staff.user,
                     message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
                 )
-
-
         return vacancy
+    
 class JobSerializer(serializers.ModelSerializer):
     vacancy_data = serializers.ListField(
         write_only=True 
@@ -334,7 +332,7 @@ class PermanentJobsSerializer(serializers.ModelSerializer):
 
 class FavouriteStaffSerializer(serializers.ModelSerializer):
     company = serializers.StringRelatedField(read_only=True)
-    staff = StaffSerializer(read_only=True, many=True)
+    staff = StaffSerializer(read_only=True)
     class Meta:
         model = FavouriteStaff
         fields = ['staff', 'company']    
