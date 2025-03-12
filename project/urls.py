@@ -20,9 +20,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-admin.site.site_title = "Company Name"
-admin.site.site_header = "matteostornaiuo"
-admin.site.index_title = "Welcome to Company Admin"
+# admin.site.site_title = "Company Name"
+# admin.site.site_header = "matteostornaiuo"
+# admin.site.index_title = "Welcome to Company Admin"
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 

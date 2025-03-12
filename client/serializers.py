@@ -332,7 +332,7 @@ class PermanentJobsSerializer(serializers.ModelSerializer):
 
 class FavouriteStaffSerializer(serializers.ModelSerializer):
     company = serializers.StringRelatedField(read_only=True)
-    staff = StaffSerializer(read_only=True, many=True)
+    staff = StaffSerializer(read_only=True)
     class Meta:
         model = FavouriteStaff
         fields = ['staff', 'company']    
