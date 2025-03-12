@@ -138,6 +138,12 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default='postgresql://matteo:YhG2Qs5c5I92yle0O7jFH9AVa6PsZ4f7@dpg-cujej9ggph6c73bev3p0-a.oregon-postgres.render.com/matteo'
+#     )
+# }
+
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0' 
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
@@ -203,7 +209,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    "https://b15f-103-174-189-33.ngrok-free.app"
     ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
@@ -233,8 +240,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = "mainbsl4@gmail.com"
 EMAIL_HOST_PASSWORD = "nmwk umma atdu sosv"
-EMAIL_PORT = 465  # SMTP port
-EMAIL_USE_SSL = True  # Use SSL for secure connection
+EMAIL_PORT = 465  
+EMAIL_USE_SSL = True
 
 
 # Stripe settings
@@ -273,7 +280,10 @@ UNFOLD = {
             {
                 "title": _("Super Admin"), 
                 "separator": True,  # Top border
-                "collapsible": False,  # Collapsible group of links
+                "collapsible": False, 
+                "SITE_TITLE": "Letme Administrator",
+                "SITE_HEADER": "Letme Admin Dashboard",
+                # "SITE_SUBHEADER": "Appears under SITE_HEADER",
                 "items": [
                     {
                         "title": _("Dashboard"),
