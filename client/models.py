@@ -278,7 +278,7 @@ class MyStaff(models.Model):
 
 class FavouriteStaff(models.Model):
     company = models.OneToOneField(CompanyProfile, on_delete=models.CASCADE)
-    staff = models.ManyToManyField(Staff, blank=True, related_name='favourites_staff')
+    staff = models.ForeignKey(Staff, blank=True, on_delete=models.CASCADE,related_name='favourites_staff')
 
     created_at = models.DateTimeField(auto_now_add=True)
 
