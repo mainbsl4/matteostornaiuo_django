@@ -25,8 +25,10 @@ from . models import (
 
 @admin.register(CompanyProfile)
 class CompanyProfileAdmin(ModelAdmin):
-    list_display = ('company_name', 'contact_number', 'company_email','company_address')
+    list_display = ('company_name', 'contact_number', 'company_email','tax_number','company_address', 'created_at')
     search_fields = ('company_name', 'contact_number', 'company_email', 'company_address')
+    list_per_page =  20
+    list_filter_sheet = False 
 
 class VacancyInline(StackedInline):  # or admin.StackedInline for a different layout
     model = Vacancy  
@@ -37,6 +39,7 @@ class VacancyInline(StackedInline):  # or admin.StackedInline for a different la
     )
     readonly_fields = ('salary',)
     show_change_link = True
+
     def get_queryset(self, request):
         # Optimize the queryset to reduce database queries
         return super().get_queryset(request).select_related('job_title', 'uniform').prefetch_related('skills', 'participants')
@@ -47,17 +50,24 @@ class JobAdmin(ModelAdmin):
     list_filter = ('status', 'company')
     search_fields = ('title', 'description', 'company__name')
     ordering = ('-created_at',)
+    list_per_page = 20
+    list_filter_sheet = False
     inlines = [VacancyInline]
-    # filter_horizontal = ('vacancy',)  # Improves ManyToMany selection UI
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('company')
+    
 
 @admin.register(Vacancy)
 class VacancyAdmin(ModelAdmin):
-    list_display = ('job_title', 'salary', 'job_status', 'open_date','start_time', 'close_date','end_time', 'shift_job')
+    list_display = ('job__title','job_title__name', 'salary', 'job_status', 'open_date','start_time', 'close_date','end_time')
     # list_filter = ('job_title','client__company_name')
-    search_fields = ('job_title__name',)
+    list_editable = ('job_status','open_date','close_date','start_time', 'end_time')
+    search_fields = ('job_title__name','job__title')
     ordering = ('-created_at',)
     date_hierarchy = 'open_date'
-    list_filter_sheet = False
+    list_filter = ('job_status','job_title','created_at','job')
+    # list_filter_sheet = False
     list_per_page = 50
     readonly_fields = ('salary',)
     
@@ -68,15 +78,12 @@ class VacancyAdmin(ModelAdmin):
 
 @admin.register(FavouriteStaff)
 class FavouriteStaffAdmin(ModelAdmin):
-    list_display = ('company','number_of_staff', 'created_at' ) 
+    list_display = ('company','staff', 'created_at' ) 
     list_filter = ('company__company_name',)
-    search_fields = ('company__company_name', 'staff__user__first_name', 'staff__user__last_name')
+    search_fields = ('company__company_name', 'staff__user__first_name', 'staff__user__last_name', 'staff__user__email')
     list_filter_sheet = False 
     list_per_page = 50
 
-    # show count of total staff
-    def number_of_staff(self, obj):
-        return obj.staff.count()
 @admin.register(JobTemplate)
 class JobTemplateAdmin(ModelAdmin):
     pass 
@@ -86,11 +93,13 @@ class JobTemplateAdmin(ModelAdmin):
 
 @admin.register(JobApplication)
 class JobApplicationAdmin(ModelAdmin):
-    list_display = ('applicant','vacancy__job_title', 'applicant__is_letme_staff', 'job_status',  'is_approve', 'created_at')
-    list_filter = ('is_approve', 'job_status', 'created_at')
-    search_fields = ('vacancy__job_title__name', 'applicant__user__first_name', 'applicant__user__email')
-    list_filter_sheet = False 
-    list_editable = ('is_approve',)
+    list_display = ('vacancy__job__title','applicant','vacancy__job_title','in_time', 'out_time','checkin_approve', 'checkout_approve','total_working_hours', 'applicant__is_letme_staff', 'job_status',  'is_approve', 'created_at')
+
+    list_filter = ('is_approve','checkin_approve', 'checkout_approve', 'job_status', 'created_at')
+    search_fields = ('vacancy__job__title','vacancy__job_title__name', 'applicant__user__first_name', 'applicant__user__email')
+    list_filter_sheet = True 
+    list_per_page = 20
+    # list_editable = ('is_approve',)
     
     # fieldset for checkin checout time 
     fieldsets = (
@@ -167,14 +176,9 @@ class JobReportAdmin(ModelAdmin):
     list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
     search_fields = ('job_application__vacancy__job_title__name','job_application__applicant__user__first_name', 'job_application__applicant__user__last_name')
     list_filter_sheet = False
-    list_filter = ('job_application__vacancy', 'job_application__applicant')
-
-#     resource_class = JobReportResource
-
-#     list_display = ('job_application__applicant', 'job_application__vacancy', 'working_hour', 'extra_hour', 'regular_pay','overtime_pay', 'total_pay')
-#     list_filter = ('job_application__vacancy__client','job_application__applicant')
-#     search_fields = ('job_application__applicant__user__first_name', 'job_application__applicant__user__last_name', 'job_application__vacancy__job_title')
-#     list_filter_sheet = False
+    list_filter = ( 'created_at',)
+    list_per_page = 20
+    date_hierarchy = 'created_at'
 
 
 

@@ -776,7 +776,7 @@ class FavouriteStaffView(APIView):
         company = get_object_or_404(CompanyProfile, user=user)
 
         if pk:
-            favourite = FavouriteStaff.objects.filter(company=company,pk=pk).first()
+            favourite = FavouriteStaff.objects.filter(company=company).select_related('company','staff')
             if favourite:
                 serializer = FavouriteStaffSerializer(favourite)
                 response = {
@@ -815,9 +815,26 @@ class FavouriteStaffView(APIView):
             }
             return Response(response, status=status.HTTP_403_FORBIDDEN)
         company = get_object_or_404(CompanyProfile, user=user)
-        favourite_staff,_ = FavouriteStaff.objects.get_or_create(company=company)
         try:
             staff = Staff.objects.get(id=pk)
+            favourite_staff = FavouriteStaff.objects.filter(company=company, staff=staff).first()
+            # if already added then remove it 
+            if favourite_staff:
+                favourite_staff.delete()
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Staff removed from favourites successfully"
+                }
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                favourite_staff = FavouriteStaff.objects.create(company=company, staff=staff)
+                response = {
+                    "status": status.HTTP_201_CREATED,
+                    "success": True,
+                    "message": "Staff added to favourites successfully"
+                }
+                return Response(response, status=status.HTTP_201_CREATED)
         except Staff.DoesNotExist:
             response = {
                 "status": status.HTTP_404_NOT_FOUND,
@@ -826,75 +843,6 @@ class FavouriteStaffView(APIView):
             }
             return Response(response,status=status.HTTP_404_NOT_FOUND)
         
-        # if data['action'] == 'add':
-        #     # check is staff already added
-        #     if staff in favourite_staff.staff.all():
-        #         response = {
-        #             "status": status.HTTP_400_BAD_REQUEST,
-        #             "success": False,
-        #             "message": "Staff is already a favourite"
-        #         }
-        #         return Response(response,status=status.HTTP_400_BAD_REQUEST)
-            
-        #     favourite_staff.staff.add(staff)
-        #     response = {
-        #         "status": status.HTTP_201_CREATED,
-        #         "success": True,
-        #         "message": "Staff added to favourites successfully"
-        #     }
-        #     return Response(response,status=status.HTTP_201_CREATED)
-        # elif data['action'] =='remove':
-        #     if staff in favourite_staff.staff.all():
-        #         favourite_staff.staff.remove(staff)
-        #         return Response({"message": "Favourite staff removed successfully"})
-        #     return Response({"message": "Staff is not a favourite"})
-        
-        if not staff in favourite_staff.staff.all():
-            favourite_staff.staff.add(staff)
-            response = {
-                "status": status.HTTP_201_CREATED,
-                "success": True,
-                "message": "Staff added to favourites successfully"
-            }
-            return Response(response, status=status.HTTP_201_CREATED)
-        elif staff in favourite_staff.staff.all():
-            favourite_staff.staff.remove(staff)
-            response = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "Favourite staff removed successfully"
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        
-
-
-    # def delete(self, request, pk, *args, **kwargs):
-    #     user = request.user
-    #     company = get_object_or_404(CompanyProfile, user=user)
-    #     favourite_staff = FavouriteStaff.objects.filter(company=company)
-        
-    #     try:
-    #         staff = Staff.objects.get(id=pk)
-    #         if staff in favourite_staff.favourites_staff.all():
-    #             favourite_staff.staff.remove(staff)
-    #             response = {
-    #                 "status": status.HTTP_200_OK,
-    #                 "success": True,
-    #                 "message": "Favourite staff removed successfully"
-    #             }
-    #             return Response(response, status=status.HTTP_200_OK)
-    #     except Staff.DoesNotExist:
-    #         response = {
-    #             "status": status.HTTP_404_NOT_FOUND,
-    #             "success": False,
-    #             "message": "Staff not found"
-    #         }
-    #         return Response(response, status=status.HTTP_404_NOT_FOUND)
-    #     response = {
-    #         "status": status.HTTP_400_BAD_REQUEST,
-    #         "success": False,
-    #         "message": "Failed to remove staff from favourites"
-    #     }
 
 class MyStaffView(APIView):
     def get(self, request, pk=None):
