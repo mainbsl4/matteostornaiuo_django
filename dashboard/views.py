@@ -188,12 +188,20 @@ class GetJobTemplateAPIView(APIView):
                     return Response(response_data, status=status.HTTP_200_OK)
                 else:
                     return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
-            job_template = JobTemplate.objects.filter(client=client)
-            serializer = JobTemplateSserializers(job_template, many=True)
+            templates = JobTemplate.objects.filter(client=client)
+            # serializer = JobTemplateSserializers(job_template, many=True)
+            template_list = []
+            for template in templates:
+                data = {
+                    "id": template.id,
+                    "name": template.name,
+                }
+                template_list.append(data)
+
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
-                "data": serializer.data,
+                "data": template_list,
             }
             return Response(response_data , status=status.HTTP_200_OK)
             
