@@ -94,6 +94,16 @@ class ExperienceSerializer(serializers.ModelSerializer):
 class StaffSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     avg_rating = serializers.SerializerMethodField(read_only=True, required=False)
+
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)  # Get dynamic fields if provided
+        super().__init__(*args, **kwargs)
+
+        if fields:
+            allowed = set(fields)
+            existing = set(self.fields.keys())
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
     class Meta:
         model = Staff
         fields = ['id','user', 'avg_rating','role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_available','is_letme_staff']

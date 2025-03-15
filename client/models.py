@@ -277,7 +277,7 @@ class MyStaff(models.Model):
         ordering = ['-created_at']
 
 class FavouriteStaff(models.Model):
-    company = models.OneToOneField(CompanyProfile, on_delete=models.CASCADE)
+    company = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
     staff = models.ForeignKey(Staff, blank=True, on_delete=models.CASCADE,related_name='favourites_staff')
 
     created_at = models.DateTimeField(auto_now_add=True)
