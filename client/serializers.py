@@ -333,6 +333,15 @@ class PermanentJobsSerializer(serializers.ModelSerializer):
 class FavouriteStaffSerializer(serializers.ModelSerializer):
     company = serializers.StringRelatedField(read_only=True)
     staff = StaffSerializer(read_only=True)
+    def __init__(self, *args, **kwargs):
+        fields = kwargs.pop('fields', None)  # Get dynamic fields if provided
+        super().__init__(*args, **kwargs)
+
+        if fields:
+            allowed = set(fields)
+            existing = set(self.fields.keys())
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
     class Meta:
         model = FavouriteStaff
         fields = ['staff', 'company']    
