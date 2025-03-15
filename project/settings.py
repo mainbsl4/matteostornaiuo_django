@@ -409,3 +409,13 @@ UNFOLD = {
     ],
 
 }
+
+
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://120b71450bcbaed97a865803a841fb23@o4508216826855424.ingest.us.sentry.io/4508980703657984",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
