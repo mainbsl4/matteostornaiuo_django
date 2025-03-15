@@ -725,12 +725,25 @@ class FavouriteStaffView(APIView):
             }
             return Response(response,status=status.HTTP_404_NOT_FOUND)
         
-        serializer = StaffSerializer(favourites, many=True, fields=['staff'])
+        # serializer = FavouriteStaffSerializer(favourites, many=True, fields=['staff'])
+        staff_list = []
+        for staff in favourites:
+            data = {
+                "id": staff.staff.id,
+                "first_name": staff.staff.user.first_name,
+                "last_name": staff.staff.user.last_name,
+                "avatar": staff.staff.avatar.url if staff.staff.avatar else None,
+                "role": staff.staff.role.name,
+                # "experience": staff.staff.experience.all(),
+                "age": staff.staff.age,
+            }
+            staff_list.append(data)
+
         response = {
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "List of favourite staff",
-            "data": serializer.data
+            "data": staff_list
         }
         return Response(response,status=status.HTTP_200_OK)
     
