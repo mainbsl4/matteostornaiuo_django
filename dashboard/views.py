@@ -175,7 +175,7 @@ class GetJobTemplateAPIView(APIView):
     def get(self, request, pk=None):
         user = request.user 
         if user.is_client:
-            client = user.profiles 
+            client = CompanyProfile.objects.filter(user=user).first()
             if pk:
                 job_template = JobTemplate.objects.filter(client=client, pk=pk).first()
                 if job_template:
@@ -190,6 +190,9 @@ class GetJobTemplateAPIView(APIView):
                     return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
             templates = JobTemplate.objects.filter(client=client)
             # serializer = JobTemplateSserializers(job_template, many=True)
+            if not templates.exists():
+                return Response({"message": "No job template found"}, status=status.HTTP_404_NOT_FOUND)
+            
             template_list = []
             for template in templates:
                 data = {
@@ -204,4 +207,5 @@ class GetJobTemplateAPIView(APIView):
                 "data": template_list,
             }
             return Response(response_data , status=status.HTTP_200_OK)
+        return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
             
