@@ -69,7 +69,9 @@ class FeedJobView(APIView):
             
             job_status = request.query_params.get('status', None)
             open_date = request.query_params.get('date', None)
+            time = request.query_params.get('time', None)
             search = request.query_params.get('search', None)
+            location = request.query_params.get('location', None)
 
             # Start with the base queryset
             vacancies = Vacancy.objects.filter(job__company=client).select_related(
@@ -81,7 +83,7 @@ class FeedJobView(APIView):
             if search:
                 vacancies = vacancies.filter(
                     Q(job__title__icontains=search) |  # Search job title
-                    Q(location__icontains=search) |
+                    # Q(location__icontains=search) |
                     Q(skills__name__icontains=search) |
                     Q(job_title__name__icontains=search)  # Search job location
                 ).distinct()
@@ -90,23 +92,37 @@ class FeedJobView(APIView):
             if job_status:
                 vacancies = vacancies.filter(job_status=job_status)
 
+            if location:
+                vacancies = vacancies.filter(location=location)
             # Filter by open_date if provided
             if open_date:
                 try:
                     # Assuming open_date is in 'YYYY-MM-DD' format
                     open_date = datetime.strptime(open_date, '%Y-%m-%d').date()
-                    vacancies = vacancies.filter(open_date=open_date)
+                    vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=open_date))
                 except ValueError:
                     return Response(
                         {"error": "Invalid open_date format, expected YYYY-MM-DD."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+                
+            if time:
+                try:
+                    # Assuming time is in 'HH:MM' format
+                    time = datetime.strptime(time, '%H:%M').time()
+                    vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time))
+                except ValueError:
+                    return Response(
+                        {"error": "Invalid time format, expected HH:MM."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
             if not vacancies.exists():
                 return Response(
                     {"error": "No vacancies found matching the provided filters."},
                     status=status.HTTP_404_NOT_FOUND
                 )
-
+            # Pagination
             paginator = PageNumberPagination()
             paginator.page_size= 5
             vacancies = paginator.paginate_queryset(vacancies,request) 
@@ -128,7 +144,7 @@ class FeedJobView(APIView):
                     "id": vacancy.id,
                     "job_status": vacancy.job_status,
                     "job_title": vacancy.job.title,
-                    "company_logo": vacancy.job.company.company_logo or None,
+                    "company_logo": vacancy.job.company.company_logo.url or None,
                     "number_of_staff": vacancy.number_of_staff,
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
@@ -136,7 +152,7 @@ class FeedJobView(APIView):
                         staff.applicant.avatar.url if staff.applicant.avatar else None for staff in applications
                         
                     ],
-                    "application_status": [get_application_status(vacancy)],
+                    "application_status": get_application_status(vacancy),
                 }
                 job_list.append(data)
 
