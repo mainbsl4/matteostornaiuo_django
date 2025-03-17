@@ -72,7 +72,7 @@ class FeedJobView(APIView):
             time = request.query_params.get('time', None)
             search = request.query_params.get('search', None)
             location = request.query_params.get('location', None)
-
+            
             # Start with the base queryset
             vacancies = Vacancy.objects.filter(job__company=client).select_related(
                 'job', 'job_title', 'uniform'
@@ -90,10 +90,22 @@ class FeedJobView(APIView):
 
             # Filter by job_status if provided
             if job_status:
-                vacancies = vacancies.filter(job_status=job_status)
+                try:
+                    vacancies = vacancies.filter(job_status=job_status)
+                except ValueError:
+                    return Response(
+                        {"error": "Invalid job_status format."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
             if location:
-                vacancies = vacancies.filter(location=location)
+                try:
+                    vacancies = vacancies.filter(location=location)
+                except ValueError:
+                    return Response(
+                        {"error": "Invalid location format."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             # Filter by open_date if provided
             if open_date:
                 try:
@@ -109,7 +121,7 @@ class FeedJobView(APIView):
             if time:
                 try:
                     # Assuming time is in 'HH:MM' format
-                    time = datetime.strptime(time, '%H:%M').time()
+                    time = datetime.strptime(time, '%H:%M:%S').time()
                     vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time))
                 except ValueError:
                     return Response(
