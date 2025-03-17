@@ -355,11 +355,11 @@ class MyStaffSerializer(serializers.ModelSerializer):
 
 class JobTemplateSserializers(serializers.ModelSerializer):
     name = serializers.StringRelatedField(read_only=True)
-    client = CompanyProfileSerializer(read_only=True)
+    # client = CompanyProfileSerializer(read_only=True)
     job = JobSerializer(read_only=True)
     class Meta:
         model = JobTemplate
-        fields = ['id','name', 'client', 'job']
+        fields = ['id','name', 'job']
 
 
 class CompanyReviewSerializer(serializers.ModelSerializer):
