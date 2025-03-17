@@ -197,7 +197,7 @@ STATIC_URL = "/static/"
 STATICFILE_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
@@ -212,7 +212,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
     'http://localhost:5173',
-    "https://b15f-103-174-189-33.ngrok-free.app"
+    "https://f060-103-174-189-33.ngrok-free.app"
     ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
