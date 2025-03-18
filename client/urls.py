@@ -17,7 +17,7 @@ urlpatterns = [
     # favourite staff 
 
     path('company/staff/favourites/', views.FavouriteStaffView.as_view()),
-    # path('company/staff/favourites/<int:pk>/', views.FavouriteStaffView.as_view()),
+    path('company/staff/favourites/<int:pk>/', views.FavouriteStaffView.as_view()),
     # my staff
 
     path('company/staff/own/', views.MyStaffView.as_view()),

@@ -115,12 +115,12 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -129,16 +129,16 @@ WSGI_APPLICATION = "project.wsgi.application"
 # }
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'matteostornaiuo',
-        'USER': 'matteostornaiuo',
-        'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '51.20.35.242',
-        'PORT': '5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'matteostornaiuo',
+#         'USER': 'matteostornaiuo',
+#         'PASSWORD': 'matteostornaiuo@AA',
+#         'HOST': '51.20.35.242',
+#         'PORT': '5432',
+#     }
+# }
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -197,7 +197,7 @@ STATIC_URL = "/static/"
 STATICFILE_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')

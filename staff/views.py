@@ -202,7 +202,7 @@ class JobApplicationView(APIView):
                 "status": status.HTTP_201_CREATED,
                 "success": True,
                 "message": "Job application created successfully",
-                "data": JobApplicationSerializer(application).data
+                # "data": JobApplicationSerializer(application).data
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         # user must be a staff instance
