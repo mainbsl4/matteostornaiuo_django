@@ -8,9 +8,6 @@ from dateutil.relativedelta import relativedelta
 
 from users.models import JobRole, Skill
 
-
-
-
 User = get_user_model()
 
 

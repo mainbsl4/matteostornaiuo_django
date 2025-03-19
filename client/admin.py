@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from django.contrib.admin import DateFieldListFilter
 from unfold.admin import ModelAdmin, TabularInline, StackedInline
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 from import_export.admin import ImportExportModelAdmin
@@ -154,29 +155,42 @@ class MyStaffAdmin(ModelAdmin):
     list_filter = ('status', 'client__company_name')
 
 
-# class JobReportResource(resources.ModelResource):
-#     applicant_name = fields.Field(column_name='Applicant Name')
+class JobReportResource(resources.ModelResource):
+    applicant_name = fields.Field(column_name='Applicant Name')
+    job_title = fields.Field(column_name='Job Title', attribute='job_application__vacancy__job__title')
+    vacancy_title = fields.Field(column_name='Vacancy Title', attribute='job_application__vacancy__job_title__name')
+    company = fields.Field(column_name='Company', attribute='job_application__vacancy__job__company__company_name')
+    working_hour = fields.Field(column_name='Working Hour', attribute='working_hour')
+    extra_hour = fields.Field(column_name='Extra Hour', attribute='extra_hour')
+    regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
+    overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
+    tips = fields.Field(column_name='Tips', attribute='tips')
+    tax = fields.Field(column_name='Tax', attribute='tax')
+    total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
+    created_at = fields.Field(column_name='Created At', attribute='created_at')
 
-#     def dehydrate_applicant_name(self, job_report):
-#         return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
+    def dehydrate_applicant_name(self, job_report):
+        return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
 
-#     vacancy_title = fields.Field(column_name='Vacancy Title', attribute='job_application__vacancy__job_title')
-#     working_hour = fields.Field(column_name='Working Hour', attribute='working_hour')
-#     extra_hour = fields.Field(column_name='Extra Hour', attribute='extra_hour')
-#     regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
-#     overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
-#     total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
-
-#     class Meta:
-#         model = JobReport
-#         fields = ('applicant_name', 'vacancy_title', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'total_pay')
+    class Meta:
+        model = JobReport
+        fields = ('applicant_name', 'job_title', 'vacancy_title', 'company', 'working_hour', 
+                 'extra_hour', 'regular_pay', 'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at')
+        export_order = fields
 
 @admin.register(JobReport)
-class JobReportAdmin(ModelAdmin):
-    list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
-    search_fields = ('job_application__vacancy__job_title__name','job_application__applicant__user__first_name', 'job_application__applicant__user__last_name')
+class JobReportAdmin(ImportExportModelAdmin, ModelAdmin):
+    resource_class = JobReportResource
+    
+    list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 
+                    'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
+    search_fields = ('job_application__vacancy__job_title__name',
+                    'job_application__applicant__user__first_name', 
+                    'job_application__applicant__user__last_name')
+    list_filter = (
+        'created_at',
+    )
     list_filter_sheet = False
-    list_filter = ( 'created_at',)
     list_per_page = 20
     date_hierarchy = 'created_at'
 
