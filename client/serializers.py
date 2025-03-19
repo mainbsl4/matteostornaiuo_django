@@ -3,7 +3,7 @@ from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
 from django.db.models import Avg
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from users.serializers import SkillSerializer, JobRoleSerializer, UniformSerializer
 from users.models import Skill
@@ -125,20 +125,78 @@ class CreateVacancySerializers(serializers.ModelSerializer):
         skills = validated_data.pop('skills',[])
         invited_staff_id = validated_data.pop('invited_staff',[])
         # invited_staff_ids = validated_data.pop('invited_staff', [])
-        vacancy = Vacancy.objects.create(
-            **validated_data
-        )
-        vacancy.skills.set(skills)
-
-        for staff in invited_staff_id:
+        open_date = validated_data.get('open_date')
+        close_date = validated_data.get('close_date')
+        # if open date and close date duration is more than one day 
+        if open_date and close_date:
+            if (close_date - open_date).days > 1:
+                # count how many days
+                days = (close_date - open_date).days
+                # create vacancy for each day
+                for day in range(days+1):
+                    date = open_date + timedelta(days=day)
+                    validated_data['open_date'] = date
+                    validated_data['close_date'] = date
+                    vacancy = Vacancy.objects.create(
+                        **validated_data
+                    )
+                    vacancy.skills.set(skills)
+                    # send notifications to the invited staff
+                    for staff in invited_staff_id:
+                        # send notifications to the invited staff
+                        staff = Staff.objects.filter(id=staff).first()
+                        if staff:
+                            Notification.objects.create(
+                                user= staff.user,
+                                message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+                            )
+                return vacancy
+            # else:
+            #     # create vacancy for the given date
+            #     vacancy = Vacancy.objects.create(
+            #         **validated_data
+            #     )
+            #     vacancy.skills.set(skills)
+            #     # send notifications to the invited staff
+            #     for staff in invited_staff_id:
+            #         # send notifications to the invited staff
+            #         staff = Staff.objects.filter(id=staff).first()
+            #         if staff:
+            #             Notification.objects.create(
+            #                 user= staff.user,
+            #                 message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+            #             )
+            #     return vacancy
+        else:
+            # create vacancy for the given date
+            vacancy = Vacancy.objects.create(
+                **validated_data
+            )
+            vacancy.skills.set(skills)
             # send notifications to the invited staff
-            staff = Staff.objects.filter(id=staff).first()
-            if staff:
-                Notification.objects.create(
-                    user= staff.user,
-                    message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-                )
-        return vacancy
+            for staff in invited_staff_id:
+                # send notifications to the invited staff
+                staff = Staff.objects.filter(id=staff).first()
+                if staff:
+                    Notification.objects.create(
+                        user= staff.user,
+                        message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+                    )
+            return vacancy
+        # vacancy = Vacancy.objects.create(
+        #     **validated_data
+        # )
+        # vacancy.skills.set(skills)
+
+        # for staff in invited_staff_id:
+        #     # send notifications to the invited staff
+        #     staff = Staff.objects.filter(id=staff).first()
+        #     if staff:
+        #         Notification.objects.create(
+        #             user= staff.user,
+        #             message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+        #         )
+        # return vacancy
     
 class JobSerializer(serializers.ModelSerializer):
     vacancy_data = serializers.ListField(
