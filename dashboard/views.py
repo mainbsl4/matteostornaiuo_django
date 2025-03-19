@@ -226,6 +226,7 @@ class GetJobTemplateAPIView(APIView):
                 data = {
                     "id": template.id,
                     "name": template.name,
+                    "description": template.job.description
                 }
                 template_list.append(data)
 
