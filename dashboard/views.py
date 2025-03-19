@@ -80,6 +80,11 @@ class FeedJobView(APIView):
                 'skills', 'participants'
             ).order_by('open_date', 'start_time')
 
+            if not vacancies.exists():
+                return Response(
+                    {"error": "No vacancies found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             if search:
                 vacancies = vacancies.filter(
                     Q(job__title__icontains=search) |  # Search job title
