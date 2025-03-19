@@ -11,9 +11,6 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-
-
-
 from .models import (
     CompanyProfile,
     JobTemplate,
@@ -28,8 +25,6 @@ from .models import (
     MyStaff,
     JobReport,
     CompanyReview
-
-
 
 )
 
@@ -237,7 +232,7 @@ class JobView(APIView):
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job created successfully",
-                "data": serializer.data
+                # "data": serializer.data
             }
             return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -716,12 +711,12 @@ class FavouriteStaffView(APIView):
         company = get_object_or_404(CompanyProfile, user=user)
 
         favourites = FavouriteStaff.objects.filter(company = company)
-        print('fav ', favourites)
         if not favourites:
             response = {
                 "status": status.HTTP_404_NOT_FOUND,
                 "success": False,
-                "message": "Favourite staff not found"
+                "message": "Favourite staff not found",
+                "data"   : []
             }
             return Response(response,status=status.HTTP_404_NOT_FOUND)
         
@@ -770,7 +765,6 @@ class FavouriteStaffView(APIView):
             return Response(response,status=status.HTTP_404_NOT_FOUND)
         
         favourite_staff = FavouriteStaff.objects.filter(company=company, staff=staff).first() 
-        print('fav staff', favourite_staff)
 
         # if already added then remove it 
         if favourite_staff:
