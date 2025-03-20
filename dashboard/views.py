@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from datetime import date 
 from datetime import datetime 
-from django.db.models import Q 
+from django.db.models import Q , Count , Prefetch
 
 from rest_framework import status, generics 
 from rest_framework.views import APIView
@@ -62,10 +62,25 @@ class SkillView(APIView):
     
 
 class FeedJobView(APIView):
-    def get(self, request,pk=None, *args, **kwargs):
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            vacancy = Vacancy.objects.filter(pk=pk).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').first()
+            if not vacancy:
+                return Response({"error": "Vacancy not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = VacancySerializer(vacancy)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "data": serializer.data,
+            }
+            return Response(response)
+        
         user = request.user
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
+            if not client:
+                return Response({"error": "Client profile not found."}, status=status.HTTP_404_NOT_FOUND)
             
             job_status = request.query_params.get('status', None)
             open_date = request.query_params.get('date', None)
@@ -73,48 +88,27 @@ class FeedJobView(APIView):
             search = request.query_params.get('search', None)
             location = request.query_params.get('location', None)
             
-            # Start with the base queryset
             vacancies = Vacancy.objects.filter(job__company=client).select_related(
                 'job', 'job_title', 'uniform'
             ).prefetch_related(
                 'skills', 'participants'
             ).order_by('open_date', 'start_time')
 
-            if not vacancies.exists():
-                return Response(
-                    {"error": "No vacancies found."},
-                    status=status.HTTP_404_NOT_FOUND
-                )
             if search:
                 vacancies = vacancies.filter(
-                    Q(job__title__icontains=search) |  # Search job title
-                    # Q(location__icontains=search) |
+                    Q(job__title__icontains=search) |
                     Q(skills__name__icontains=search) |
-                    Q(job_title__name__icontains=search)  # Search job location
+                    Q(job_title__name__icontains=search)
                 ).distinct()
 
-            # Filter by job_status if provided
             if job_status:
-                try:
-                    vacancies = vacancies.filter(job_status=job_status)
-                except ValueError:
-                    return Response(
-                        {"error": "Invalid job_status format."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                vacancies = vacancies.filter(job_status=job_status)
 
             if location:
-                try:
-                    vacancies = vacancies.filter(location=location)
-                except ValueError:
-                    return Response(
-                        {"error": "Invalid location format."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            # Filter by open_date if provided
+                vacancies = vacancies.filter(location=location)
+
             if open_date:
                 try:
-                    # Assuming open_date is in 'YYYY-MM-DD' format
                     open_date = datetime.strptime(open_date, '%Y-%m-%d').date()
                     vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=open_date))
                 except ValueError:
@@ -125,7 +119,6 @@ class FeedJobView(APIView):
                 
             if time:
                 try:
-                    # Assuming time is in 'HH:MM' format
                     time = datetime.strptime(time, '%H:%M:%S').time()
                     vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time))
                 except ValueError:
@@ -139,24 +132,23 @@ class FeedJobView(APIView):
                     {"error": "No vacancies found matching the provided filters."},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            # Pagination
-            paginator = PageNumberPagination()
-            paginator.page_size= 5
-            vacancies = paginator.paginate_queryset(vacancies,request) 
-            job_list = []
-            def get_application_status(obj):
-                # return the count of each job status 
-                job_application = JobApplication.objects.filter(vacancy=obj)
-                pending = job_application.filter(job_status='pending').count()
-                accepted = job_application.filter(job_status='accepted').count()
-                rejected = job_application.filter(job_status='rejected').count()
-                expierd = job_application.filter(job_status='expired').count()
-                return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
-        
+            
+            # Prefetch related JobApplications and annotate counts
+            vacancies = vacancies.prefetch_related(
+                Prefetch('jobapplication_set', queryset=JobApplication.objects.only('applicant__avatar'))
+            ).annotate(
+                pending_applications=Count('jobapplication', filter=Q(jobapplication__job_status='pending')),
+                accepted_applications=Count('jobapplication', filter=Q(jobapplication__job_status='accepted')),
+                rejected_applications=Count('jobapplication', filter=Q(jobapplication__job_status='rejected')),
+                expired_applications=Count('jobapplication', filter=Q(jobapplication__job_status='expired'))
+            )
 
-            for vacancy in vacancies:
-                applications = JobApplication.objects.filter(vacancy=vacancy).only('applicant__avatar')
-                
+            paginator = PageNumberPagination()
+            paginator.page_size = 5
+            paginated_vacancies = paginator.paginate_queryset(vacancies, request)
+            
+            job_list = []
+            for vacancy in paginated_vacancies:
                 data = {
                     "id": vacancy.id,
                     "job_status": vacancy.job_status,
@@ -166,42 +158,35 @@ class FeedJobView(APIView):
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
                     "applicant": [
-                        staff.applicant.avatar.url if staff.applicant.avatar else None for staff in applications
-                        
+                        app.applicant.avatar.url if app.applicant.avatar else None for app in vacancy.jobapplication_set.all()
                     ],
-                    "application_status": get_application_status(vacancy),
+                    "application_status": {
+                        "pending": vacancy.pending_applications,
+                        "accepted": vacancy.accepted_applications,
+                        "rejected": vacancy.rejected_applications,
+                        "expired": vacancy.expired_applications
+                    },
                 }
                 job_list.append(data)
 
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
-                "total_objects": paginator.page.paginator.count,  # Total vacancies
-                "total_pages": paginator.page.paginator.num_pages,  # Total pages
+                "total_objects": paginator.page.paginator.count,
+                "total_pages": paginator.page.paginator.num_pages,
                 "current_page": paginator.page.number,
                 "data": job_list,
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
-        if pk:
-            vacancy = Vacancy.objects.filter(pk=pk).select_related('job','job_title','uniform').prefetch_related('skills','participants').first()
-            serializer = VacancySerializer(vacancy)
-            response = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "data": serializer.data,
-            }
-            return Response(response)
-        
-        vacancy = Vacancy.objects.filter(job_status='active').select_related('job','job_title', 'uniform').prefetch_related('skills', 'participants').order_by('open_date', 'start_time')
-        serializer = VacancySerializer(vacancy, many=True)
+        vacancies = Vacancy.objects.filter(job_status='active').select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').order_by('open_date', 'start_time')
+        serializer = VacancySerializer(vacancies, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
             "data": serializer.data,
         }
         return Response(response_data, status=status.HTTP_200_OK)
-        
     
 
 class GetJobTemplateAPIView(APIView):
