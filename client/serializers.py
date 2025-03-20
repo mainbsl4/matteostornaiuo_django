@@ -266,7 +266,6 @@ class JobSerializer(serializers.ModelSerializer):
                         # raise error
                         raise serializers.ValidationError(vacancy_serializer.errors)
                 else:
-                    print('instance', instance, instance.pk)
                     # create new vacancy
                     vacancy_item['job'] = instance.id
                     vacancy_serializer = CreateVacancySerializers(data=vacancy_item)
