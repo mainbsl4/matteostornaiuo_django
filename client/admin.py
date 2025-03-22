@@ -165,7 +165,7 @@ class JobReportResource(resources.ModelResource):
     regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
     overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
     tips = fields.Field(column_name='Tips', attribute='tips')
-    tax = fields.Field(column_name='Tax', attribute='tax')
+    # tax = fields.Field(column_name='Tax', attribute='tax')
     total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
     created_at = fields.Field(column_name='Created At', attribute='created_at')
 
@@ -183,7 +183,7 @@ class JobReportAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = JobReportResource
     
     list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 
-                    'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
+                    'overtime_pay', 'tips', 'total_pay', 'created_at']
     search_fields = ('job_application__vacancy__job_title__name',
                     'job_application__applicant__user__first_name', 
                     'job_application__applicant__user__last_name')

@@ -150,23 +150,8 @@ class CreateVacancySerializers(serializers.ModelSerializer):
                                 user= staff.user,
                                 message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
                             )
-                return vacancy
-            # else:
-            #     # create vacancy for the given date
-            #     vacancy = Vacancy.objects.create(
-            #         **validated_data
-            #     )
-            #     vacancy.skills.set(skills)
-            #     # send notifications to the invited staff
-            #     for staff in invited_staff_id:
-            #         # send notifications to the invited staff
-            #         staff = Staff.objects.filter(id=staff).first()
-            #         if staff:
-            #             Notification.objects.create(
-            #                 user= staff.user,
-            #                 message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-            #             )
-            #     return vacancy
+            return vacancy
+            
         else:
             # create vacancy for the given date
             vacancy = Vacancy.objects.create(
@@ -183,20 +168,6 @@ class CreateVacancySerializers(serializers.ModelSerializer):
                         message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
                     )
             return vacancy
-        # vacancy = Vacancy.objects.create(
-        #     **validated_data
-        # )
-        # vacancy.skills.set(skills)
-
-        # for staff in invited_staff_id:
-        #     # send notifications to the invited staff
-        #     staff = Staff.objects.filter(id=staff).first()
-        #     if staff:
-        #         Notification.objects.create(
-        #             user= staff.user,
-        #             message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-        #         )
-        # return vacancy
     
 class JobSerializer(serializers.ModelSerializer):
     vacancy_data = serializers.ListField(
