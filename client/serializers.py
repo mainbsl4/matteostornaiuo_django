@@ -124,79 +124,22 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     def create(self, validated_data):
         skills = validated_data.pop('skills',[])
         invited_staff_id = validated_data.pop('invited_staff',[])
-        # invited_staff_ids = validated_data.pop('invited_staff', [])
-        open_date = validated_data.get('open_date')
-        close_date = validated_data.get('close_date')
-        # if open date and close date duration is more than one day 
-        if open_date and close_date:
-            if (close_date - open_date).days > 1:
-                # count how many days
-                days = (close_date - open_date).days
-                # create vacancy for each day
-                for day in range(days+1):
-                    date = open_date + timedelta(days=day)
-                    validated_data['open_date'] = date
-                    validated_data['close_date'] = date
-                    vacancy = Vacancy.objects.create(
-                        **validated_data
-                    )
-                    vacancy.skills.set(skills)
-                    # send notifications to the invited staff
-                    for staff in invited_staff_id:
-                        # send notifications to the invited staff
-                        staff = Staff.objects.filter(id=staff).first()
-                        if staff:
-                            Notification.objects.create(
-                                user= staff.user,
-                                message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-                            )
-                return vacancy
-            # else:
-            #     # create vacancy for the given date
-            #     vacancy = Vacancy.objects.create(
-            #         **validated_data
-            #     )
-            #     vacancy.skills.set(skills)
-            #     # send notifications to the invited staff
-            #     for staff in invited_staff_id:
-            #         # send notifications to the invited staff
-            #         staff = Staff.objects.filter(id=staff).first()
-            #         if staff:
-            #             Notification.objects.create(
-            #                 user= staff.user,
-            #                 message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-            #             )
-            #     return vacancy
-        else:
-            # create vacancy for the given date
-            vacancy = Vacancy.objects.create(
-                **validated_data
-            )
-            vacancy.skills.set(skills)
-            # send notifications to the invited staff
-            for staff in invited_staff_id:
-                # send notifications to the invited staff
-                staff = Staff.objects.filter(id=staff).first()
-                if staff:
-                    Notification.objects.create(
-                        user= staff.user,
-                        message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-                    )
-            return vacancy
-        # vacancy = Vacancy.objects.create(
-        #     **validated_data
-        # )
-        # vacancy.skills.set(skills)
 
-        # for staff in invited_staff_id:
-        #     # send notifications to the invited staff
-        #     staff = Staff.objects.filter(id=staff).first()
-        #     if staff:
-        #         Notification.objects.create(
-        #             user= staff.user,
-        #             message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
-        #         )
-        # return vacancy
+        vacancy = Vacancy.objects.create(
+            **validated_data
+        )
+
+        vacancy.skills.set(skills)
+        # send notifications to the invited staff
+        for staff in invited_staff_id:
+            # send notifications to the invited staff
+            staff = Staff.objects.filter(id=staff).first()
+            if staff:
+                Notification.objects.create(
+                    user= staff.user,
+                    message = f'You are invited to {vacancy.job.title} at {vacancy.open_date}. go to the job description.'
+                )
+        return vacancy
     
 class JobSerializer(serializers.ModelSerializer):
     vacancy_data = serializers.ListField(
@@ -214,6 +157,8 @@ class JobSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         vacancy_data = validated_data.pop('vacancy_data',[])
         save_in_template = validated_data.get('save_template')
+
+        print('vacancy_data', vacancy_data)
         # user must be is client
         if not user.is_client:
             return serializers.ValidationError("Only clients can update jobs.")
@@ -223,13 +168,38 @@ class JobSerializer(serializers.ModelSerializer):
         job = Job.objects.create(**validated_data)
         
         for vacancy in vacancy_data:
-            vacancy['job'] = job.id
-            vacancy_serializer = CreateVacancySerializers(data=vacancy)
-            if vacancy_serializer.is_valid():
-                vacancy_serializer.save()
+            start_date = vacancy.get('open_date')
+            end_date = vacancy.get('close_date')
+
+            if isinstance(start_date, str):
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            if isinstance(end_date, str):
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+            if start_date and end_date:
+                current_date = start_date
+                while current_date <= end_date:
+                    vacancy_copy = vacancy.copy()
+                    vacancy_copy['open_date'] = current_date
+                    vacancy_copy['close_date'] = current_date
+                    vacancy_copy['job'] = job.id
+
+                    print('vacancy copy', vacancy_copy)
+                    vacancy_serializer = CreateVacancySerializers(data=vacancy_copy)
+                    if vacancy_serializer.is_valid():
+                        vacancy_serializer.save()
+                    else:
+                        return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    print('current', current_date)
+                    current_date = current_date + timedelta(days=1)
+
             else:
-                # raise error
-                return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                vacancy['job'] = job.id
+                vacancy_serializer = CreateVacancySerializers(data=vacancy)
+                if vacancy_serializer.is_valid():
+                    vacancy_serializer.save()
+                else:
+                    return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if save_in_template:
             JobTemplate.objects.create(client=user.profiles, job=job)
