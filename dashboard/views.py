@@ -64,17 +64,22 @@ class SkillView(APIView):
 class FeedJobView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         if pk:
+            user = request.user
+
             vacancy = Vacancy.objects.filter(pk=pk).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').first()
+                
             if not vacancy:
                 return Response({"error": "Vacancy not found."}, status=status.HTTP_404_NOT_FOUND)
             
-            serializer = VacancySerializer(vacancy)
-            response = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "data": serializer.data,
-            }
-            return Response(response)
+            if vacancy.job.company.user == user:
+                serializer = VacancySerializer(vacancy)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "data": serializer.data,
+                }
+                return Response(response)
+            
         
         user = request.user
         if user.is_client:

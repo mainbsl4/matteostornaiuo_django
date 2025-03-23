@@ -2,6 +2,7 @@ from django.shortcuts import render, HttpResponse
 
 from users.models import User
 from client.models import CompanyProfile
+from staff.models import Staff
 
 
 def home(request):
@@ -24,3 +25,6 @@ def dashboard_callback(request, context):
     return context
 
 
+def available_staff_badge(request):
+    available_staff_count = Staff.objects.filter(is_available=True).count()
+    return str(available_staff_count)

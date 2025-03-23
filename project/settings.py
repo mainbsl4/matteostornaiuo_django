@@ -264,10 +264,6 @@ STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 # CELERY_TASK_SERIALIZER = 'json'
 
 
-# CRONJOBS = [
-#     ('0 0 * * *', 'jobs.management.commands.expire_jobs.Command', '>> /tmp/cron_log.log 2>&1'),
-# ]
-
 
 UNFOLD = {
     
@@ -282,7 +278,7 @@ UNFOLD = {
             {
                 "title": _("Super Admin"), 
                 "separator": True,  # Top border
-                "collapsible": False, 
+                "collapsible": True, 
                 "SITE_TITLE": "Letme Administrator",
                 "SITE_HEADER": "Letme Admin Dashboard",
                 # "SITE_SUBHEADER": "Appears under SITE_HEADER",
@@ -291,7 +287,7 @@ UNFOLD = {
                         "title": _("Dashboard"),
                         "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
                         "link": reverse_lazy("admin:index"),
-                        # "badge": "sample_app.badge_callback",
+                        # "badge": "homedashbord.views.available_staff_badge",
                         "permission": lambda request: request.user.is_superuser,
                     },
                     {
@@ -381,6 +377,7 @@ UNFOLD = {
                     {
                         "title": _("Staff"),
                         "icon": "id_card",
+                        "badge": "homedashbord.views.available_staff_badge",
                         "link": reverse_lazy("admin:staff_staff_changelist"),
                     },
                     {
@@ -410,12 +407,3 @@ UNFOLD = {
 
 }
 
-
-import sentry_sdk
-
-sentry_sdk.init(
-    dsn="https://120b71450bcbaed97a865803a841fb23@o4508216826855424.ingest.us.sentry.io/4508980703657984",
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
