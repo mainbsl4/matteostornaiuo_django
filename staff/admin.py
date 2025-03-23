@@ -31,18 +31,22 @@ class StaffResource(resources.ModelResource):
     class Meta:
         model = Staff
         fields = ('user__first_name', 'user__last_name', 'phone', 'role', 'nid_number', 
-                 'age', 'gender', 'country', 'is_letme_staff', 'created_at')
+                'age', 'gender', 'country', 'is_letme_staff', 'created_at')
 
 @admin.register(Staff)
 class StaffAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = StaffResource
-    list_display = ('user__first_name','user__last_name', 'phone','role','nid_number','age','gender','country','is_letme_staff','created_at')
+    list_display = ('user__first_name','user__last_name', 'phone','role','nid_number','age','gender','country','is_available','created_at')
     search_fields = ('user__first_name', 'user__last_name', 'user__email', 'phone','role__name','gender', 'country')
     list_filter = ('role__name', 'gender','country', 'is_letme_staff', )
     list_filter_sheet = False
     list_per_page = 50
     list_display_links = ('user__first_name','user__last_name')
     inlines = [BankDetailsInline]
+    # change_list_template = "admin/staff_changelist.html"
+
+    def has_import_permission(self, request):
+        return False
 
     def get_changelist_instance(self, request):
         cl = super().get_changelist_instance(request)
@@ -50,6 +54,17 @@ class StaffAdmin(ImportExportModelAdmin, ModelAdmin):
             if filter_spec.field_path == "role__name":  # Use `field_path` instead
                 filter_spec.title = "role " 
         return cl
+    
+    # def changelist_view(self, request, extra_context=None):
+    #     # Calculate staff counts
+    #     total_staff = Staff.objects.count()
+    #     letme_staff_count = Staff.objects.filter(is_letme_staff=True).count()
+    #     # Pass the counts to the template context
+    #     extra_context = extra_context or {}
+    #     extra_context['total_staff'] = total_staff
+    #     extra_context['letme_staff_count'] = letme_staff_count
+
+    #     return super().changelist_view(request, extra_context=extra_context)
 
     
 

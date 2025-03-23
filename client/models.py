@@ -101,7 +101,7 @@ class Vacancy(models.Model):
     def calculate_salary(self):
         # calculate hour form start and end time
         hours = (self.end_time.hour - self.start_time.hour) + (self.end_time.minute - self.start_time.minute) / 60
-        self.salary = (self.job_title.staff_price * hours) 
+        self.salary = (self.job_title.staff_price * hours * self.number_of_staff) 
         return self.salary
     
     # set salary in save method
@@ -298,7 +298,7 @@ class JobReport(models.Model):
     extra_hour = models.IntegerField(null=True, blank=True)
     regular_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)
     overtime_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)
-    tax = models.DecimalField(null=True,  decimal_places=2, max_digits=10, default=25)
+    # tax = models.DecimalField(null=True,  decimal_places=2, max_digits=10, default=25)
     total_pay = models.DecimalField(max_digits=50, decimal_places=2, blank=True, null=True)
     tips = models.PositiveIntegerField(default=0)
 
@@ -324,14 +324,15 @@ class JobReport(models.Model):
             # Overtime Pay: Extra hours at 1.4x the base rate
             self.overtime_pay = self.extra_hour * base_rate * 1.4
             
-            # Tax (25% of total earnings before tax)
-            total_earnings = self.regular_pay + self.overtime_pay
-            if self.tips > 0:
-                total_earnings += self.tips  # Add tips to total earnings
-            self.tax = total_earnings * 0.25  # 25% tax
+            # # Tax (25% of total earnings before tax)
+            # total_earnings = self.regular_pay + self.overtime_pay
+            # if self.tips > 0:
+            #     total_earnings += self.tips  # Add tips to total earnings
+            # self.tax = total_earnings * 0.25  # 25% tax
             
             # Final Total Pay after deducting tax
-            self.total_pay = total_earnings - self.tax
+            self.total_pay = self.regular_pay + self.overtime_pay
+            
 
     class Meta:
         verbose_name_plural = 'Job Reports'
