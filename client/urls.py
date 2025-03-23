@@ -42,7 +42,7 @@ urlpatterns = [
 
     # company review 
     path('company/review/', views.CompanyReviewView.as_view()),
-    path('company/<int:application_id>/review/', views.CompanyReviewView.as_view()),
+    path('company/<int:application_id>/review/', views.CompanyReviewView.as_view()), # give review
 
     # give tips 
     path('vacancy/<int:report_id>/tips/', views.TipView.as_view()),
