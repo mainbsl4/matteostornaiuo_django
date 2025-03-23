@@ -1,8 +1,12 @@
 from django.contrib import admin
 
+from rangefilter.filters import DateRangeFilter
+
 from django.contrib.admin import DateFieldListFilter
-from unfold.admin import ModelAdmin, TabularInline, StackedInline
+from unfold.admin import ModelAdmin, TabularInline, StackedInline,UnfoldModelAdminChecks
 from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
+# from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
+# from rangefilter.filter import DateRangeFilter
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
 
@@ -28,6 +32,8 @@ from . models import (
 class CompanyProfileAdmin(ModelAdmin):
     list_display = ('company_name', 'contact_number', 'company_email','tax_number','company_address', 'created_at')
     search_fields = ('company_name', 'contact_number', 'company_email', 'company_address')
+    list_filter = ("company_name",)
+
     list_per_page =  20
     list_filter_sheet = False 
 
@@ -47,13 +53,18 @@ class VacancyInline(StackedInline):  # or admin.StackedInline for a different la
 
 @admin.register(Job)
 class JobAdmin(ModelAdmin):
-    list_display = ('title', 'company', 'status', 'created_at')
-    list_filter = ('status', 'company')
-    search_fields = ('title', 'description', 'company__name')
+    list_display = ('title', 'company', 'status', 'created_at','description')
+    list_filter = ('status', 'company__company_name')
+    search_fields = ('title', 'description', 'company__company_name')
     ordering = ('-created_at',)
     list_per_page = 20
     list_filter_sheet = False
     inlines = [VacancyInline]
+    list_filter = (
+        "status",
+        "company__company_name",
+        ("created_at", RangeDateTimeFilter),
+    )
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('company')
@@ -68,9 +79,13 @@ class VacancyAdmin(ModelAdmin):
     ordering = ('-created_at',)
     date_hierarchy = 'open_date'
     list_filter = ('job_status','job_title','created_at','job')
-    # list_filter_sheet = False
+    list_filter_sheet = True
     list_per_page = 50
     readonly_fields = ('salary',)
+    list_fullwidth = True
+    checks_class = UnfoldModelAdminChecks
+
+
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('job','job_title', 'uniform').prefetch_related('skills','participants')
@@ -155,6 +170,7 @@ class MyStaffAdmin(ModelAdmin):
     list_filter = ('status', 'client__company_name')
 
 
+
 class JobReportResource(resources.ModelResource):
     applicant_name = fields.Field(column_name='Applicant Name')
     job_title = fields.Field(column_name='Job Title', attribute='job_application__vacancy__job__title')
@@ -165,9 +181,15 @@ class JobReportResource(resources.ModelResource):
     regular_pay = fields.Field(column_name='Regular Pay', attribute='regular_pay')
     overtime_pay = fields.Field(column_name='Overtime Pay', attribute='overtime_pay')
     tips = fields.Field(column_name='Tips', attribute='tips')
-    tax = fields.Field(column_name='Tax', attribute='tax')
+    # tax = fields.Field(column_name='Tax', attribute='tax')
     total_pay = fields.Field(column_name='Total Pay', attribute='total_pay')
     created_at = fields.Field(column_name='Created At', attribute='created_at')
+
+    
+    # list_filter = (
+    #     ("field_E", RangeDateFilter),  # Date filter
+    #     ("field_F", RangeDateTimeFilter),  # Datetime filter
+    # )
 
     def dehydrate_applicant_name(self, job_report):
         return f"{job_report.job_application.applicant.user.first_name} {job_report.job_application.applicant.user.last_name}"
@@ -178,17 +200,23 @@ class JobReportResource(resources.ModelResource):
                  'extra_hour', 'regular_pay', 'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at')
         export_order = fields
 
+
+
 @admin.register(JobReport)
 class JobReportAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = JobReportResource
     
     list_display = ['job_application', 'working_hour', 'extra_hour', 'regular_pay', 
-                    'overtime_pay', 'tips', 'tax', 'total_pay', 'created_at']
+                    'overtime_pay', 'tips', 'total_pay', 'created_at']
     search_fields = ('job_application__vacancy__job_title__name',
                     'job_application__applicant__user__first_name', 
                     'job_application__applicant__user__last_name')
+    # list_filter = (
+    #     ('created_at', DateRangeFilter),  # Add DateRangeFilter for the datetime field
+    # )
     list_filter = (
-        'created_at',
+        ("created_at", RangeDateFilter),  # Date filter
+        # ("created_at", RangeDateTimeFilter),  # Datetime filter
     )
     list_filter_sheet = False
     list_per_page = 20
