@@ -158,6 +158,7 @@ class FeedJobView(APIView):
                     "id": vacancy.id,
                     "job_status": vacancy.job_status,
                     "job_title": vacancy.job.title,
+                    "job_id": vacancy.job.id,
                     "company_logo": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "number_of_staff": vacancy.number_of_staff,
                     "start_date": vacancy.open_date,
