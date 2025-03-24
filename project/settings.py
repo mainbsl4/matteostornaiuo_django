@@ -207,13 +207,12 @@ CORS_ALLOWED_ORIGINS = [
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
 ]
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
     'http://localhost:5173',
-    "https://f060-103-174-189-33.ngrok-free.app"
-    ]
+]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
