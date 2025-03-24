@@ -295,7 +295,7 @@ class JobApplicationAPI(APIView): # pending actions page approve job
         # use in job details application list
         if vacancy_id:
             try:
-                vacancy = Vacancy.objects.get(id=vacancy_id).only('id')
+                vacancy = Vacancy.objects.get(id=vacancy_id)
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
             job_applications = JobApplication.objects.filter(vacancy__id=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
