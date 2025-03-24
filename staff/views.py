@@ -226,6 +226,7 @@ class JobCheckinView(APIView): # jobapplication
                 "message": "You are not authorized to view this resource"
             }
             return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+        # not used
         if pk:
             try:
                 job_application = JobApplication.objects.get(applicant=staff, id=pk)
@@ -245,14 +246,28 @@ class JobCheckinView(APIView): # jobapplication
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        
-        job_application = JobApplication.objects.filter(applicant=staff,is_approve=True)
-        application_serializer = JobApplicationSerializer(job_application, many=True)
+        # upcomming job list
+        job_application = JobApplication.objects.filter(applicant=staff,is_approve=True).select_related('vacancy','applicant')
+        # application_serializer = JobApplicationSerializer(job_application, many=True)
+        applications = []
+        for application in job_application:
+            obj = {
+                'id': application.id,
+                'job_title': application.vacancy.job.title,
+                'company_logo': application.vacancy.job.company.company_logo.url if application.vacancy.job.company.company_logo else None,
+                'job_role': application.vacancy.job_title.name,
+                'date': application.vacancy.open_date,
+                'start_time': application.vacancy.start_time,
+                'end_time': application.vacancy.end_time,
+                'location': application.vacancy.location,
+
+            }
+            applications.append(obj)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "Job applications retrieved successfully",
-            "data": application_serializer.data
+            "data": applications
         }
         return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request,pk, *args, **kwargs):
