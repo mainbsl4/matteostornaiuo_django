@@ -209,9 +209,9 @@ CORS_ALLOWED_ORIGINS = [
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
-    'http://localhost:5173',
 ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
