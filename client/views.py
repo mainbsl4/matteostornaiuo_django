@@ -279,6 +279,7 @@ class JobApplicationAPI(APIView): # pending actions page approve job
             client = CompanyProfile.objects.filter(user=user).first()
         else:
             return Response({"error": "Only clients can access this endpoint"}, status=status.HTTP_403_FORBIDDEN)
+        # not used
         if pk:
             job_application = JobApplication.objects.filter(pk=pk, vacancy__client=client, is_approve = False).first()
             if not job_application:
@@ -291,34 +292,58 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
+        # use in job details application list
         if vacancy_id:
             try:
-                vacancy = Vacancy.objects.get(id=vacancy_id)
+                vacancy = Vacancy.objects.get(id=vacancy_id).only('id')
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).order_by('created_at')
+            job_applications = JobApplication.objects.filter(vacancy__id=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
 
-            serializer = JobApplicationSerializer(job_applications, many=True)
+            # serializer = JobApplicationSerializer(job_applications, many=True)
+            applications = []
+            for application in job_applications:
+                obj = {
+                    "id": application.id,
+                    "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                    "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+                    "age": application.applicant.age,
+                    "gender": application.applicant.gender,
+                    "timesince": application.created_at,
+                }
+                applications.append(obj)
+
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job applications",
-                "data": serializer.data
+                "data": applications
             }
             return Response(response_data, status=status.HTTP_200_OK)
 
 
-        # get all vacancy that job_status is active and progress
-        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'accepted'])
+        # use in pending action page
+        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active','pending', 'accepted']).only('id')
 
-        applications = JobApplication.objects.filter(vacancy__in=vacancy_list).order_by('created_at')
+        job_applications = JobApplication.objects.filter(vacancy__in=vacancy_list).select_related('vacancy','applicant').order_by('created_at')
         # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
-        serializer = JobApplicationSerializer(applications, many=True)
+        # serializer = JobApplicationSerializer(applications, many=True)
+        applications = []
+        for application in job_applications:
+            obj = {
+                "id": application.id,
+                "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+                "age": application.applicant.age,
+                "gender": application.applicant.gender,
+                "timesince": application.created_at,
+            }
+            applications.append(obj)
         response_data = {
             "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job applications",
-                "data": serializer.data
+                "data": applications
         }
         return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request,vacancy_id=None,pk=None):
@@ -838,9 +863,19 @@ class CompanyReviewView(APIView):
         
         if application.applicant.user == request.user:
             data = request.data 
+            # if already reviewed 
+            if CompanyReview.objects.filter(review_by = application.applicant, application=application).exists():
+                response = {
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "success": False,
+                    "message": "You have already reviewed this client"
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
             review = CompanyReview.objects.create(
                 review_by = application.applicant,
                 review_for = application.vacancy.job.company,
+                application=application,
                 rating = data['rating'],
                 content = data['content']
             )
@@ -848,7 +883,6 @@ class CompanyReviewView(APIView):
                 "status": status.HTTP_201_CREATED,
                 "success": True,
                 "message": "Review submitted successfully",
-                "data": CompanyReviewSerializer(review).data
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         response = {
