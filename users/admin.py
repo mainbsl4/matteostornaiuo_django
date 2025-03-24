@@ -81,8 +81,10 @@ class JobRoleAdmin(ModelAdmin):
 
 @admin.register(Uniform)
 class UniformAdmin(ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name',) 
+    list_display = ('name', 'job_role', 'description')
+    search_fields = ('name','job_role') 
+    list_filter = ('job_role',)
+    list_filter_sheet = False 
     list_per_page = 20
     
 

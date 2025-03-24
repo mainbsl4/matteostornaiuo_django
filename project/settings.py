@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     "unfold.contrib.inlines",  # optional, if special inlines are needed
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+    "unfold.contrib.simple_history", # optional, if django-simple-history package is used
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -205,7 +205,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'https://matteostornaiuo-django.onrender.com',
-    'http://127.0.0.1:8080'
+    'http://127.0.0.1:8080',
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
