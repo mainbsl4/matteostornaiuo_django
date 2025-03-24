@@ -347,6 +347,7 @@ class JobReport(models.Model):
 class CompanyReview(models.Model):
     review_by = models.ForeignKey(Staff, on_delete=models.SET_NULL, null=True)
     review_for = models.ForeignKey(CompanyProfile, on_delete=models.SET_NULL, null=True)
+    application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True)
     rating = models.IntegerField(default=0, validators=[MaxValueValidator(5)])
     content = models.TextField(blank=True)
 

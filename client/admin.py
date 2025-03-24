@@ -229,7 +229,7 @@ class CompanyReviewAdmin(ModelAdmin):
     list_display = ('review_for', 'review_by', 'rating', 'content', 'created_at')
     list_filter = ('review_for__company_name',"rating")
     search_fields = ('review_for__company_name', 'review_by__user__first_name', 'review_by__user__last_name')
-    list_filter_sheet = True
+    list_filter_sheet = False
     list_per_page = 50
     search_help_text = "Search by company name"
     # list_display_links = None
