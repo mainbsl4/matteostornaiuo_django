@@ -54,7 +54,7 @@ class Staff(models.Model):
 
 
 class BankDetails(models.Model):
-    staff = models.OneToOneField(Staff, on_delete=models.CASCADE)
+    staff = models.OneToOneField(Staff, on_delete=models.CASCADE, related_name='bank_details')
     card_holder_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=20)
     swift_code = models.CharField(max_length=100)

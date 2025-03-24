@@ -33,6 +33,25 @@ class StaffResource(resources.ModelResource):
         fields = ('user__first_name', 'user__last_name', 'phone', 'role', 'nid_number', 
                 'age', 'gender', 'country', 'is_letme_staff', 'created_at')
 
+
+
+
+#============================================================
+from unfold.sections import TableSection, TemplateSection
+from django.utils.translation import gettext_lazy as _
+from django.template.loader import render_to_string
+
+class BankDetailsSection(TemplateSection):
+    verbose_name = _("Bank Details")
+    template_name = "admin/bank_details_section.html"  # Create this template
+
+    def get_context(self, request, parent_instance):
+        """Pass the bank details to the template"""
+        return {"bank_details": getattr(parent_instance, "bank_details", None)}
+
+
+
+
 @admin.register(Staff)
 class StaffAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = StaffResource
@@ -43,6 +62,9 @@ class StaffAdmin(ImportExportModelAdmin, ModelAdmin):
     list_per_page = 50
     list_display_links = ('user__first_name','user__last_name')
     inlines = [BankDetailsInline]
+    list_sections = [
+        BankDetailsSection,
+    ]
     # change_list_template = "admin/staff_changelist.html"
 
     def has_import_permission(self, request):
