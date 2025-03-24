@@ -1,0 +1,11 @@
+{% if bank_details %}
+    <table class="table">
+        <tr><th>Card Holder Name:</th><td>{{ bank_details.card_holder_name }}</td></tr>
+        <tr><th>Account Number:</th><td>{{ bank_details.account_number }}</td></tr>
+        <tr><th>Swift Code:</th><td>{{ bank_details.swift_code }}</td></tr>
+        <tr><th>Country:</th><td>{{ bank_details.country }}</td></tr>
+        <tr><th>Post Code:</th><td>{{ bank_details.post_code }}</td></tr>
+    </table>
+{% else %}
+    <p>No bank details available.</p>
+{% endif %}
