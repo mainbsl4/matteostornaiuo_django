@@ -133,7 +133,7 @@ class JobRoleSerializer(serializers.ModelSerializer):
 class UniformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Uniform
-        fields = ["id", "name", "description"]
+        fields = ["id", "name", "job_role", "description", "image"]
 
 
 #  invite staff from clients
