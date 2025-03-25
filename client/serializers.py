@@ -95,7 +95,7 @@ class VacancySerializer(serializers.ModelSerializer):
     class Meta:
         model = Vacancy
         fields = "__all__"
-        # depth = 2
+        depth = 1
     
     def get_application_status(self, obj):
         # return the count of each job status 

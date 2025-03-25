@@ -9,7 +9,7 @@ from client.models import CompanyProfile, Vacancy
 
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE) # to whom
+    user = models.ForeignKey(User, on_delete=models.CASCADE)# to whom
     message = models.CharField(max_length=255)
     link = models.CharField(max_length=255, blank=True, null=True)
     is_read = models.BooleanField(default=False)
