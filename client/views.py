@@ -1,9 +1,15 @@
+import os
 from datetime import datetime
+from weasyprint import HTML
+
+
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Q, Avg
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.utils.html import strip_tags
 from django.conf import settings
 
@@ -175,7 +181,7 @@ class VacancyView(APIView):
             response_data = {
                 "status": status.HTTP_200_OK,
                 "message": "Vacancy updated successfully",
-                "data": response.data
+                # "data": response.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
         else:
@@ -298,7 +304,7 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 vacancy = Vacancy.objects.get(id=vacancy_id)
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            job_applications = JobApplication.objects.filter(vacancy__id=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
+            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
 
             # serializer = JobApplicationSerializer(job_applications, many=True)
             applications = []
@@ -410,14 +416,22 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                     # no space response
                     return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "No space for applicants"})
                 
+                # if not vacancy.participants.is_available:
+                #     return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "You have another job schedule at that time!!"})
+                # is staff have any entry on jobapplication on the same date and same time of this job
+                if JobApplication.objects.filter(applicant=job_application.applicant, vacancy__open_date=job_application.vacancy.open_date, vacancy__start_time=job_application.vacancy.start_time, is_approve=False).exclude(id=job_application.id).exists():
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={"message": "You have another job schedule at that time!!"})
+
+
                 vacancy.participants.add(job_application.applicant)
+                
                 job_application.job_status = 'accepted'
                 job_application.is_approve = True
                 job_application.save()
 
                 full_name = job_application.applicant.user.first_name + ' ' + job_application.applicant.user.last_name
                 time = f'{vacancy.open_date} at {vacancy.start_time}'
-                html_message = render_to_string(
+                html_content = render_to_string(
                     'contact.html', {
                     'staff_name': full_name,
                     'vacancy_name': vacancy.job_title.name,
@@ -429,12 +443,23 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                     'year': '2025',
                 })
 
+                # Convert HTML to PDF
+                pdf_file = HTML(string=html_content).write_pdf()
+
+                # Define storage path
+                pdf_filename = f"job_contacts/job_contact_{job_application.id}.pdf"
+                pdf_path = os.path.join(settings.MEDIA_ROOT, pdf_filename)
+
+                # Save PDF in Django storage
+                default_storage.save(pdf_filename, ContentFile(pdf_file))
+
+                # Send email
                 send_mail(
-                    subject='Job Contict File',
-                    message=strip_tags(html_message),  # Plain text version
+                    subject='Job Contact File',
+                    message=strip_tags(html_content),  # Plain text version
                     from_email= settings.EMAIL_HOST_USER,
                     recipient_list=[job_application.applicant.user.email],
-                    html_message=html_message,  # HTML version
+                    html_message=html_content,  # HTML version
                 )
 
                 # send notification to staff
