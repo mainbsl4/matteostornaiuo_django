@@ -83,6 +83,7 @@ class JobTemplateSerializer(serializers.ModelSerializer):
 
 class VacancySerializer(serializers.ModelSerializer):
     application_status = serializers.SerializerMethodField(read_only=True)
+    job_name = serializers.SerializerMethodField(read_only=True)
     # def __init__(self, *args, **kwargs):
     #     fields = kwargs.pop('fields', None)  # Get dynamic fields if provided
     #     super().__init__(*args, **kwargs)
@@ -97,6 +98,8 @@ class VacancySerializer(serializers.ModelSerializer):
         fields = "__all__"
         # depth = 1
     
+    def get_job_name(self, obj):
+        return obj.job.title
     def get_application_status(self, obj):
         # return the count of each job status 
         job_application = JobApplication.objects.filter(vacancy=obj)
@@ -124,10 +127,13 @@ class CreateVacancySerializers(serializers.ModelSerializer):
     def create(self, validated_data):
         skills = validated_data.pop('skills',[])
         invited_staff_id = validated_data.pop('invited_staff',[])
-
+        
+        print('validated data', validated_data['job'].status)
         vacancy = Vacancy.objects.create(
             **validated_data
         )
+        
+
 
         vacancy.skills.set(skills)
         # send notifications to the invited staff
@@ -166,7 +172,7 @@ class JobSerializer(serializers.ModelSerializer):
         validated_data['company'] = client
         
         job = Job.objects.create(**validated_data)
-        
+
         for vacancy in vacancy_data:
             start_date = vacancy.get('open_date')
             end_date = vacancy.get('close_date')
@@ -183,7 +189,7 @@ class JobSerializer(serializers.ModelSerializer):
                     vacancy_copy['open_date'] = current_date
                     vacancy_copy['close_date'] = current_date
                     vacancy_copy['job'] = job.id
-
+                    vacancy_copy['job_status'] =  'draft' if job.status == False else 'active'
                     print('vacancy copy', vacancy_copy)
                     vacancy_serializer = CreateVacancySerializers(data=vacancy_copy)
                     if vacancy_serializer.is_valid():
@@ -203,6 +209,7 @@ class JobSerializer(serializers.ModelSerializer):
 
         if save_in_template:
             JobTemplate.objects.create(client=user.profiles, job=job)
+        
 
         return job
     def update(self, instance, validated_data):
