@@ -97,7 +97,7 @@ class FeedJobView(APIView):
                 'job', 'job_title', 'uniform'
             ).prefetch_related(
                 'skills', 'participants'
-            ).order_by('open_date', 'start_time')
+            ).order_by('-created_at')
 
             if search:
                 vacancies = vacancies.filter(
@@ -110,12 +110,12 @@ class FeedJobView(APIView):
                 vacancies = vacancies.filter(job_status=job_status)
 
             if location:
-                vacancies = vacancies.filter(location=location).order_by('open_date', 'start_time')
+                vacancies = vacancies.filter(location=location).order_by('-created_at')
 
             if open_date:
                 try:
                     open_date = datetime.strptime(open_date, '%Y-%m-%d').date()
-                    vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=open_date)).order_by('open_date', 'start_time')
+                    vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=open_date)).order_by('-created_at')
                 except ValueError:
                     return Response(
                         {"error": "Invalid open_date format, expected YYYY-MM-DD."},
@@ -125,7 +125,7 @@ class FeedJobView(APIView):
             if time:
                 try:
                     time = datetime.strptime(time, '%H:%M:%S').time()
-                    vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time)).order_by('open_date', 'start_time')
+                    vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time)).order_by('-created_at')
                 except ValueError:
                     return Response(
                         {"error": "Invalid time format, expected HH:MM."},
@@ -146,7 +146,7 @@ class FeedJobView(APIView):
                 accepted_applications=Count('jobapplication', filter=Q(jobapplication__job_status='accepted')),
                 rejected_applications=Count('jobapplication', filter=Q(jobapplication__job_status='rejected')),
                 expired_applications=Count('jobapplication', filter=Q(jobapplication__job_status='expired'))
-            ).order_by('open_date', 'start_time')
+            ).order_by('-created_at')
 
             paginator = PageNumberPagination()
             paginator.page_size = 5
@@ -185,7 +185,7 @@ class FeedJobView(APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
-        vacancies = Vacancy.objects.filter(job_status='active').select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').order_by('open_date', 'start_time')
+        vacancies = Vacancy.objects.filter(job_status='active').select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').order_by('-created_at')
         serializer = VacancySerializer(vacancies, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
