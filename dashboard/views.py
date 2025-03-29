@@ -159,10 +159,14 @@ class FeedJobView(APIView):
                     "job_status": vacancy.job_status,
                     "job_title": vacancy.job.title,
                     "job_id": vacancy.job.id,
+                    "job_role_id": vacancy.job_title.id,
+                    "uniform_id": vacancy.uniform.id,
+                    "skill_ids": [skl.id for skl in vacancy.skills.all()],
                     "company_logo": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "number_of_staff": vacancy.number_of_staff,
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
+                    "location": vacancy.location,
                     "applicant": [
                         app.applicant.avatar.url if app.applicant.avatar else None for app in vacancy.jobapplication_set.all()
                     ],
@@ -233,4 +237,13 @@ class GetJobTemplateAPIView(APIView):
             }
             return Response(response_data , status=status.HTTP_200_OK)
         return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
-            
+    def delete(self, request, pk):
+        user = request.user 
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            job_template = JobTemplate.objects.filter(client=client, id=pk).first()
+            if not job_template:
+                return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
+            job_template.delete()
+            return Response({"message": "Job template deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
