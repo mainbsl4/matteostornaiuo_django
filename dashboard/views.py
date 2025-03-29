@@ -166,6 +166,7 @@ class FeedJobView(APIView):
                     "number_of_staff": vacancy.number_of_staff,
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
+                    "end_time": vacancy.end_time,
                     "location": vacancy.location,
                     "applicant": [
                         app.applicant.avatar.url if app.applicant.avatar else None for app in vacancy.jobapplication_set.all()
