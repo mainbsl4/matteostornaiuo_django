@@ -160,7 +160,7 @@ class FeedJobView(APIView):
                     "job_title": vacancy.job.title,
                     "job_id": vacancy.job.id,
                     "job_role_id": vacancy.job_title.id,
-                    "uniform_id": vacancy.uniform.id,
+                    "uniform_id": vacancy.uniform.id if vacancy.uniform else None,
                     "skill_ids": [skl.id for skl in vacancy.skills.all()],
                     "company_logo": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "number_of_staff": vacancy.number_of_staff,
