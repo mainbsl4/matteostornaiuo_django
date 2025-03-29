@@ -199,6 +199,28 @@ class FeedJobView(APIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
+class JobCountAPI(APIView):
+    def get(self, request):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if not client:
+                return Response({"error": "Client profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            vacancies = Vacancy.objects.filter(job__company=client).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants')
+            status_count = {
+                "active": vacancies.filter(job_status='active').count(),
+                "progress": vacancies.filter(job_status='progress').count(),
+                "draft": vacancies.filter(job_status='draft').count(),
+                "cancelled": vacancies.filter(job_status='cancelled').count(),
+                "finished": vacancies.filter(job_status='finished').count(),
+            }
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "data": status_count,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
 
 class GetJobTemplateAPIView(APIView):
     def get(self, request, pk=None):

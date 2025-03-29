@@ -216,7 +216,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 from import_export.formats.base_formats import CSV, XLSX
 # multiple import options
