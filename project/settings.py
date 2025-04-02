@@ -315,6 +315,21 @@ UNFOLD = {
                         "icon": "notifications_active",
                         "link": reverse_lazy("admin:dashboard_notification_changelist"),
                     },
+                    {
+                        "title": _("Report and Issue"),
+                        "icon": "flag",
+                        "link": reverse_lazy("admin:dashboard_report_changelist"),
+                    },
+                    {
+                    "title": _("FAQ"),
+                        "icon": "contact_support",
+                        "link": reverse_lazy("admin:dashboard_faq_changelist"),
+                    },
+                    {
+                    "title": _("Terms and Conditions"),
+                        "icon": "description",
+                        "link": reverse_lazy("admin:dashboard_termsandconditions_changelist"),
+                    },
                 ],
             },
             {
