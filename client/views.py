@@ -12,6 +12,8 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.utils.html import strip_tags
 from django.conf import settings
+from django.utils.timesince import timesince
+from django.utils.timezone import now
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -315,7 +317,8 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                     "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
                     "age": application.applicant.age,
                     "gender": application.applicant.gender,
-                    "timesince": application.created_at,
+                    "timesince": f"{timesince(application.created_at, now())} ago", 
+                    "job_title": application.applicant.role.name
                 }
                 applications.append(obj)
 
