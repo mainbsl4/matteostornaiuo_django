@@ -164,7 +164,7 @@ class FeedJobView(APIView):
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
                     "applicant": [
-                        app.applicant.avatar.url if app.applicant.avatar else None for app in vacancy.jobapplication_set.all()
+                        app.applicant.avatar.url if app.applicant.avatar else app.applicant.user.first_name for app in vacancy.jobapplication_set.all()
                     ],
                     "application_status": {
                         "pending": vacancy.pending_applications,
