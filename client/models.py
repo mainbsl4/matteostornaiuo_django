@@ -87,7 +87,7 @@ class Vacancy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return self.job_title.name
+        return f'{self.job}  {self.job_title}'
     
     class Meta:
         verbose_name = 'Job Vacancy'
@@ -313,13 +313,13 @@ class JobReport(models.Model):
             base_rate = self.job_application.vacancy.job_title.staff_price  # Get hourly pay rate
             
             # Calculate overtime (if work > 8 hours)
-            if self.working_hour > 8:
-                self.extra_hour = self.working_hour - 8
+            if self.working_hour > 9:
+                self.extra_hour = self.working_hour - 9
             else:
                 self.extra_hour = 0
             
             # Regular Pay: First 8 hours at base rate
-            self.regular_pay = base_rate * min(self.working_hour, 8)
+            self.regular_pay = base_rate * min(self.working_hour, 9)
             
             # Overtime Pay: Extra hours at 1.4x the base rate
             self.overtime_pay = self.extra_hour * base_rate * 1.4
