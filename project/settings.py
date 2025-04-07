@@ -206,6 +206,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
+
     'https://letme-frontend-web.netlify.app',
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
@@ -314,6 +315,21 @@ UNFOLD = {
                         "title": _("Notifications"),
                         "icon": "notifications_active",
                         "link": reverse_lazy("admin:dashboard_notification_changelist"),
+                    },
+                    {
+                        "title": _("Report and Issue"),
+                        "icon": "flag",
+                        "link": reverse_lazy("admin:dashboard_report_changelist"),
+                    },
+                    {
+                    "title": _("FAQ"),
+                        "icon": "contact_support",
+                        "link": reverse_lazy("admin:dashboard_faq_changelist"),
+                    },
+                    {
+                    "title": _("Terms and Conditions"),
+                        "icon": "description",
+                        "link": reverse_lazy("admin:dashboard_termsandconditions_changelist"),
                     },
                 ],
             },
