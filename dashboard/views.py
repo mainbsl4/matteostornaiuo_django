@@ -159,10 +159,15 @@ class FeedJobView(APIView):
                     "job_status": vacancy.job_status,
                     "job_title": vacancy.job.title,
                     "job_id": vacancy.job.id,
+                    "job_role_id": vacancy.job_title.id,
+                    "uniform_id": vacancy.uniform.id if vacancy.uniform else None,
+                    "skill_ids": [skl.id for skl in vacancy.skills.all()],
                     "company_logo": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "number_of_staff": vacancy.number_of_staff,
                     "start_date": vacancy.open_date,
                     "start_time": vacancy.start_time,
+                    "end_time": vacancy.end_time,
+                    "location": vacancy.location,
                     "applicant": [
                         app.applicant.avatar.url if app.applicant.avatar else app.applicant.user.first_name for app in vacancy.jobapplication_set.all()
                     ],
@@ -194,6 +199,28 @@ class FeedJobView(APIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
+class JobCountAPI(APIView):
+    def get(self, request):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if not client:
+                return Response({"error": "Client profile not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+            vacancies = Vacancy.objects.filter(job__company=client).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants')
+            status_count = {
+                "active": vacancies.filter(job_status='active').count(),
+                "progress": vacancies.filter(job_status='progress').count(),
+                "draft": vacancies.filter(job_status='draft').count(),
+                "cancelled": vacancies.filter(job_status='cancelled').count(),
+                "finished": vacancies.filter(job_status='finished').count(),
+            }
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "data": status_count,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
 
 class GetJobTemplateAPIView(APIView):
     def get(self, request, pk=None):
@@ -233,4 +260,13 @@ class GetJobTemplateAPIView(APIView):
             }
             return Response(response_data , status=status.HTTP_200_OK)
         return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
-            
+    def delete(self, request, pk):
+        user = request.user 
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            job_template = JobTemplate.objects.filter(client=client, id=pk).first()
+            if not job_template:
+                return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
+            job_template.delete()
+            return Response({"message": "Job template deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
