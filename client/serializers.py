@@ -208,7 +208,7 @@ class JobSerializer(serializers.ModelSerializer):
                     return Response(vacancy_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if save_in_template:
-            JobTemplate.objects.create(client=user.profiles, job=job)
+            JobTemplate.objects.create(client=user.profiles, job=job, name = job.title, title=job.title, description=job.description)
         
 
         return job
