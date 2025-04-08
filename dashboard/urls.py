@@ -12,5 +12,9 @@ urlpatterns = [
     path('job/templates/', views.GetJobTemplateAPIView.as_view()),
     path('job/templates/<int:pk>/', views.GetJobTemplateAPIView.as_view()),
 
+    path('faq/', views.FAQAPIView.as_view()),
+    path('terms/', views.TermsAPIView.as_view()),
+    path('report/', views.ReportAPIView.as_view()),
+
     
 ]
