@@ -270,7 +270,9 @@ class GetJobTemplateAPIView(APIView):
                 data = {
                     "id": template.id,
                     "name": template.name,
-                    "description": template.job.description,
+                    "title": template.title,
+                    "description": template.description,
+                    "job_id": template.job.id
                 }
                 template_list.append(data)
 
@@ -286,15 +288,49 @@ class GetJobTemplateAPIView(APIView):
         user = request.user
         template = JobTemplate.objects.filter(pk=pk).first()
 
+        data = request.data 
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if template.client == client:
+                template.title = data['title'] if data['title'] else template.job.title 
+                template.name = data['name'] if data['name'] else template.job.title 
+                template.description = data['description'] if data['description'] else template.job.description 
+                template.save()
+
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Job templated updated successfully"
+                }
+                return Response(response, status=status.HTTP_200_OK)
+        response = {
+            "status": status.HTTP_304_NOT_MODIFIED,
+            "success": False,
+            "message": "Job template not updated"
+        }
+        return Response(response)
+
+
+
     def delete(self, request, pk):
         user = request.user 
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
             job_template = JobTemplate.objects.filter(client=client, id=pk).first()
             if not job_template:
-                return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": False,
+                    "message": "Job template not found"
+                }
+                return Response(response, status=status.HTTP_200_OK)
             job_template.delete()
-            return Response({"message": "Job template deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            response = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job Template Delete Successfully"
+            }
+            return Response(response, status=status.HTTP_200_OK)
         return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
 
 class ReportAPIView(APIView):
