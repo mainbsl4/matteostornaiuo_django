@@ -114,6 +114,9 @@ class Vacancy(models.Model):
     
 class JobTemplate(models.Model):
     name = models.CharField(max_length=200, blank=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
     client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
     
@@ -124,9 +127,11 @@ class JobTemplate(models.Model):
         verbose_name = 'Job Template'
         verbose_name_plural = 'Job-Templates'
     # add name from job title
-    def save(self, *args, **kwargs):
-        self.name = self.job.title
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.name = self.job.title
+    #     self.title = self.job.title
+    #     self.description = self.job.description 
+    #     super().save(*args, **kwargs)
 
     
 
