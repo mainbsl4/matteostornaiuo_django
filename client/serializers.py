@@ -234,7 +234,10 @@ class JobSerializer(serializers.ModelSerializer):
 
                     if not vacancy_obj:
                         vacancy_id = None
-
+                    if instance.status:
+                        vacancy_item['job_status'] = 'active'
+                    else:
+                        vacancy_item['job_status'] = 'draft'
                     # update vacancy using vacancy serializer 
                     vacancy_serializer = CreateVacancySerializers(instance=vacancy_obj, data=vacancy_item, partial=True)
                     if vacancy_serializer.is_valid():
@@ -245,6 +248,12 @@ class JobSerializer(serializers.ModelSerializer):
                 else:
                     # create new vacancy
                     vacancy_item['job'] = instance.id
+
+                    if instance.status:
+                        vacancy_item['job_status'] = 'active'
+                    else:
+                        vacancy_item['job_status'] = 'draft'
+
                     vacancy_serializer = CreateVacancySerializers(data=vacancy_item)
                     if vacancy_serializer.is_valid():
                         vacancy_serializer.save()
@@ -253,11 +262,18 @@ class JobSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(vacancy_serializer.errors)
                     
                     
+        # if save_in_template:
+        #     job_template, created = JobTemplate.objects.get_or_create(client=user_.profiles, job=instance)
+        #     if created:
+        #         job_template.user = user_
+        #         job_template.job = instance
+        #         job_template.save()
         if save_in_template:
-            job_template, created = JobTemplate.objects.get_or_create(client=user_.profiles, job=instance)
+            job_template, created = JobTemplate.objects.get_or_create(client=user_.profiles, job=instance, name = instance.title, title=instance.title, description=instance.description)
             if created:
-                job_template.user = user_
-                job_template.job = instance
+                job_template.name = instance.title
+                job_template.title = instance.title
+                job_template.description = instance.description
                 job_template.save()
 
         return instance
