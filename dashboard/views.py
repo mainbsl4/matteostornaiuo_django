@@ -7,12 +7,15 @@ from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 # Create your views here.
-from .models import  Notification
+from .models import  Notification, Report, FAQ, TermsAndConditions
 from . serializers import (
     NotificationSerializer, 
     SkillSerializer,
+    TermsAndConditionsSerializer,
+    ReportSerializer
 
 )
 
@@ -69,7 +72,13 @@ class FeedJobView(APIView):
             vacancy = Vacancy.objects.filter(pk=pk).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants').first()
                 
             if not vacancy:
-                return Response({"error": "Vacancy not found."}, status=status.HTTP_404_NOT_FOUND)
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "No Vacancy Found",
+                    "data": []
+                }
+                return Response(response, status=status.HTTP_200_OK)
             
             if vacancy.job.company.user == user:
                 serializer = VacancySerializer(vacancy)
@@ -78,7 +87,7 @@ class FeedJobView(APIView):
                     "success": True,
                     "data": serializer.data,
                 }
-                return Response(response)
+                return Response(response, status=status.HTTP_200_OK)
             
         
         user = request.user
@@ -88,8 +97,12 @@ class FeedJobView(APIView):
                 return Response({"error": "Client profile not found."}, status=status.HTTP_404_NOT_FOUND)
             
             job_status = request.query_params.get('status', None)
-            open_date = request.query_params.get('date', None)
-            time = request.query_params.get('time', None)
+            open_date = request.query_params.get('open_date', None)
+            close_date = request.query_params.get('close_date', None)
+            
+            start_time = request.query_params.get('start_time', None)
+            end_time = request.query_params.get('end_time', None)
+            
             search = request.query_params.get('search', None)
             location = request.query_params.get('location', None)
             
@@ -112,20 +125,22 @@ class FeedJobView(APIView):
             if location:
                 vacancies = vacancies.filter(location=location).order_by('-created_at')
 
-            if open_date:
+            if open_date or close_date:
                 try:
                     open_date = datetime.strptime(open_date, '%Y-%m-%d').date()
-                    vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=open_date)).order_by('-created_at')
+                    close_date = datetime.strptime(close_date, '%Y-%m-%d').date()
+                    vacancies = vacancies.filter(Q(open_date=open_date) | Q(close_date=close_date)).order_by('-created_at')
                 except ValueError:
                     return Response(
                         {"error": "Invalid open_date format, expected YYYY-MM-DD."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
-            if time:
+            if start_time or end_time:
                 try:
-                    time = datetime.strptime(time, '%H:%M:%S').time()
-                    vacancies = vacancies.filter(Q(start_time=time) | Q(close_time=time)).order_by('-created_at')
+                    start_time = datetime.strptime(start_time, '%H:%M:%S').time()
+                    end_time = datetime.strptime(end_time, '%H:%M:%S').time()
+                    vacancies = vacancies.filter(Q(start_time=start_time) | Q(close_time=end_time)).order_by('-created_at')
                 except ValueError:
                     return Response(
                         {"error": "Invalid time format, expected HH:MM."},
@@ -133,9 +148,15 @@ class FeedJobView(APIView):
                     )
                 
             if not vacancies.exists():
+                response = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Vacancy Not Found",
+                    "data": []
+                }
                 return Response(
-                    {"error": "No vacancies found matching the provided filters."},
-                    status=status.HTTP_404_NOT_FOUND
+                    response,
+                    status=status.HTTP_200_OK
                 )
             
             # Prefetch related JobApplications and annotate counts
@@ -238,18 +259,18 @@ class GetJobTemplateAPIView(APIView):
                     }
                     return Response(response_data, status=status.HTTP_200_OK)
                 else:
-                    return Response({"message": "Job template not found"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"message": "Job template not found"}, status=status.HTTP_204_NO_CONTENT)
             templates = JobTemplate.objects.filter(client=client)
             # serializer = JobTemplateSserializers(job_template, many=True)
             if not templates.exists():
-                return Response({"message": "No job template found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"message": "No job template found"}, status=status.HTTP_204_NO_CONTENT)
             
             template_list = []
             for template in templates:
                 data = {
                     "id": template.id,
                     "name": template.name,
-                    "description": template.job.description
+                    "description": template.job.description,
                 }
                 template_list.append(data)
 
@@ -260,6 +281,11 @@ class GetJobTemplateAPIView(APIView):
             }
             return Response(response_data , status=status.HTTP_200_OK)
         return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
+    
+    def put(self, request, pk):
+        user = request.user
+        template = JobTemplate.objects.filter(pk=pk).first()
+
     def delete(self, request, pk):
         user = request.user 
         if user.is_client:
@@ -270,3 +296,72 @@ class GetJobTemplateAPIView(APIView):
             job_template.delete()
             return Response({"message": "Job template deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         return Response({"message": "You are not authorized to access this resource"}, status=status.HTTP_403_FORBIDDEN)
+
+class ReportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        reports = Report.objects.filter(user=user)
+        serializers = ReportSerializer(reports, many=True)
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of Report",
+            "data": serializers.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        data= request.data
+        # data['user'] = request.user.id
+        serializer = ReportSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+
+            response = {
+                "status": status.HTTP_201_CREATED,
+                "success": True,
+                "message": "Report sent successfullly",
+            }
+        else:
+            return Response(serializer.errors)
+        return Response(response, status=status.HTTP_201_CREATED)
+
+
+
+
+class FAQAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        faqs = FAQ.objects.all()
+        data = []
+        for faq in faqs:
+            obj = {
+                "question": faq.question,
+                "answer": faq.answer
+            }
+            data.append(obj)
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of Faqs",
+            "data": data
+        }
+        return Response(response, status=status.HTTP_200_OK)
+    
+class TermsAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        terms = TermsAndConditions.objects.all()
+        serializers = TermsAndConditionsSerializer(terms, many=True)
+
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "List of Terms and Conditions",
+            "data": serializers.data
+        }
+        return Response(response, status=status.HTTP_200_OK)

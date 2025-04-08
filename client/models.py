@@ -116,13 +116,13 @@ class JobTemplate(models.Model):
     name = models.CharField(max_length=200, blank=True)
     client = models.ForeignKey(CompanyProfile, on_delete=models.CASCADE)
     job =   models.ForeignKey(Job, on_delete=models.CASCADE)
-
+    
     def __str__(self):
         return self.job.title
     
     class Meta:
         verbose_name = 'Job Template'
-        verbose_name_plural = 'Job Templates'
+        verbose_name_plural = 'Job-Templates'
     # add name from job title
     def save(self, *args, **kwargs):
         self.name = self.job.title
