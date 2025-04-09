@@ -313,12 +313,14 @@ class JobApplicationAPI(APIView): # pending actions page approve job
             for application in job_applications:
                 obj = {
                     "id": application.id,
-                    "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                    "staff_name": application.applicant.user.first_name + " " + application.applicant.user.last_name,
+                    "staff_id": application.applicant.id,
                     "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
                     "age": application.applicant.age,
                     "gender": application.applicant.gender,
                     "timesince": f"{timesince(application.created_at, now())} ago", 
-                    "job_title": application.applicant.role.name
+                    "job_title": application.applicant.role.name,
+                    "is_favourite": True if FavouriteStaff.objects.filter(company=client, staff=application.applicant).select_related('staff','company').exists() else False
                 }
                 applications.append(obj)
 
