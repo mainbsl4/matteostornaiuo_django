@@ -140,7 +140,7 @@ class FeedJobView(APIView):
                 try:
                     start_time = datetime.strptime(start_time, '%H:%M:%S').time()
                     end_time = datetime.strptime(end_time, '%H:%M:%S').time()
-                    vacancies = vacancies.filter(Q(start_time=start_time) | Q(close_time=end_time)).order_by('-created_at')
+                    vacancies = vacancies.filter(Q(start_time=start_time) | Q(end_time=end_time)).order_by('-created_at')
                 except ValueError:
                     return Response(
                         {"error": "Invalid time format, expected HH:MM."},
@@ -175,6 +175,7 @@ class FeedJobView(APIView):
             
             job_list = []
             for vacancy in paginated_vacancies:
+                
                 data = {
                     "id": vacancy.id,
                     "job_status": vacancy.job_status,
@@ -189,9 +190,18 @@ class FeedJobView(APIView):
                     "start_time": vacancy.start_time,
                     "end_time": vacancy.end_time,
                     "location": vacancy.location,
+                    
                     "applicant": [
-                        app.applicant.avatar.url if app.applicant.avatar else app.applicant.user.first_name for app in vacancy.jobapplication_set.all()
+                        {
+                            "id": app.applicant.id,
+                            "first_name": app.applicant.user.first_name,
+                            "last_name": app.applicant.user.last_name,
+                            "avatar": app.applicant.avatar.url if app.applicant.avatar else None
+                            
+                        } 
+                        for app in vacancy.jobapplication_set.all()
                     ],
+                    
                     "application_status": {
                         "pending": vacancy.pending_applications,
                         "accepted": vacancy.accepted_applications,
