@@ -499,16 +499,31 @@ class CheckInView(APIView):
 
         if vacancy_id:
             try:
-                vacancy = Vacancy.objects.get(id=vacancy_id)
+                vacancy = Vacancy.objects.get(id=vacancy_id).select_related('job', 'job_title', 'uniform').prefetch_related('skills', 'participants')
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False)
-            serializer = JobApplicationSerializer(applications, many=True)
+            
+            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False).order_by('created_at')
+            # applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy=vacancy, is_approve=True, checkin_approve=False)
+            # serializer = JobApplicationSerializer(applications, many=True)
+            checkin_applications = []
+            for application in applications:
+                obj = {
+                    "application_id": application.id,
+                    "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                    "staff_id": application.applicant.id,
+                    "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+                    "age": application.applicant.age,
+                    "gender": application.applicant.gender,
+                    "timesince":  f"{timesince(application.created_at)} ago",
+                }
+                checkin_applications.append(obj)
+
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job checkin request",
-                "data": serializer.data
+                "data": checkin_applications
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
@@ -516,16 +531,33 @@ class CheckInView(APIView):
         vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
 
         try:
-            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkin_approve=False)
+            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkin_approve=False).order_by('created_at')
         except JobApplication.DoesNotExist:
             return Response({"error": "No job checkin request found"}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = JobApplicationSerializer(applications, many=True)
+        # serializer = JobApplicationSerializer(applications, many=True)
+        checkin_applications = []
+        for application in applications:
+            obj = {
+                "application_id": application.id,
+                "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                "staff_id": application.applicant.id,
+                "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+                "age": application.applicant.age,
+                "gender": application.applicant.gender,
+                "timesince":  f"{timesince(application.created_at)} ago",
+                # format date and time
+                "date": application.created_at.date() if application.in_time else None,
+                "time": application.in_time.time() if application.in_time else None,
+                "location": application.checkin_location,
+            }
+            checkin_applications.append(obj)
+
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "Job Checkin Request",
-            "data": serializer.data
+            "data": checkin_applications
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
@@ -541,13 +573,16 @@ class CheckInView(APIView):
             application = JobApplication.objects.get(id=pk)
         except JobApplication.DoesNotExist:
             return Response({"error": "Job application not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         if application.vacancy.job.company != client:
             return Response({"error": "Only client can check in this job application"}, status=status.HTTP_403_FORBIDDEN)
+        
         if application.checkin_approve:
             return Response({"error": "Job check-in request has already been approved"}, status=status.HTTP_400_BAD_REQUEST)
         
         if not application.is_approve:
             return Response({"error": "Job application has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
+        
         if not application.in_time or not application.checkin_location:
             return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -558,7 +593,12 @@ class CheckInView(APIView):
             user = application.applicant.user,
             message = f"Your check-in request for {application.vacancy.job_title} has been approved",
         )
-        return Response(status=status.HTTP_200_OK, data={"message": "Job check-in request approved"})
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job check-in request approved"
+        }
+        return Response(response,status=status.HTTP_200_OK)
     
 
 class CheckOutView(APIView):
