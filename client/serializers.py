@@ -96,8 +96,7 @@ class VacancySerializer(serializers.ModelSerializer):
     class Meta:
         model = Vacancy
         fields = "__all__"
-        # depth = 1
-    
+        # depth = 1    # 
     def get_job_name(self, obj):
         return obj.job.title
     def get_application_status(self, obj):

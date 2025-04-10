@@ -2,6 +2,9 @@ from django.shortcuts import render, get_object_or_404
 from datetime import date 
 from datetime import datetime 
 from django.db.models import Q , Count , Prefetch
+from django.utils.timesince import timesince
+from django.utils.timezone import now
+
 
 from rest_framework import status, generics 
 from rest_framework.views import APIView
@@ -19,7 +22,7 @@ from . serializers import (
 
 )
 
-from client.models import CompanyProfile, Vacancy, Job, JobTemplate, JobApplication
+from client.models import CompanyProfile, Vacancy, Job, JobTemplate, JobApplication, FavouriteStaff
 from client.serializers import VacancySerializer, JobTemplateSserializers, JobApplicationSerializer
 from staff.models import Staff
 from users.models import Skill
@@ -81,11 +84,36 @@ class FeedJobView(APIView):
                 return Response(response, status=status.HTTP_200_OK)
             
             if vacancy.job.company.user == user:
-                serializer = VacancySerializer(vacancy)
+                # serializer = VacancySerializer(vacancy)
+                data = {
+                    "id": vacancy.id,
+                    "company_avatar": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
+                    "job_status": vacancy.job_status,
+                    "open_date": vacancy.open_date,
+                    "close_date": vacancy.close_date,
+                    "start_time": vacancy.start_time,
+                    "end_time": vacancy.end_time,
+                    "location": vacancy.location,
+                    "salary": vacancy.salary,
+                    "number_of_staff": vacancy.number_of_staff,
+                    "participants": [
+                        {
+                            "staff_name": staff.user.first_name + " " + staff.user.last_name,
+                            "staff_id" : staff.id,
+                            "staff_profile": staff.avatar.url if staff.avatar else None,
+                            "age": staff.age,
+                            "gender": staff.gender,
+                            "timesince": f"{timesince(staff.created_at, now())} ago",
+                            "job_title": staff.role.name,
+                            "is_favourite": True if FavouriteStaff.objects.filter(company=vacancy.job.company, staff=staff).select_related('staff','company').exists() else False,
+                        }
+                        for staff in vacancy.participants.all()
+                    ]
+                }
                 response = {
                     "status": status.HTTP_200_OK,
                     "success": True,
-                    "data": serializer.data,
+                    "data": data,
                 }
                 return Response(response, status=status.HTTP_200_OK)
             
