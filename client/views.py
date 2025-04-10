@@ -540,16 +540,18 @@ class CheckInView(APIView):
         for application in applications:
             obj = {
                 "application_id": application.id,
+                "job_title": application.vacancy.job.title,
                 "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                "staff_role": application.applicant.role.name,
                 "staff_id": application.applicant.id,
                 "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
                 "age": application.applicant.age,
                 "gender": application.applicant.gender,
                 "timesince":  f"{timesince(application.created_at)} ago",
                 # format date and time
-                "date": application.created_at.date() if application.in_time else None,
-                "time": application.in_time.time() if application.in_time else None,
-                "location": application.checkin_location,
+                # "date": application.created_at.date() if application.in_time else None,
+                # "time": application.in_time.time() if application.in_time else None,
+                # "location": application.checkin_location,
             }
             checkin_applications.append(obj)
 
@@ -565,6 +567,7 @@ class CheckInView(APIView):
     
     def post(self, request, vacancy_id=None, pk=None, *args, **kwargs):
         user = request.user
+        data = request.data
         try:
             client = CompanyProfile.objects.get(user=user)
         except CompanyProfile.DoesNotExist:
@@ -586,6 +589,8 @@ class CheckInView(APIView):
         if not application.in_time or not application.checkin_location:
             return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
         
+        combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
+        application.in_time = combine_time
         application.checkin_approve = True
         application.save()
         # send notification to staff
