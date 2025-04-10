@@ -1,6 +1,9 @@
 from django.contrib import admin
 
 from rangefilter.filters import DateRangeFilter
+from import_export import resources, fields
+from import_export.widgets import CharWidget
+from import_export.admin import ExportMixin
 
 from django.contrib.admin import DateFieldListFilter
 from unfold.admin import ModelAdmin, TabularInline, StackedInline,UnfoldModelAdminChecks
@@ -28,14 +31,30 @@ from . models import (
 
 )
 
+
+class CompanyProfileResource(resources.ModelResource):
+    class Meta:
+        model = CompanyProfile
+        fields = (
+            'company_name',
+            'contact_number',
+            'company_email',
+            'tax_number',
+            'company_address',
+            'created_at',
+        )
 @admin.register(CompanyProfile)
-class CompanyProfileAdmin(ModelAdmin):
+class CompanyProfileAdmin(ExportMixin,ModelAdmin):
+    resource_class = CompanyProfileResource
     list_display = ('company_name', 'contact_number', 'company_email','tax_number','company_address', 'created_at')
     search_fields = ('company_name', 'contact_number', 'company_email', 'company_address')
     list_filter = ("company_name",)
 
     list_per_page =  20
     list_filter_sheet = False 
+
+    def has_import_permission(self, request):
+        return False
 
 class VacancyInline(StackedInline):  # or admin.StackedInline for a different layout
     model = Vacancy  
@@ -141,6 +160,19 @@ class JobApplicationAdmin(ModelAdmin):
             ),
         })
         )
+    raw_id_fields = ('vacancy', 'applicant')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('vacancy','applicant')
+    
+    def get_object(self, request, object_id, from_field=None):
+        queryset = self.get_queryset(request)
+        return queryset.select_related(
+            'vacancy',
+            'vacancy__job',
+            'applicant',
+            'applicant__user'
+        ).get(pk=object_id)
 
 @admin.register(StaffInvitation)
 class StaffInvitationAdmin(ModelAdmin):

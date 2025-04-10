@@ -3,7 +3,8 @@ from unfold.admin import ModelAdmin, StackedInline
 
 from django.contrib.auth import get_user_model
 from .models import Staff, BankDetails, Experience, StaffReview
-from import_export import resources
+from import_export import resources, fields
+from import_export.widgets import CharWidget
 from import_export.admin import ImportExportModelAdmin
 
 
@@ -28,11 +29,18 @@ class ExperienceInline(StackedInline):
     ordering = ['-start_date']
 
 class StaffResource(resources.ModelResource):
+    full_name = fields.Field(
+        column_name='full_name',
+        attribute='user',
+        widget=CharWidget()
+    )
     class Meta:
         model = Staff
-        fields = ('user__first_name', 'user__last_name', 'phone', 'role', 'nid_number', 
+        fields = ('full_name','user__email', 'phone', 'role', 'nid_number', 
                 'age', 'gender', 'country', 'is_letme_staff', 'created_at')
-
+    
+    def dehydrate_full_name(self, staff):
+        return f"{staff.user.first_name} {staff.user.last_name}"
 
 
 
@@ -55,7 +63,7 @@ class BankDetailsSection(TemplateSection):
 @admin.register(Staff)
 class StaffAdmin(ImportExportModelAdmin, ModelAdmin):
     resource_class = StaffResource
-    list_display = ('user__first_name','user__last_name', 'phone','role','nid_number','age','gender','country','is_available','created_at')
+    list_display = ('user__first_name','user__last_name', 'phone','user__email','role','nid_number','age','gender','country','is_available','created_at')
     search_fields = ('user__first_name', 'user__last_name', 'user__email', 'phone','role__name','gender', 'country')
     list_filter = ('role__name', 'gender','country', 'is_letme_staff', )
     list_filter_sheet = False
