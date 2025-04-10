@@ -83,12 +83,23 @@ class FeedJobView(APIView):
                 }
                 return Response(response, status=status.HTTP_200_OK)
             
+            def get_application_status(obj):
+                # return the count of each job status 
+                job_application = JobApplication.objects.filter(vacancy=obj)
+                pending = job_application.filter(job_status='pending').count()
+                accepted = job_application.filter(job_status='accepted').count()
+                rejected = job_application.filter(job_status='rejected').count()
+                expierd = job_application.filter(job_status='expired').count()
+                return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+                
             if vacancy.job.company.user == user:
                 # serializer = VacancySerializer(vacancy)
                 data = {
                     "id": vacancy.id,
                     "company_avatar": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "job_status": vacancy.job_status,
+                    "job_name": vacancy.job.title,
+                    "job_role": vacancy.job_title.name,
                     "open_date": vacancy.open_date,
                     "close_date": vacancy.close_date,
                     "start_time": vacancy.start_time,
@@ -108,7 +119,8 @@ class FeedJobView(APIView):
                             "is_favourite": True if FavouriteStaff.objects.filter(company=vacancy.job.company, staff=staff).select_related('staff','company').exists() else False,
                         }
                         for staff in vacancy.participants.all()
-                    ]
+                    ],
+                    "application_status": get_application_status(vacancy)
                 }
                 response = {
                     "status": status.HTTP_200_OK,
