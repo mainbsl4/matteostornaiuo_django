@@ -587,8 +587,8 @@ class CheckInView(APIView):
         if not application.is_approve:
             return Response({"error": "Job application has not been approved yet"}, status=status.HTTP_400_BAD_REQUEST)
         
-        if not application.in_time or not application.checkin_location:
-            return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
+        # if not application.in_time or not application.checkin_location:
+        #     return Response({"error": "Job application has not been checked in yet"}, status=status.HTTP_400_BAD_REQUEST)
         
         combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
         application.in_time = combine_time
@@ -647,8 +647,8 @@ class CheckOutView(APIView):
         if application.vacancy.job.company != client:
             return Response({"error": "Only client can check out this job application"}, status=status.HTTP_403_FORBIDDEN)
         
-        if not application.out_time or not application.checkout_location:
-            return Response({"error": "Job application has not been checked out yet"}, status=status.HTTP_400_BAD_REQUEST)
+        # if not application.out_time or not application.checkout_location:
+        #     return Response({"error": "Job application has not been checked out yet"}, status=status.HTTP_400_BAD_REQUEST)
         
         if application.checkout_approve:
             return Response({"error": "Job check-out request has already been completed"}, status=status.HTTP_400_BAD_REQUEST)
