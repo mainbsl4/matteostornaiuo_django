@@ -95,6 +95,7 @@ class FeedJobView(APIView):
             if vacancy.job.company.user == user:
                 # serializer = VacancySerializer(vacancy)
                 data = {
+                    
                     "id": vacancy.id,
                     "company_avatar": vacancy.job.company.company_logo.url if vacancy.job.company.company_logo else None,
                     "job_status": vacancy.job_status,
