@@ -549,7 +549,8 @@ class CheckInView(APIView):
                 "gender": application.applicant.gender,
                 "timesince":  f"{timesince(application.created_at)} ago",
                 # format date and time
-                # "date": application.created_at.date() if application.in_time else None,
+                "date": application.created_at.date(),
+                "time": application.created_at.time()
                 # "time": application.in_time.time() if application.in_time else None,
                 # "location": application.checkin_location,
             }
