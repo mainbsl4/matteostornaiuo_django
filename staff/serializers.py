@@ -88,7 +88,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['job_role'] = JobRoleSerializer(instance.job_role).data
+        data['job_role'] = instance.job_role.name
         return data
 
 class StaffSerializer(serializers.ModelSerializer):
@@ -127,6 +127,12 @@ class StaffSerializer(serializers.ModelSerializer):
             'total_avg_rating': total_avg,  
             'job_role_ratings': list(rating)  
         }
+    
+    # to_representation for showing experience
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['experience'] = ExperienceSerializer(instance.user.experiences.all(), many=True).data
+        return data
 
 class StaffReviewSerializer(serializers.ModelSerializer):
     class Meta:
