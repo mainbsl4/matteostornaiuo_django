@@ -106,7 +106,7 @@ class StaffSerializer(serializers.ModelSerializer):
                 self.fields.pop(field_name)
     class Meta:
         model = Staff
-        fields = ['id','user', 'avg_rating','role', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_available','is_letme_staff']
+        fields = ['id','user', 'avg_rating','role', 'gender', 'nid_number', 'phone', 'address', 'dob', 'age', 'avatar', 'about', 'cv', 'video_cv','skills','is_available','is_letme_staff']
         depth = 1
     
     def get_avg_rating(self, obj):
