@@ -45,6 +45,7 @@ class StaffProfileView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
         
         if pk:
+            
             try:
                 staff = Staff.objects.get(id=pk)
             except Staff.DoesNotExist:
