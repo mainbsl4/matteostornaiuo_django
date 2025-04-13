@@ -143,7 +143,7 @@ JOB_STATUS = (
     ('expired', 'EXPIRED'),
     ('completed', 'COMPLETED')
 )
-class JobApplication(models.Model):
+class n                      JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
     is_approve = models.BooleanField(default=False)
@@ -338,7 +338,32 @@ class JobReport(models.Model):
             # Final Total Pay after deducting tax
             self.total_pay = self.regular_pay + self.overtime_pay
             
-
+    # create report csv file
+    # def generate_report_csv(self):
+    #     # create a csv file
+    #     csv_file = StringIO()
+    #     csv_writer = csv.writer(csv_file)
+        
+    #     # write headers
+    #     headers = ['Job Title', 'Vacancy Title', 'Company', 'Working Hour', 'Extra Hour', 'Regular Pay', 'Overtime Pay', 'Tips', 'Total Pay']
+    #     csv_writer.writerow(headers)
+        
+    #     # write data
+    #     data = [
+    #         self.job_application.vacancy.job.title,
+    #         self.job_application.vacancy.job_title.name,
+    #         self.job_application.vacancy.job.company.company_name,
+    #         self.working_hour,
+    #         self.extra_hour,
+    #         self.regular_pay,
+    #         self.overtime_pay,
+    #         self.tips,
+    #         self.total_pay
+    #     ]
+    #     csv_writer.writerow(data)
+        
+    #     # return the csv file as a string
+    #     return csv_file.getvalue()
     class Meta:
         verbose_name_plural = 'Job Reports'
         ordering = ['-created_at']

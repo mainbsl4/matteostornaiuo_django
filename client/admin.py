@@ -254,6 +254,11 @@ class JobReportAdmin(ImportExportModelAdmin, ModelAdmin):
     list_per_page = 20
     date_hierarchy = 'created_at'
 
+    def has_import_permission(self, request):
+        return False
+
+    
+
 
 
 @admin.register(CompanyReview)
