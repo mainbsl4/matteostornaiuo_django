@@ -38,5 +38,9 @@ urlpatterns =[
     path('staff/experiences/', views.ExperienceView.as_view()),
     path('staff/experiences/<int:pk>/', views.ExperienceView.as_view()),
 
+    # working hours
+    path('staff/workinghours/<int:staff_id>/', views.StaffWorkingHoursView.as_view()),
+
+
 ]
 
