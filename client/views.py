@@ -617,7 +617,7 @@ class CheckOutView(APIView):
         
         vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
 
-        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy,checkin_approve=True, job_status='accepted')
+        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy, job_status='accepted')
         
         # serializer = JobApplicationSerializer(job_application, many=True)
         checkout_applications = []
@@ -634,7 +634,8 @@ class CheckOutView(APIView):
                 "timesince":  f"{timesince(application.created_at)} ago",
                 # format date and time
                 "date": application.created_at.date(),
-                "time": application.created_at.time()
+                "time": application.created_at.time(),
+                "checkout_approved": application.checkout_approve,
                 # "time": application.in_time.time() if application.in_time else None,
                 # "location": application.checkin_location,
             }
@@ -694,7 +695,7 @@ class CheckOutView(APIView):
         response = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "Job check-out request completed"
+            "message": "Job check-out request approved"
         }
         return Response(response,status=status.HTTP_200_OK)
         
