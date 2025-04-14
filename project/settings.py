@@ -279,7 +279,7 @@ UNFOLD = {
             {
                 "title": _("Super Admin"), 
                 "separator": True,  # Top border
-                "collapsible": True, 
+                "collapsible": False, 
                 "SITE_TITLE": "Letme Administrator",
                 "SITE_HEADER": "Letme Admin Dashboard",
                 # "SITE_SUBHEADER": "Appears under SITE_HEADER",
