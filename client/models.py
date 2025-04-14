@@ -143,7 +143,7 @@ JOB_STATUS = (
     ('expired', 'EXPIRED'),
     ('completed', 'COMPLETED')
 )
-class n                      JobApplication(models.Model):
+class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
     applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
     is_approve = models.BooleanField(default=False)
