@@ -27,7 +27,7 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole
+from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole, JobReport
 from client.serializers import JobApplicationSerializer, CheckinSerializer, CheckOutSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -725,3 +725,40 @@ class StaffReviewView(APIView):
         }
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
     
+
+class StaffWorkingHoursView(APIView):
+    def get(self, request, staff_id, *args, **kwargs):
+        staff = Staff.objects.filter(id=staff_id).first()
+        if staff:
+            working_hours = JobReport.objects.filter(job_application__applicant=staff)
+            
+            print('working hours', working_hours)
+            working_hours_list = []
+            for report in working_hours:
+                obj = {
+                    ""
+                    "job_title": report.job_application.vacancy.job.title,
+                    "company": report.job_application.vacancy.job.company.company_name,
+                    "working_hour": report.working_hour,
+                    "extra_hour": report.extra_hour,
+                    "regular_pay": report.regular_pay,
+                    "overtime_pay": report.overtime_pay,
+                    "tips": report.tips,
+                    "total_pay": report.total_pay,
+                    "created_at": report.created_at
+                }
+                working_hours_list.append(obj)
+
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "List of working hours",
+                "data": working_hours_list
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        response_data = {
+            "status": status.HTTP_404_NOT_FOUND,
+            "success": False,
+            "message": "Staff not found"
+        }
+        return Response(response_data, status=status.HTTP_404_NOT_FOUND)

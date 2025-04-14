@@ -27,6 +27,7 @@ urlpatterns = [
 
     path('company/job/applications/', views.JobApplicationAPI.as_view()),
     path('company/job/applications/<int:pk>/', views.JobApplicationAPI.as_view()), # application details / approve application 
+    
     # application list in pending action view
 
     path('company/job/<int:vacancy_id>/applications/', views.JobApplicationAPI.as_view()),
@@ -43,6 +44,9 @@ urlpatterns = [
     # company review 
     path('company/review/', views.CompanyReviewView.as_view()),
     path('company/<int:application_id>/review/', views.CompanyReviewView.as_view()), # give review
+
+    # report 
+
 
     # give tips 
     path('vacancy/<int:report_id>/tips/', views.TipView.as_view()),
