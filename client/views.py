@@ -13,7 +13,7 @@ from django.core.files.storage import default_storage
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.utils.timesince import timesince
-from django.utils.timezone import now
+from django.utils.timezone import now, make_aware
 
 from rest_framework import status, generics
 from rest_framework.response import Response
@@ -617,19 +617,41 @@ class CheckOutView(APIView):
         
         vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
 
-        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy,checkin_approve=True, job_status='accepted')
+        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy, job_status='accepted')
         
-        serializer = JobApplicationSerializer(job_application, many=True)
+        # serializer = JobApplicationSerializer(job_application, many=True)
+        checkout_applications = []
+        for application in job_application:
+            obj = {
+                "application_id": application.id,
+                "job_title": application.vacancy.job.title,
+                "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+                "staff_role": application.applicant.role.name,
+                "staff_id": application.applicant.id,
+                "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+                "age": application.applicant.age,
+                "gender": application.applicant.gender,
+                "timesince":  f"{timesince(application.created_at)} ago",
+                # format date and time
+                "date": application.created_at.date(),
+                "time": application.created_at.time(),
+                "checkout_approved": application.checkout_approve,
+                # "time": application.in_time.time() if application.in_time else None,
+                # "location": application.checkin_location,
+            }
+            checkout_applications.append(obj)
+
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
             "message": "List of pending check-out requests",
-            "data": serializer.data
+            "data": checkout_applications
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
     def post(self, request, pk, **kwargs):
         user = request.user
+        data = request.data
         try:
             client = CompanyProfile.objects.get(user=user)
         except CompanyProfile.DoesNotExist:
@@ -652,22 +674,30 @@ class CheckOutView(APIView):
         
         if application.checkout_approve:
             return Response({"error": "Job check-out request has already been completed"}, status=status.HTTP_400_BAD_REQUEST)
-                
+        
+
+        combine_time = datetime.combine(datetime.strptime(data['date'],'%Y-%m-%d').date(), datetime.strptime(data['time'],'%H:%M:%S').time())
+        application.out_time = make_aware(combine_time)
         application.job_status = 'completed'
         application.checkout_approve = True
+        application.save()
         # create report 
         report = JobReport.objects.create(
             job_application = application,
         )
         
-        application.save()
         
         # send notification to staff
         Notification.objects.create(
             user = application.applicant.user,
             message = f"Your check-out request for {application.vacancy.job_title} has been completed",
         )
-        return Response(status=status.HTTP_200_OK, data={"message": "Job check-out request completed"})
+        response = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job check-out request approved"
+        }
+        return Response(response,status=status.HTTP_200_OK)
         
 
 class JobAdsView(APIView):
