@@ -531,7 +531,7 @@ class CheckInView(APIView):
         vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
 
         try:
-            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkin_approve=False).order_by('created_at')
+            applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkout_approve=False).order_by('created_at')
         except JobApplication.DoesNotExist:
             return Response({"error": "No job checkin request found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -550,7 +550,8 @@ class CheckInView(APIView):
                 "timesince":  f"{timesince(application.created_at)} ago",
                 # format date and time
                 "date": application.created_at.date(),
-                "time": application.created_at.time()
+                "time": application.created_at.time(),
+                "checkin_approved": application.checkin_approve,
                 # "time": application.in_time.time() if application.in_time else None,
                 # "location": application.checkin_location,
             }
