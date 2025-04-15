@@ -528,7 +528,7 @@ class CheckInView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         
 
-        vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
+        vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('job','uniform','job_title').prefetch_related('skills','participants')
 
         try:
             applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkout_approve=False).order_by('created_at')
@@ -552,6 +552,8 @@ class CheckInView(APIView):
                 "date": application.created_at.date(),
                 "time": application.created_at.time(),
                 "checkin_approved": application.checkin_approve,
+                "checkout_approved": application.checkout_approve,
+                
                 # "time": application.in_time.time() if application.in_time else None,
                 # "location": application.checkin_location,
             }
@@ -616,9 +618,10 @@ class CheckOutView(APIView):
         except CompanyProfile.DoesNotExist:
             return Response({"error": "User is not a client"}, status=status.HTTP_403_FORBIDDEN)
         
-        vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
+        vacancy = list(Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).values_list('id', flat=True) )
 
-        job_application = JobApplication.objects.select_related('vacancy','applicant').filter(vacancy__in=vacancy, job_status='accepted')
+        job_application = JobApplication.objects.filter(vacancy__id__in=vacancy).select_related('vacancy','applicant').exclude(checkin_approve=False).order_by('-created_at').distinct()
+
         
         # serializer = JobApplicationSerializer(job_application, many=True)
         checkout_applications = []
@@ -636,6 +639,7 @@ class CheckOutView(APIView):
                 # format date and time
                 "date": application.created_at.date(),
                 "time": application.created_at.time(),
+                "job_status": application.job_status,
                 "checkout_approved": application.checkout_approve,
                 # "time": application.in_time.time() if application.in_time else None,
                 # "location": application.checkin_location,
@@ -691,7 +695,7 @@ class CheckOutView(APIView):
         # send notification to staff
         Notification.objects.create(
             user = application.applicant.user,
-            message = f"Your check-out request for {application.vacancy.job_title} has been completed",
+            message = f"Your check-out request for {application.vacancy.job_title} has been approved",
         )
         response = {
             "status": status.HTTP_200_OK,
