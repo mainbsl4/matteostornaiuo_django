@@ -163,7 +163,7 @@ class JobApplication(models.Model):
     
     # calculate total working hours
     def calculate_total_working_hours(self):
-        if self.in_time and self.out_time:
+        if self.checkin_approve and self.checkout_approve:
             self.total_working_hours = self.out_time - self.in_time
             return self.total_working_hours
 
