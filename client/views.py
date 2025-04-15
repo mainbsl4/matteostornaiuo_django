@@ -528,7 +528,7 @@ class CheckInView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         
 
-        vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('jo','uniform','job_title').prefetch_related('skills','participants')
+        vacancy = Vacancy.objects.filter(job__company=client, job_status__in=['active', 'progress', 'finished']).select_related('job','uniform','job_title').prefetch_related('skills','participants')
 
         try:
             applications = JobApplication.objects.select_related('vacancy', 'applicant').filter(vacancy__in=vacancy,is_approve=True, checkout_approve=False).order_by('created_at')
