@@ -183,13 +183,16 @@ class StaffInvitationAdmin(ModelAdmin):
 
 @admin.register(Checkin)
 class CheckinAdmin(ModelAdmin):
-   pass
+   list_display = ('application', 'in_time', 'location','is_approved')
 
    def get_queryset(self, request):
        return super().get_queryset(request).select_related('application')
 @admin.register(Checkout)
 class CheckoutAdmin(ModelAdmin):
-    pass
+    list_display = ('application', 'out_time', 'location','is_approved')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('application')
 
 @admin.register(JobAds)
 class PermanentJobsAdmin(ModelAdmin):
