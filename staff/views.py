@@ -215,7 +215,7 @@ class JobApplicationView(APIView):
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
     
 
-class JobCheckinView(APIView): # jobapplication 
+class StaffJobView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
         """UPCOMMING JOB LIST"""
         user = request.user
@@ -228,7 +228,7 @@ class JobCheckinView(APIView): # jobapplication
                 "message": "You are not authorized to view this resource"
             }
             return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-        # CHECKOUT/CHECKIN BUTTON IN DETAILS VIEW
+        # UPCOMMING JOB DETAILS VIEW / WITH CHECKIN CHECKOUT REPORT PAGE BUTTON INCLUDED
         if pk:
             try:
                 job_application = JobApplication.objects.get(applicant=staff, id=pk)
@@ -240,26 +240,37 @@ class JobCheckinView(APIView): # jobapplication
                 }
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
-            serializer = JobApplicationSerializer(job_application)
-            # obj = {
-            #     'id': job_application.id,
-            #     'job_title': job_application.vacancy.job.title,
-            #     'company_logo': job_application.vacancy.job.company.company_logo.url if job_application.vacancy.job.company.company_logo else None,
-            #     'job_role': job_application.vacancy.job_title.name,
-            #     'date': job_application.vacancy.open_date,
-            #     'start_time': job_application.vacancy.start_time,
-            #     'end_time': job_application.vacancy.end_time,
-            #     'location': job_application.vacancy.location,
-            #     "job_status": job_application.job_status,
-            #     "checkin_approve": job_application.checkin_approve,
-            #     "checkout_approve": job_application.checkout_approve
+            # serializer = JobApplicationSerializer(job_application)
+            obj = {
+                'id': job_application.id,
+                'job_title': job_application.vacancy.job.title,
+                'shift_price': job_application.vacancy.salary,
+                'company_logo': job_application.vacancy.job.company.company_logo.url if job_application.vacancy.job.company.company_logo else None,
+                'company_id': job_application.vacancy.job.company.id,
+                'job_role': job_application.vacancy.job_title.name,
+                'job_description': job_application.vacancy.job.description,
+                'uniform': {
+                    'name': job_application.vacancy.uniform.name,
+                    'description': job_application.vacancy.uniform.description,
+                    'image': job_application.vacancy.uniform.image.url if job_application.vacancy.uniform.image else None,
+                } if job_application.vacancy.uniform else None,
+                'skills': [x for x in job_application.vacancy.skills.all().values_list('name', flat=True)],
+                
+                'date': job_application.vacancy.open_date,
+                'start_time': job_application.vacancy.start_time,
+                'end_time': job_application.vacancy.end_time,
+                'location': job_application.vacancy.location,
+                
+                "job_status": job_application.job_status,
+                "checkin_approve": job_application.checkin_approve,
+                "checkout_approve": job_application.checkout_approve
 
-            # }
+            }
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Job retrieved successfully",
-                "data": serializer.data
+                "data": obj
             }
             return Response(response_data, status=status.HTTP_200_OK)
         # upcomming job list
@@ -270,6 +281,7 @@ class JobCheckinView(APIView): # jobapplication
             obj = {
                 'id': application.id,
                 'job_title': application.vacancy.job.title,
+                'shift_price': application.vacancy.salary,
                 'company_logo': application.vacancy.job.company.company_logo.url if application.vacancy.job.company.company_logo else None,
                 'job_role': application.vacancy.job_title.name,
                 'date': application.vacancy.open_date,
@@ -279,7 +291,6 @@ class JobCheckinView(APIView): # jobapplication
                 "job_status": application.job_status,
                 "checkin_approve": application.checkin_approve,
                 "checkout_approve": application.checkout_approve
-
             }
             applications.append(obj)
         
@@ -291,12 +302,12 @@ class JobCheckinView(APIView): # jobapplication
         }
         return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request,pk, *args, **kwargs):
-        """CHECKIN REQUEST"""
+        """CKECKIN / CHECKIN REQUEST"""
         user = request.user
         data = request.data
         if user.is_staff:
             try:
-                staff = Staff.objects.get(user=user)
+                staff = Staff.objects.only('id').get(user=user)
             except Staff.DoesNotExist:
                 response_data = {
                     "status": status.HTTP_403_FORBIDDEN,
@@ -347,6 +358,15 @@ class JobCheckinView(APIView): # jobapplication
                 
 
                 elif data['type'] == 'checkout' and application.checkout_approve is False and application.checkin_approve is True:
+                    # if already checkedout
+                    if Checkout.objects.filter(application=application).exists():
+                        response_data = {
+                            "status": status.HTTP_400_BAD_REQUEST,
+                            "success": False,
+                            "message": "You have already checked out this"
+                        }
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    
                     Checkout.objects.create(
                         application=application,
                         out_time = timezone.now(),

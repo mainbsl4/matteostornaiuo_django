@@ -9,10 +9,14 @@ urlpatterns =[
     path('staff/job/apply/', views.JobApplicationView.as_view()), #post
     path('staff/job/apply/<int:pk>/', views.JobApplicationView.as_view()), #post
     # upcoming jobs, checkin and checkout 
-    path('staff/jobs/', views.JobCheckinView.as_view()), # assigned list 
-    path('staff/jobs/<int:pk>/', views.JobCheckinView.as_view()),
-    path('staff/jobs/<int:>/checkin/', views.JobCheckinView.as_view()),
-    path('staff/jobs/<int:pk>/checkout/', views.JobCheckinView.as_view()),
+    path('staff/jobs/', views.StaffJobView.as_view()), # upcoming jobs
+    # path('staff/jobs/<int:job_id>/', views.StaffJobView.as_view()), # upcoming jobs
+    
+
+
+    path('staff/jobs/<int:pk>/', views.StaffJobView.as_view()),
+    path('staff/jobs/<int:pk>/checkin/', views.StaffJobView.as_view()),
+    path('staff/jobs/<int:pk>/checkout/', views.StaffJobView.as_view()),
 
     path('staff/reviews/', views.StaffReviewView.as_view()), #post
     path('vacancy/<int:application_id>/review/', views.StaffReviewView.as_view()), #post
