@@ -11,7 +11,7 @@ urlpatterns =[
     # upcoming jobs, checkin and checkout 
     path('staff/jobs/', views.JobCheckinView.as_view()), # assigned list 
     path('staff/jobs/<int:pk>/', views.JobCheckinView.as_view()),
-    path('staff/jobs/<int:pk>/checkin/', views.JobCheckinView.as_view()),
+    path('staff/jobs/<int:>/checkin/', views.JobCheckinView.as_view()),
     path('staff/jobs/<int:pk>/checkout/', views.JobCheckinView.as_view()),
 
     path('staff/reviews/', views.StaffReviewView.as_view()), #post
