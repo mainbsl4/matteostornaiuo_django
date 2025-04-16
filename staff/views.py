@@ -217,6 +217,7 @@ class JobApplicationView(APIView):
 
 class JobCheckinView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
+        """UPCOMMING JOB LIST"""
         user = request.user
         try:
             staff = Staff.objects.get(user=user)
@@ -227,7 +228,7 @@ class JobCheckinView(APIView): # jobapplication
                 "message": "You are not authorized to view this resource"
             }
             return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-        # not used
+        # CHECKOUT/CHECKIN BUTTON IN DETAILS VIEW
         if pk:
             try:
                 job_application = JobApplication.objects.get(applicant=staff, id=pk)
@@ -240,6 +241,20 @@ class JobCheckinView(APIView): # jobapplication
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
             
             serializer = JobApplicationSerializer(job_application)
+            # obj = {
+            #     'id': job_application.id,
+            #     'job_title': job_application.vacancy.job.title,
+            #     'company_logo': job_application.vacancy.job.company.company_logo.url if job_application.vacancy.job.company.company_logo else None,
+            #     'job_role': job_application.vacancy.job_title.name,
+            #     'date': job_application.vacancy.open_date,
+            #     'start_time': job_application.vacancy.start_time,
+            #     'end_time': job_application.vacancy.end_time,
+            #     'location': job_application.vacancy.location,
+            #     "job_status": job_application.job_status,
+            #     "checkin_approve": job_application.checkin_approve,
+            #     "checkout_approve": job_application.checkout_approve
+
+            # }
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
@@ -261,17 +276,22 @@ class JobCheckinView(APIView): # jobapplication
                 'start_time': application.vacancy.start_time,
                 'end_time': application.vacancy.end_time,
                 'location': application.vacancy.location,
+                "job_status": application.job_status,
+                "checkin_approve": application.checkin_approve,
+                "checkout_approve": application.checkout_approve
 
             }
             applications.append(obj)
+        
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "Job applications retrieved successfully",
+            "message": "List of Upcomming Jobs",
             "data": applications
         }
         return Response(response_data, status=status.HTTP_200_OK)
     def post(self, request,pk, *args, **kwargs):
+        """CHECKIN REQUEST"""
         user = request.user
         data = request.data
         if user.is_staff:
@@ -284,6 +304,8 @@ class JobCheckinView(APIView): # jobapplication
                     "message": "You are not authorized to create this resource"
                 }
                 return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+            
+            
             try:
                 application = JobApplication.objects.get(id=pk, applicant=staff)
             except JobApplication.DoesNotExist:
@@ -295,10 +317,21 @@ class JobCheckinView(APIView): # jobapplication
                 return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
             if application.is_approve:
-                if data['type'] == 'checkin' and application.in_time is None:
-                    application.in_time = timezone.now()
-                    application.checkin_location = data['location']
-                    application.save()
+                if data['type'] == 'checkin' and application.checkin_approve is False:
+                    # if already checkedin 
+                    if Checkin.objects.filter(application=application).exists():
+                        response_data = {
+                            "status": status.HTTP_400_BAD_REQUEST,
+                            "success": False,
+                            "message": "You have already checked in this"
+                        }
+                        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                    Checkin.objects.create(
+                        application=application,
+                        in_time = timezone.now(),
+                        location = data['location']
+                    )
+
                     response_data = {
                         "status": status.HTTP_200_OK,
                         "success": True,
@@ -311,10 +344,15 @@ class JobCheckinView(APIView): # jobapplication
                         message=f'{staff} has checked in for {application.vacancy.job_title}! Approve the checkin request.'
                     )
                     return Response(response_data, status=status.HTTP_200_OK)
-                elif data['type'] == 'checkout' and application.out_time is None:
-                    application.out_time = timezone.now()
-                    application.checkout_location = data['location']
-                    application.save()
+                
+
+                elif data['type'] == 'checkout' and application.checkout_approve is False and application.checkin_approve is True:
+                    Checkout.objects.create(
+                        application=application,
+                        out_time = timezone.now(),
+                        location = data['location']
+                    )
+                    
                     response_data = {
                         "status": status.HTTP_200_OK,
                         "success": True,
