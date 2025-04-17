@@ -334,22 +334,75 @@ class JobApplicationAPI(APIView): # pending actions page approve job
 
 
         # use in pending action page
-        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active','pending', 'accepted']).only('id')
+        # vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active','pending', 'accepted']).only('id')
 
-        job_applications = JobApplication.objects.filter(vacancy__in=vacancy_list).select_related('vacancy','applicant').order_by('created_at')
-        # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
-        # serializer = JobApplicationSerializer(applications, many=True)
+        # job_applications = JobApplication.objects.filter(vacancy__in=vacancy_list).select_related('vacancy','applicant').order_by('created_at')
+        # # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
+        # # serializer = JobApplicationSerializer(applications, many=True)
+        # applications = []
+        # for application in job_applications:
+        #     obj = {
+        #         "id": application.id,
+        #         "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+        #         "staff_id": application.applicant.id,
+        #         "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+        #         "age": application.applicant.age,
+        #         "gender": application.applicant.gender,
+        #         "timesince": application.created_at,
+        #         "job_title": application.vacancy.job.title,
+        #         "job_role": application.applicant.role.name,
+        #         "job_status": application.job_status,
+        #         "is_favourite": True if FavouriteStaff.objects.filter(company=client, staff=application.applicant).select_related('staff','company').exists() else False
+        #     }
+        #     applications.append(obj)
+
+        # optimized query
+        vacancy_list = Vacancy.objects.filter(
+            job__company=client,
+            job_status__in=['active', 'pending', 'accepted']
+        ).only('id')
+
+        # Prefetch favourite staff in one query
+        favourite_staff_ids = set(
+            FavouriteStaff.objects.filter(company=client).values_list('staff_id', flat=True)
+        )
+
+        # Prefetch all needed related fields
+        job_applications = JobApplication.objects.filter(
+            vacancy__in=vacancy_list
+        ).select_related(
+            'vacancy__job',
+            'applicant__user',
+            'applicant__role'
+        ).only(
+            'id', 'created_at', 'job_status',
+            'vacancy__job__title',
+            'applicant__id', 'applicant__age', 'applicant__gender', 'applicant__avatar',
+            'applicant__user__first_name', 'applicant__user__last_name',
+            'applicant__role__name'
+        ).order_by('created_at')
+
         applications = []
         for application in job_applications:
+            applicant = application.applicant
+            user = applicant.user
+            full_name = f"{user.first_name} {user.last_name}"
+
             obj = {
                 "id": application.id,
-                "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
-                "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
-                "age": application.applicant.age,
-                "gender": application.applicant.gender,
+                "staff_name": full_name,
+                "staff_id": applicant.id,
+                "staff_profile": applicant.avatar.url if applicant.avatar else None,
+                "age": applicant.age,
+                "gender": applicant.gender,
                 "timesince": application.created_at,
+                "job_title": application.vacancy.job.title,
+                "job_role": applicant.role.name,
+                "job_status": application.job_status,
+                "is_favourite": applicant.id in favourite_staff_ids
             }
             applications.append(obj)
+
         response_data = {
             "status": status.HTTP_200_OK,
                 "success": True,
