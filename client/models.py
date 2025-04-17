@@ -187,13 +187,12 @@ class StaffInvitation(models.Model):
         return f'{self.staff.user.email} -invited in {self.vacancy.job_title}'
 
 class Checkin(models.Model):
-    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    in_time = models.DateTimeField()
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE)
+    in_time = models.DateTimeField(blank=True, null=True)
     location =  models.CharField(max_length=255, blank=True, null=True)
-    distance = models.IntegerField(default=0, blank=True, null=True)
-    is_approved = models.BooleanField(default=False)
-
+    distance = models.IntegerField(default=0, blank=True, null=True, editable=False)
+    is_approved = models.BooleanField(default=False, editable=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     # calculate distance from vacancy.location to location
@@ -203,18 +202,19 @@ class Checkin(models.Model):
         pass
 
     def __str__(self):
-        return f'{self.staff.user.first_name} { self.staff.user.last_name } - checked in at {self.in_time}'
+        return f'{self.application.applicant} - checked in at {self.in_time}'
 
 class Checkout(models.Model):
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
-    out_time = models.DateTimeField()
-    status = models.BooleanField(default=False)
-
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE)
+    out_time = models.DateTimeField(blank=True, null=True)
+    location =  models.CharField(max_length=255, blank=True, null=True)
+    distance = models.IntegerField(default=0, blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f'{self.staff.user.email} - checked out at {self.out_time}'
+        return f'{self.application.applicant} - checked out at {self.out_time}'
     
 
 # job_type like full-time

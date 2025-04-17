@@ -13,7 +13,7 @@ from unfold.contrib.filters.admin import RangeDateFilter, RangeDateTimeFilter
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources, fields
 
-from . models import (
+from .models import (
     CompanyProfile,
     JobTemplate,
     Job,
@@ -163,14 +163,17 @@ class JobApplicationAdmin(ModelAdmin):
     raw_id_fields = ('vacancy', 'applicant')
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('vacancy','applicant')
-    
+        return super().get_queryset(request).select_related(
+            'vacancy',
+            'vacancy__job',
+            # 'vacancy__job__title',
+            'applicant',
+            'applicant__user'
+        )
     def get_object(self, request, object_id, from_field=None):
         queryset = self.get_queryset(request)
         return queryset.select_related(
-            'vacancy',
             'vacancy__job',
-            'applicant',
             'applicant__user'
         ).get(pk=object_id)
 
@@ -180,10 +183,16 @@ class StaffInvitationAdmin(ModelAdmin):
 
 @admin.register(Checkin)
 class CheckinAdmin(ModelAdmin):
-    list_display = ('staff', 'vacancy', 'in_time', 'is_approved')
+   list_display = ('application', 'in_time', 'location','is_approved')
+
+   def get_queryset(self, request):
+       return super().get_queryset(request).select_related('application')
 @admin.register(Checkout)
 class CheckoutAdmin(ModelAdmin):
-    list_display = ('staff', 'vacancy', 'out_time', 'status')
+    list_display = ('application', 'out_time', 'location','is_approved')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('application')
 
 @admin.register(JobAds)
 class PermanentJobsAdmin(ModelAdmin):
