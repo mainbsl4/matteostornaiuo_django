@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
+import csv
+from io import StringIO
 
 
 from rest_framework import status, generics
@@ -790,7 +792,6 @@ class StaffWorkingHoursView(APIView):
         if staff:
             working_hours = JobReport.objects.filter(job_application__applicant=staff)
             
-            print('working hours', working_hours)
             working_hours_list = []
             for report in working_hours:
                 obj = {
@@ -803,17 +804,35 @@ class StaffWorkingHoursView(APIView):
                     "overtime_pay": report.overtime_pay,
                     "tips": report.tips,
                     "total_pay": report.total_pay,
-                    "created_at": report.created_at
+
+                    "date": report.job_application.created_at,
+                    "shift": f'{report.job_application.vacancy.start_time} to {report.job_application.vacancy.end_time}',
+                    "location": report.job_application.vacancy.location
                 }
                 working_hours_list.append(obj)
+                # convert this data into csv file and send it to the response.
+                # a downloadable csv file
+                csv_file = StringIO()
+                csv_writer = csv.writer(csv_file)
+                headers = ['Job Title', 'Company', 'Working Hour', 'Extra Hour', 'Regular Pay', 'Overtime Pay', 'Tips', 'Total Pay', 'Date', 'Shift', 'Location']
+                csv_writer.writerow(headers)
+                csv_writer.writerow(obj.values())
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "List of working hours",
+                    "data": csv_file.getvalue()
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            
 
-            response_data = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "List of working hours",
-                "data": working_hours_list
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
+            # response_data = {
+            #     "status": status.HTTP_200_OK,
+            #     "success": True,
+            #     "message": "List of working hours",
+            #     "data": working_hours_list
+            # }
+            # return Response(response_data, status=status.HTTP_200_OK)
         response_data = {
             "status": status.HTTP_404_NOT_FOUND,
             "success": False,
