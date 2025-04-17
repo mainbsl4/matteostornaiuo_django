@@ -187,3 +187,45 @@ class UniformList(APIView):
             "data": serializer.data
         }
         return Response(response_data)
+
+
+
+
+
+
+# logout 
+
+class LogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token is None:
+                response_error = {
+                    "success": False,
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "message": "Refresh token is required",
+                    "errors": {"error": ["Refresh token is required."]}
+                }
+                return Response(response_error, status=status.HTTP_400_BAD_REQUEST)
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            response_data = {
+                "success": True,
+                "status": status.HTTP_200_OK,
+                "message": "Successfully logged out.",
+            }
+            
+
+            return Response(response_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            response_error = {
+                "success": False,
+                "status": status.HTTP_400_BAD_REQUEST,
+                "message": "Error occured",
+                "errors": {"error": [str(e)]}
+            }
+            return Response(response_error, status=status.HTTP_400_BAD_REQUEST)
