@@ -298,7 +298,7 @@ class FavouriteStaff(models.Model):
     
 
 class JobReport(models.Model):
-    job_application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True)
+    job_application = models.OneToOneField(JobApplication, on_delete=models.SET_NULL, null=True, related_name='job_report')
     working_hour = models.IntegerField(null=True, blank=True)
     extra_hour = models.IntegerField(null=True, blank=True)
     regular_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)

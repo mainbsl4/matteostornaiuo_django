@@ -49,7 +49,7 @@ urlpatterns = [
 
 
     # give tips 
-    path('vacancy/<int:report_id>/tips/', views.TipView.as_view()),
+    path('vacancy/<int:application_id>/tips/', views.TipView.as_view()),
 
 
 

@@ -693,6 +693,7 @@ class CheckOutView(APIView):
             obj = {
                 "id": obj.id,
                 "application_id": obj.application.id,
+                # "vacancy_id": obj.application.vacancy.id,
                 "job_title": obj.application.vacancy.job.title,
                 "staff_name": obj.application.applicant.user.first_name + obj.application.applicant.user.last_name,
                 "staff_role": obj.application.applicant.role.name,
@@ -1078,11 +1079,15 @@ class CompanyReviewView(APIView):
     
 
 class TipView(APIView):
-    def post(self,request, report_id):
+    def post(self,request, application_id):
         user = request.user
         data = request.data
-        report = get_object_or_404(JobReport, id=report_id)
-        if report.job_application.vacancy.job.company.user == user:
+
+        application = get_object_or_404(JobApplication, id=application_id)
+
+        report = application.job_report
+
+        if application.vacancy.job.company.user == user:
             data = request.data
             report.tips += data['tips']
             report.save()
