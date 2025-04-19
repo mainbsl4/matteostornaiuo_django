@@ -18,6 +18,7 @@ from django.utils.timezone import now, make_aware
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from .models import (
     CompanyProfile,
@@ -1178,4 +1179,46 @@ class TipView(APIView):
             "message": "You are not authorized to submit a tip for this report"
         }
         return Response(response, status=status.HTTP_403_FORBIDDEN)
-    
+
+# api for updating client profile image
+class ClientProfileImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if client:
+                # get image file from the request body name image
+                # and save it to the client profile
+
+                data = request.FILES.get('image')
+                print('data', data)
+                if not data:
+                    response_data = {
+                        "status": status.HTTP_400_BAD_REQUEST,
+                        "success": False,
+                        "message": "Invalid request"
+                    }
+                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                
+                client.company_logo = data
+                client.save()
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Client profile image updated successfully",
+                    # "data": client.company_logo
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Client profile not found"
+            }
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Only client can access this endpoint"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)
