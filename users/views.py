@@ -4,7 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from jwt.exceptions import InvalidTokenError
+
 from rest_framework.permissions import AllowAny
 
 from .serializers import (
@@ -49,6 +53,7 @@ class StaffSignupAPIView(APIView):
                 "access": str(refresh.access_token),
             }
             data = {
+                "user_type": "staff",
                 "user": serializer.data,
                 "tokens": tokens,
             }
@@ -95,6 +100,7 @@ class ClientSignupAPIView(APIView):
                 "access": str(refresh.access_token),
             }
             data = {
+                "user_type": "client",
                 "user": serializer.data,
                 "tokens": tokens,
             }
@@ -200,33 +206,41 @@ class LogoutAPIView(APIView):
 
     def post(self, request):
         try:
-            # get access token from headers
-            access_token = request.headers.get('Authorization').split(' ')[1]
-            
-            # if acess token not found
-            if access_token is None:
-                response_error = {
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return Response({
                     "success": False,
                     "status": status.HTTP_400_BAD_REQUEST,
-                    "message": "Access token is required",
+                    "message": "Authorization header with Bearer token required.",
                     "errors": {"error": ["Access token is required."]}
-                }            
-                return Response(response_error, status=status.HTTP_400_BAD_REQUEST)
-            
-            token = AccessToken.for_user(access_token)
-            token.blacklist()
-            
-            response_data = {
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            access_token_str = auth_header.split(' ')[1]
+            access_token = AccessToken(access_token_str)
+
+            # Manually blacklist the token using OutstandingToken
+            token_obj = OutstandingToken.objects.filter(token=access_token_str).first()
+            if token_obj:
+                BlacklistedToken.objects.get_or_create(token=token_obj)
+
+            return Response({
                 "success": True,
                 "status": status.HTTP_200_OK,
                 "message": "Successfully logged out.",
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        except Exception as e:
-            response_error = {
+            }, status=status.HTTP_200_OK)
+
+        except InvalidTokenError as e:
+            return Response({
                 "success": False,
                 "status": status.HTTP_400_BAD_REQUEST,
-                "message": "Error occured",
+                "message": "Invalid or expired token.",
                 "errors": {"error": [str(e)]}
-            }
-            return Response(response_error, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "success": False,
+                "status": status.HTTP_400_BAD_REQUEST,
+                "message": "An error occurred during logout.",
+                "errors": {"error": [str(e)]}
+            }, status=status.HTTP_400_BAD_REQUEST)
