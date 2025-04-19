@@ -141,11 +141,12 @@ JOB_STATUS = (
     ('accepted', 'ACCEPTED'),
     ('rejected', 'REJECTED'),
     ('expired', 'EXPIRED'),
+    ('late', 'LATE'),
     ('completed', 'COMPLETED')
 )
 class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
-    applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    applicant = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='job_applications')
     is_approve = models.BooleanField(default=False)
     in_time = models.DateTimeField(blank=True, null=True)
     out_time = models.DateTimeField(blank=True, null=True)
