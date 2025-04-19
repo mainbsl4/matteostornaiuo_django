@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from datetime import datetime
 from django.db.models import Avg, Count
@@ -10,6 +10,8 @@ from io import StringIO
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import (
     Staff,
@@ -890,3 +892,57 @@ class StaffWorkingHoursView(APIView):
             "message": "Staff not found"
         }
         return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+    
+
+# staff profile preview
+class UpcommingJobsPreview(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+
+
+        upcoming_jobs = JobApplication.objects.filter(applicant=staff, is_approve=True).select_related('vacancy__job__company')
+        # use pagination 
+        page = request.GET.get('page',1)
+        paginator = Paginator(upcoming_jobs, 3)
+        try:
+            jobs = paginator.page(page)
+        except PageNotAnInteger:
+            jobs = paginator.page(1)
+        except EmptyPage:
+            jobs = paginator.page(paginator.num_pages)
+
+        # serializer = JobApplicationSerializer(jobs, many=True)
+        upcoming_jobs = []
+        def get_application_status(obj):
+            # return the count of each job status 
+            job_application = JobApplication.objects.filter(vacancy=obj)
+            pending = job_application.filter(job_status='pending').count()
+            accepted = job_application.filter(job_status='accepted').count()
+            rejected = job_application.filter(job_status='rejected').count()
+            expierd = job_application.filter(job_status='expired').count()
+            return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+                
+
+        for job in jobs:
+            obj = {
+                'id': job.id,
+                'job_title': job.vacancy.job.title,
+                'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                # 'job_role': job.vacancy.job_title.name,
+                "job_status": job.vacancy.job_status,
+                "date": job.vacancy.created_at,
+                "application_status": get_application_status(job.vacancy)
+            }
+            upcoming_jobs.append(obj)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Upcoming Jobs",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": jobs.number,
+            "data": upcoming_jobs
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
