@@ -1188,11 +1188,7 @@ class ClientProfileImageView(APIView):
         if user.is_client:
             client = CompanyProfile.objects.filter(user=user).first()
             if client:
-                # get image file from the request body name image
-                # and save it to the client profile
-
                 data = request.FILES.get('image')
-                print('data', data)
                 if not data:
                     response_data = {
                         "status": status.HTTP_400_BAD_REQUEST,

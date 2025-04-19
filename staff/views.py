@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
+from django.db.models import Avg, Count
+
 import csv
 from io import StringIO
 
@@ -48,12 +50,58 @@ class StaffProfileView(APIView):
                     "status": status.HTTP_404_NOT_FOUND,
                     "message": "Staff not found"
                 }, status=status.HTTP_404_NOT_FOUND)
-            serializer = StaffSerializer(staff)
+            # serializer = StaffSerializer(staff)
+            
+            StaffReview.objects.filter(staff=staff).values('job_role').annotate(avg_rating=Avg('rating'), review_count=Count('id') )
+
+            # custom response data
+            staff_data = {
+                "id": staff.id,
+                "image": staff.avatar.url if staff.avatar else None,
+                "name": staff.user.first_name + " " + staff.user.last_name,
+                "role": staff.role.name,
+                "contact": staff.phone,
+                "email": staff.user.email,
+                "age": staff.age,
+                "gender": staff.gender,
+                "cv": staff.cv.url if staff.cv else None,
+                "video_cv": staff.video_cv.url if staff.video_cv else None,
+                "rating": [
+                    {
+                        "job_role": review.job_role,
+                        "avg_rating": review.avg_rating,
+                        "review_count": review.review_count
+                    } for review in StaffReview.objects.filter(staff=staff).annotate(avg_rating=Avg('rating'), review_count=Count('id') )
+                ],
+                "job_info":{
+                    "total_apply": staff.job_applications.count(),
+
+                    "total_approved": staff.job_applications.filter(is_approve=True, job_status='accepted').count(),
+
+                    "total_cancel": staff.job_applications.filter(is_approve=False, job_status='cancelled').count(),
+
+                    "total_late": staff.job_applications.filter(is_approve=False, job_status='late').count(),
+                }
+                # "experiences": [
+                #     {
+                #         "job_role": exp.job_role,
+                #         "description": exp.description,
+                #         "start_date": exp.start_date,
+                #         "end_date": exp.end_date,
+                #         "present": exp.present,
+                #         "duration": exp.calcuate_duration()
+                #     } for exp in staff.user.experience.all()
+                # ],
+
+
+            }
+
+
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Staff profile retrieved successfully",
-                "data": serializer.data
+                "data": staff_data
             }
             return Response(response_data, status=status.HTTP_200_OK)
         
