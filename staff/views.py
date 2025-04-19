@@ -33,7 +33,7 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole, JobReport
+from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole, JobReport, CompanyProfile, FavouriteStaff
 from client.serializers import JobApplicationSerializer, CheckinSerializer, CheckOutSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -55,7 +55,10 @@ class StaffProfileView(APIView):
             # serializer = StaffSerializer(staff)
             
             StaffReview.objects.filter(staff=staff).values('job_role').annotate(avg_rating=Avg('rating'), review_count=Count('id') )
-
+            user = request.user
+            if user.is_client:
+                client = CompanyProfile.objects.filter(user=request.user).first()
+            
             # custom response data
             staff_data = {
                 "id": staff.id,
@@ -83,17 +86,8 @@ class StaffProfileView(APIView):
                     "total_cancel": staff.job_applications.filter(is_approve=False, job_status='cancelled').count(),
 
                     "total_late": staff.job_applications.filter(is_approve=False, job_status='late').count(),
-                }
-                # "experiences": [
-                #     {
-                #         "job_role": exp.job_role,
-                #         "description": exp.description,
-                #         "start_date": exp.start_date,
-                #         "end_date": exp.end_date,
-                #         "present": exp.present,
-                #         "duration": exp.calcuate_duration()
-                #     } for exp in staff.user.experience.all()
-                # ],
+                },
+                "is_favaurite": True if user.is_client and  FavouriteStaff.objects.filter(company=client, staff=staff).select_related('staff','company').exists() else False
 
 
             }
@@ -984,9 +978,15 @@ class JobHistoryPreveiw(APIView):
                 'job_title': job.vacancy.job.title,
                 'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
                 # 'job_role': job.vacancy.job_title.name,
+                "job_role": job.vacancy.job_title.name,
                 "job_status": job.vacancy.job_status,
-                "date": job.vacancy.created_at,
-                "application_status": self.get_application_status(job.vacancy)
+                "date": job.vacancy.open_date,
+                "start_time": job.vacancy.start_time,
+                "end_time": job.vacancy.end_time,
+                # get review content for the vacancy
+                "locatin":job.vacancy.location,
+                "review": StaffReview.objects.filter(staff=staff, vacancy=job.vacancy).values('rating').first(),
+
             }
             job_history.append(obj)
 
@@ -1001,31 +1001,43 @@ class JobHistoryPreveiw(APIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
-# experience preview
-class ExperiencePreview(APIView):
+# review preview
+class ReviewPreview(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk, format=None):
         staff = get_object_or_404(Staff, id=pk)
-        experiences = staff.experience.all()
-        # serializer = ExperienceSerializer(experiences, many=True)
-        experiences = []
-        for exp in experiences:
-            obj = {
-                "job_role": exp.job_role,
-                "description": exp.description,
-                "start_date": exp.start_date,
-                "end_date": exp.end_date,
-                "present": exp.present,
-                "duration": exp.calcuate_duration()
-            }
-            experiences.append(obj) 
-        
+        review_queryset = StaffReview.objects.filter(staff=staff)
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(review_queryset, 3)
+
+        try:
+            paginated_reviews = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_reviews = paginator.page(1)
+        except EmptyPage:
+            paginated_reviews = paginator.page(paginator.num_pages)
+
+        reviews_data = []
+        for review in paginated_reviews:
+            reviews_data.append({
+                "company_image": review.vacancy.job.company.company_logo.url if review.vacancy.job.company.company_logo else None,
+                "company_name": review.vacancy.job.company.company_name,
+                "job_role": review.job_role,
+                "rating": review.rating,
+                "content": review.content,
+                "date": review.created_at
+            })
+
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
-            "message": "Experiences",
-            "data": experiences
+            "message": "Reviews",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": paginated_reviews.number,
+            "data": reviews_data
         }
         return Response(response_data, status=status.HTTP_200_OK)
     
