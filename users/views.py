@@ -200,7 +200,9 @@ class LogoutAPIView(APIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data.get("refresh")
+            # refresh_token = request.data.get("refresh")
+            # get refresh token from headers
+            refresh_token = request.headers.get("refresh")
             if refresh_token is None:
                 response_error = {
                     "success": False,
