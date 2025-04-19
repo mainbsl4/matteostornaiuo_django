@@ -52,7 +52,17 @@ class StaffProfileView(APIView):
                     "status": status.HTTP_404_NOT_FOUND,
                     "message": "Staff not found"
                 }, status=status.HTTP_404_NOT_FOUND)
-            # serializer = StaffSerializer(staff)
+            segments = request.path.strip('/').split('/')
+            if 'app' in segments:
+                serializer = StaffSerializer(staff)
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Staff profile retrieved successfully",
+                    "data": serializer.data
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            
             
             StaffReview.objects.filter(staff=staff).values('job_role').annotate(avg_rating=Avg('rating'), review_count=Count('id') )
             user = request.user
