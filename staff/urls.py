@@ -49,6 +49,7 @@ urlpatterns =[
     # profile preview 
     path('staff/review/upcomming-job/<int:pk>/', views.UpcommingJobsPreview.as_view()),
     path('staff/review/job-history/<int:pk>/', views.JobHistoryPreveiw.as_view()),
+    path('staff/review/review-list/<int:pk>/', views.ReviewPreview.as_view()),
 
 
 ]
