@@ -946,3 +946,86 @@ class UpcommingJobsPreview(APIView):
             "data": upcoming_jobs
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+# job history- save as upcomming jobs. only status is completed
+class JobHistoryPreveiw(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_application_status(self,obj):
+            # return the count of each job status 
+            job_application = JobApplication.objects.filter(vacancy=obj)
+            pending = job_application.filter(job_status='pending').count()
+            accepted = job_application.filter(job_status='accepted').count()
+            rejected = job_application.filter(job_status='rejected').count()
+            expierd = job_application.filter(job_status='expired').count()
+            return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+    
+
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+        job_history = JobApplication.objects.filter(applicant=staff, is_approve=True, job_status='finished').select_related('vacancy__job__company')
+        # serializer = JobApplicationSerializer(job_history, many=True)
+        # add pagination
+        page = request.GET.get('page',1)
+        paginator = Paginator(job_history, 3)
+        try:
+            jobs = paginator.page(page)
+        except PageNotAnInteger:
+            jobs = paginator.page(1)
+        except EmptyPage:
+            jobs = paginator.page(paginator.num_pages)  
+        
+
+        job_history = []
+        for job in job_history:
+            obj = {
+                'id': job.id,
+                'job_title': job.vacancy.job.title,
+                'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                # 'job_role': job.vacancy.job_title.name,
+                "job_status": job.vacancy.job_status,
+                "date": job.vacancy.created_at,
+                "application_status": self.get_application_status(job.vacancy)
+            }
+            job_history.append(obj)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job History",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": jobs.number,
+            "data": job_history
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+# experience preview
+class ExperiencePreview(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+        experiences = staff.experience.all()
+        # serializer = ExperienceSerializer(experiences, many=True)
+        experiences = []
+        for exp in experiences:
+            obj = {
+                "job_role": exp.job_role,
+                "description": exp.description,
+                "start_date": exp.start_date,
+                "end_date": exp.end_date,
+                "present": exp.present,
+                "duration": exp.calcuate_duration()
+            }
+            experiences.append(obj) 
+        
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Experiences",
+            "data": experiences
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
