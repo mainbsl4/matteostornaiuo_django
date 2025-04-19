@@ -38,14 +38,7 @@ from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 class StaffProfileView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         user = request.user
-        try:
-            staff = Staff.objects.get(user=user)
-        except Staff.DoesNotExist:
-            return Response({
-                "status": status.HTTP_404_NOT_FOUND,
-                "message": "Staff profile not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-        
+
         if pk:
             
             try:
@@ -63,6 +56,16 @@ class StaffProfileView(APIView):
                 "data": serializer.data
             }
             return Response(response_data, status=status.HTTP_200_OK)
+        
+        try:
+            staff = Staff.objects.get(user=user)
+        except Staff.DoesNotExist:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": "Staff profile not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        
         serializer = StaffSerializer(staff)
         response_data = {
             "status": status.HTTP_200_OK,
