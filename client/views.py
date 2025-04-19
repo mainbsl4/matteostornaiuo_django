@@ -306,7 +306,8 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 vacancy = Vacancy.objects.get(id=vacancy_id)
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
+            
+            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')            
 
             # serializer = JobApplicationSerializer(job_applications, many=True)
             applications = []
@@ -322,6 +323,12 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                     "job_title": application.applicant.role.name,
                     "is_favourite": True if FavouriteStaff.objects.filter(company=client, staff=application.applicant).select_related('staff','company').exists() else False
                 }
+                if application.vacancy.open_date < now().date():
+                    obj['job_status'] = 'expired'
+                    continue
+                if application.vacancy.close_date < now().date():
+                    obj['job_status'] = 'completed'
+                    continue
                 applications.append(obj)
 
             response_data = {
@@ -388,7 +395,7 @@ class JobApplicationAPI(APIView): # pending actions page approve job
             user = applicant.user
             full_name = f"{user.first_name} {user.last_name}"
 
-            obj = {
+            obj = { 
                 "id": application.id,
                 "staff_name": full_name,
                 "staff_id": applicant.id,
@@ -396,11 +403,20 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 "age": applicant.age,
                 "gender": applicant.gender,
                 "timesince": application.created_at,
+                "job_date": application.vacancy.open_date,
                 "job_title": application.vacancy.job.title,
                 "job_role": applicant.role.name,
                 "job_status": application.job_status,
                 "is_favourite": applicant.id in favourite_staff_ids
             }
+            # extract the job application for expired jobs.
+            if application.vacancy.open_date < now().date():
+                obj['job_status'] = 'expired'
+                continue
+            if application.vacancy.close_date < now().date():
+                obj['job_status'] = 'completed'
+                continue
+            
             applications.append(obj)
 
         response_data = {
@@ -994,6 +1010,7 @@ class FavouriteStaffView(APIView):
                 "role": staff.staff.role.name,
                 # "experience": staff.staff.experience.all(),
                 "age": staff.staff.age,
+                "gender": staff.staff.gender,
             }
             staff_list.append(data)
 
