@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.permissions import AllowAny
 
 from .serializers import (
@@ -200,28 +200,27 @@ class LogoutAPIView(APIView):
 
     def post(self, request):
         try:
-            # refresh_token = request.data.get("refresh")
-            # get refresh token from headers
-            refresh_token = request.headers.get("refresh")
-            if refresh_token is None:
+            # get access token from headers
+            access_token = request.headers.get('Authorization').split(' ')[1]
+            
+            # if acess token not found
+            if access_token is None:
                 response_error = {
                     "success": False,
                     "status": status.HTTP_400_BAD_REQUEST,
-                    "message": "Refresh token is required",
-                    "errors": {"error": ["Refresh token is required."]}
-                }
+                    "message": "Access token is required",
+                    "errors": {"error": ["Access token is required."]}
+                }            
                 return Response(response_error, status=status.HTTP_400_BAD_REQUEST)
-
-            token = RefreshToken(refresh_token)
+            
+            token = AccessToken.for_user(access_token)
             token.blacklist()
-
+            
             response_data = {
                 "success": True,
                 "status": status.HTTP_200_OK,
                 "message": "Successfully logged out.",
             }
-            
-
             return Response(response_data, status=status.HTTP_200_OK)
         except Exception as e:
             response_error = {
