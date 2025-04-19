@@ -395,7 +395,7 @@ class JobApplicationAPI(APIView): # pending actions page approve job
             user = applicant.user
             full_name = f"{user.first_name} {user.last_name}"
 
-            obj = { 
+            obj = {
                 "id": application.id,
                 "staff_name": full_name,
                 "staff_id": applicant.id,
@@ -410,14 +410,18 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 "is_favourite": applicant.id in favourite_staff_ids
             }
             # extract the job application for expired jobs.
-            if application.vacancy.open_date < now().date():
-                obj['job_status'] = 'expired'
-                continue
-            if application.vacancy.close_date < now().date():
-                obj['job_status'] = 'completed'
-                continue
+            # if application.vacancy.open_date < now().date():
+            #     obj['job_status'] = 'expired'
+            #     continue
+            # if application.vacancy.close_date < now().date():
+            #     obj['job_status'] = 'completed'
+            #     continue
             
             applications.append(obj)
+        
+        # pop object that job_date is less than today
+        applications = list(filter(lambda x: x['job_date'] >= now().date(), applications))
+        
 
         response_data = {
             "status": status.HTTP_200_OK,
