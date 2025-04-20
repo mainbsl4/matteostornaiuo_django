@@ -52,6 +52,7 @@ class StaffProfileView(APIView):
                     "status": status.HTTP_404_NOT_FOUND,
                     "message": "Staff not found"
                 }, status=status.HTTP_404_NOT_FOUND)
+            
             segments = request.path.strip('/').split('/')
             if 'app' in segments:
                 serializer = StaffSerializer(staff)
@@ -922,6 +923,8 @@ class UpcommingJobsPreview(APIView):
         except EmptyPage:
             jobs = paginator.page(paginator.num_pages)
 
+        
+
         # serializer = JobApplicationSerializer(jobs, many=True)
         upcoming_jobs = []
         def get_application_status(obj):
@@ -932,7 +935,36 @@ class UpcommingJobsPreview(APIView):
             rejected = job_application.filter(job_status='rejected').count()
             expierd = job_application.filter(job_status='expired').count()
             return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
-                
+        
+        # split route for app
+        app_route = request.path.strip('/').split('/')
+        if 'app' in app_route:
+            for job in jobs:
+                obj = {
+                    'id': job.id,
+                    'job_title': job.vacancy.job.title,
+                    'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                    # 'job_role': job.vacancy.job_title.name,
+                    "job_role": job.vacancy.job_title.name,
+                    "job_status": job.vacancy.job_status,
+                    "date": job.vacancy.created_at,
+                    "start_time": job.vacancy.start_time,
+                    "end_time": job.vacancy.end_time,
+                    "location": job.vacancy.location,
+                }
+                upcoming_jobs.append(obj)
+
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Upcoming Jobs",
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "current_page": jobs.number,
+                "data": upcoming_jobs
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
 
         for job in jobs:
             obj = {
