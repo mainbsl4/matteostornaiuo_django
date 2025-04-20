@@ -1019,6 +1019,28 @@ class JobHistoryPreveiw(APIView):
         except EmptyPage:
             jobs = paginator.page(paginator.num_pages)  
         
+        url_route = request.path.strip('/').split('/')
+        if 'app' in url_route:
+            data = {
+                    "total_apply": staff.job_applications.count(),
+
+                    "total_approved": staff.job_applications.filter(is_approve=True, job_status='accepted').count(),
+
+                    "total_cancel": staff.job_applications.filter(is_approve=False, job_status='cancelled').count(),
+
+                    "total_late": staff.job_applications.filter(is_approve=False, job_status='late').count(),
+                }
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job History",
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "current_page": jobs.number,
+                "data": data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
         job_history_list = []
         for job in job_history:
             obj = {
