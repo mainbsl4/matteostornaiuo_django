@@ -132,14 +132,15 @@ class StaffSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['experience'] = ExperienceSerializer(instance.user.experiences.all(), many=True).data
+
         data['job_info'] = {
-                    "total_apply": float(instance.job_applications.count()),
+                    "total_apply": (instance.job_applications.count()),
 
-                    "total_approved": float(instance.job_applications.filter(is_approve=True, job_status='accepted').count()),
+                    "total_approved": instance.job_applications.filter(is_approve=True, job_status='accepted').count(),
 
-                    "total_cancel": float(instance.job_applications.filter(is_approve=False, job_status='cancelled').count()),
+                    "total_cancel": instance.job_applications.filter(is_approve=False, job_status='cancelled').count(),
 
-                    "total_late": float(instance.job_applications.filter(is_approve=False, job_status='late').count()),
+                    "total_late": instance.job_applications.filter(is_approve=False, job_status='late').count(),
                 }
         return data
 
