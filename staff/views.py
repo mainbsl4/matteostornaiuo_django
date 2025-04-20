@@ -1110,4 +1110,47 @@ class ReviewPreview(APIView):
             "data": reviews_data
         }
         return Response(response_data, status=status.HTTP_200_OK)
-    
+
+# cancel job api
+
+
+class CancelJobAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, pk):
+        vacancy = get_object_or_404(Vacancy, id=pk)
+        user = request.user
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).only('id').first()
+            if staff:
+                if staff in vacancy.participants.all():
+                    vacancy.participants.remove(staff)
+                    job_application = JobApplication.objects.filter(vacancy=vacancy,applicant=staff).first()
+                    if job_application:
+                        job_application.job_status = 'cancelled'
+                        job_application.save()
+                        notification = Notification.objects.create(
+                            user=staff.user,
+                            message=f'{staff} has cancelled the job application for {vacancy.job_title}'
+                        )
+                        response_data = {
+                            "status": status.HTTP_200_OK,
+                            "success": True,
+                            "message": "Job application cancelled successfully",
+                            "data": JobApplicationSerializer(job_application).data
+                        }
+                        return Response(response_data, status=status.HTTP_200_OK)
+                    else:
+                        response_data = {
+                            "status": status.HTTP_404_NOT_FOUND,
+                            "success": False,
+                            "message": "Job application not found"
+                        }
+                        return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    response_data = {
+                        "status": status.HTTP_403_FORBIDDEN,
+                        "success": False,
+                        "message": "You are not authorized to cancel this job application"
+                    }
+                    return Response(response_data,status=status.HTTP_403_FORBIDDEN)
