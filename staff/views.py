@@ -869,6 +869,13 @@ class StaffWorkingHoursView(APIView):
                 working_hours_list.append(obj)
                 # convert this data into csv file and send it to the response.
                 # a downloadable csv file
+                # if the request comes from the app url 
+                # split the path
+                url_route = request.path.split('/')
+                if 'app' in url_route:
+                    # make csv file, save it in media folder
+                    pass 
+                
                 csv_file = StringIO()
                 csv_writer = csv.writer(csv_file)
                 headers = ['Job Title', 'Company', 'Working Hour', 'Extra Hour', 'Regular Pay', 'Overtime Pay', 'Tips', 'Total Pay', 'Date', 'Shift', 'Location']
@@ -881,7 +888,6 @@ class StaffWorkingHoursView(APIView):
                     "data": csv_file.getvalue()
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
-            
 
             # response_data = {
             #     "status": status.HTTP_200_OK,
