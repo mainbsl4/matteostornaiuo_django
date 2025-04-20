@@ -908,7 +908,7 @@ class UpcommingJobsPreview(APIView):
         upcoming_jobs = JobApplication.objects.filter(applicant=staff, is_approve=True).select_related('vacancy__job__company')
         # use pagination 
         page = request.GET.get('page',1)
-        paginator = Paginator(upcoming_jobs, 3)
+        paginator = Paginator(upcoming_jobs, 5)
         try:
             jobs = paginator.page(page)
         except PageNotAnInteger:
@@ -956,23 +956,24 @@ class UpcommingJobsPreview(APIView):
 class JobHistoryPreveiw(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_application_status(self,obj):
-            # return the count of each job status 
-            job_application = JobApplication.objects.filter(vacancy=obj)
-            pending = job_application.filter(job_status='pending').count()
-            accepted = job_application.filter(job_status='accepted').count()
-            rejected = job_application.filter(job_status='rejected').count()
-            expierd = job_application.filter(job_status='expired').count()
-            return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+    # def get_application_status(self,obj):
+    #         # return the count of each job status 
+    #         job_application = JobApplication.objects.filter(vacancy=obj)
+    #         pending = job_application.filter(job_status='pending').count()
+    #         accepted = job_application.filter(job_status='accepted').count()
+    #         rejected = job_application.filter(job_status='rejected').count()
+    #         expierd = job_application.filter(job_status='expired').count()
+    #         return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
     
 
     def get(self, request, pk, format=None):
         staff = get_object_or_404(Staff, id=pk)
-        job_history = JobApplication.objects.filter(applicant=staff, is_approve=True, job_status='finished').select_related('vacancy__job__company')
+        
+        job_history = JobApplication.objects.filter(applicant=staff, is_approve=True, job_status='completed').select_related('vacancy__job__company')
         # serializer = JobApplicationSerializer(job_history, many=True)
         # add pagination
         page = request.GET.get('page',1)
-        paginator = Paginator(job_history, 3)
+        paginator = Paginator(job_history, 5)
         try:
             jobs = paginator.page(page)
         except PageNotAnInteger:
@@ -980,8 +981,7 @@ class JobHistoryPreveiw(APIView):
         except EmptyPage:
             jobs = paginator.page(paginator.num_pages)  
         
-
-        job_history = []
+        job_history_list = []
         for job in job_history:
             obj = {
                 'id': job.id,
@@ -995,10 +995,10 @@ class JobHistoryPreveiw(APIView):
                 "end_time": job.vacancy.end_time,
                 # get review content for the vacancy
                 "locatin":job.vacancy.location,
-                "review": StaffReview.objects.filter(staff=staff, vacancy=job.vacancy).values('rating').first(),
+                "review": StaffReview.objects.filter(staff=staff, vacancy=job.vacancy).values('rating', 'content').first(),
 
             }
-            job_history.append(obj)
+            job_history_list.append(obj)
 
         response_data = {
             "status": status.HTTP_200_OK,
@@ -1007,7 +1007,7 @@ class JobHistoryPreveiw(APIView):
             "count": paginator.count,
             "num_pages": paginator.num_pages,
             "current_page": jobs.number,
-            "data": job_history
+            "data": job_history_list
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
