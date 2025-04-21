@@ -43,9 +43,23 @@ class NotificationView(APIView):
         }
         return Response(response_data , status=status.HTTP_200_OK)
     
-    def post(self, request, pk):
+    def post(self, request, pk=None):
         user = request.user
         notification = Notification.objects.filter(user=user, id=pk).first()
+        # mark all read
+        data = request.data
+        if data['all'] == True:
+            notifications = Notification.objects.filter(user=user, is_read=False)
+            for notification in notifications:
+                notification.is_read = True
+                notification.save()
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "All notifications read successfully",
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
         if notification:
             if notification.user == user:
                 notification.is_read = True
