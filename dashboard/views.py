@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 
 # Create your views here.
 from .models import  Notification, Report, FAQ, TermsAndConditions
@@ -34,8 +35,13 @@ class NotificationView(APIView):
         user = request.user
         
         notifications = Notification.objects.filter(user=user).order_by('-created_at')
-        
-        serializer = NotificationSerializer(notifications, many=True)
+
+        # add pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+
+        result = paginator.paginate_queryset(notifications, request)
+        serializer = NotificationSerializer(result, many=True)
         response_data = {
             "status": status.HTTP_200_OK,
             "success": True,
