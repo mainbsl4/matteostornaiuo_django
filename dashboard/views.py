@@ -43,6 +43,46 @@ class NotificationView(APIView):
         }
         return Response(response_data , status=status.HTTP_200_OK)
     
+    def post(self, request, pk=None):
+        user = request.user
+        notification = Notification.objects.filter(user=user, id=pk).first()
+        # mark all read
+        data = request.data
+        if data['all'] == True:
+            notifications = Notification.objects.filter(user=user, is_read=False)
+            for notification in notifications:
+                notification.is_read = True
+                notification.save()
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "All notifications read successfully",
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        if notification:
+            if notification.user == user:
+                notification.is_read = True
+                notification.save()
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Notification read successfully",
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                response_data = {
+                    "status": status.HTTP_403_FORBIDDEN,
+                    "success": False,
+                    "message": "You are not authorized to read this notification"
+                }
+                return Response(response_data, status=status.HTTP_403_FORBIDDEN)
+        response_data = {
+            "status": status.HTTP_404_NOT_FOUND,
+            "success": False,
+            "message": "Notification not found"
+        }
+        return Response(response_data, status=status.HTTP_404_NOT_FOUND)
 
 class SkillView(APIView):
     def get(self, request):
