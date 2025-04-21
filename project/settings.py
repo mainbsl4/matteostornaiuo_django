@@ -205,16 +205,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
-    'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
 
     'https://letme-frontend-web.netlify.app',
+    'https://letme.no',
+    'https://www.letme.no',
+
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5173',
-    'https://matteostornaiuo-django.onrender.com',
     'http://127.0.0.1:8080',
+
+    'https://www.letme.no',
+    'https://letme.no'
 ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
