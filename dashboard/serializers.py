@@ -5,13 +5,19 @@ from staff.serializers import StaffSerializer
 from client.models import Vacancy
 from client.serializers import JobViewSerializers, VacancySerializer
 from users.models import Skill
+from django.utils.timesince import timesince
 
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    timesince = serializers.SerializerMethodField()
     class Meta:
         model = Notification
         fields = "__all__"
+        extra_fields = ['timesince']
+    
+    def get_timesince(self, obj):
+        return timesince(obj.created_at)
 
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
