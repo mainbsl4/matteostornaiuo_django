@@ -165,7 +165,8 @@ class StaffProfileView(APIView):
             "status": status.HTTP_404_NOT_FOUND,
             "message": "Staff profile not found"
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
+
 class JobApplicationView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         user = request.user
@@ -273,7 +274,7 @@ class JobApplicationView(APIView):
             "message": "You are not authorized to create this resource"
         }
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-    
+
 
 class StaffJobView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
@@ -459,6 +460,7 @@ class StaffJobView(APIView): # jobapplication
         }
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
+# VERSION 2
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user
@@ -1154,3 +1156,62 @@ class CancelJobAPIView(APIView):
                         "message": "You are not authorized to cancel this job application"
                     }
                     return Response(response_data,status=status.HTTP_403_FORBIDDEN)
+                
+
+class JobReportView(APIView):
+    def get(self, request,application_id,pk=None):
+        user = request.user
+        # get 'past' from query params
+        params = request.query_params.get('past', None)
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).first()
+            try:
+                job_application = JobApplication.objects.get(id=application_id)
+            except JobApplication.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Job Application not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            if params =='' or params == None:
+                # get current application report
+                job_report = JobReport.objects.filter(job_application=job_application).first()
+                if job_report:
+                    data = {
+                        "id": job_report.id,
+                        "full_name": job_report.job_application.applicant.user.first_name + " " + job_report.job_application.applicant.user.last_name,
+                        "job_role": job_application.vacancy.job_title.name,
+                        "date": job_application.vacancy.open_date,
+                        "start_time": job_application.vacancy.start_time,
+                        "end_time": job_application.vacancy.end_time,
+                        "total_working_hours": job_application.total_working_hours,
+                        "base_salary": job_application.vacancy.job_title.staff_price,
+                        "regular_pay": job_report.regular_pay,
+                        "overtime_pay": job_report.overtime_pay,
+                        "tips": job_report.tips,
+                        "total_pay": job_report.total_pay,
+                        "created_at": job_report.created_at
+                    
+                    }
+                    response = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Job Report retrieved successfully",
+                        "data": data
+                    }
+                    return Response(response, status=status.HTTP_200_OK)
+                    
+                else:
+                    response = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "No report found",
+                        "data": []
+                    }
+                    return Response(response, status=status.HTTP_200_OK)
+        return Response({
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Unauthorized access"
+        }, status=status.HTTP_403_FORBIDDEN)
