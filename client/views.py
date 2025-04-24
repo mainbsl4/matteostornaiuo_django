@@ -591,7 +591,8 @@ class CheckInView(APIView):
                     "gender": application.applicant.gender,
                     "timesince":  f"{timesince(application.created_at)} ago",
                     "date": application.created_at.date(),
-                    "time": application.created_at.time(),
+                    # format time in H:M:s format
+                    "time": application.created_at.strffime('%H:%M:%S'),
                     "job_status": application.job_status,
                     "checkin_approved": application.checkin_approve,
                     "checkout_approved": application.checkout_approve,
@@ -658,7 +659,7 @@ class CheckInView(APIView):
                 "timesince":  f"{timesince(obj.application.created_at)} ago",
                 # format date and time
                 "date": obj.created_at.date(),
-                "time": obj.created_at.time(),
+                "time": obj.created_at.strftime('%H:%M:%S'),
                 "job_status": obj.application.job_status,
                 "checkin_approved": obj.application.checkin_approve,
                 # "checkout_approved": obj.checkout_approve,
@@ -778,7 +779,7 @@ class CheckOutView(APIView):
                 "timesince":  f"{timesince(obj.application.created_at)} ago",
                 # format date and time
                 "date": obj.created_at.date(),
-                "time": obj.created_at.time(),
+                "time": obj.created_at.strftime('%H:%M:%S'),
                 "job_status": obj.application.job_status,
                 "checkin_approved": obj.application.checkin_approve,
                 "checkout_approved": obj.application.checkout_approve,

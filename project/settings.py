@@ -362,6 +362,16 @@ UNFOLD = {
                         "link": reverse_lazy("admin:client_vacancy_changelist"),
                     },
                     {
+                        "title": _("Checkin"),
+                        "icon": "check",
+                        "link": reverse_lazy("admin:client_checkin_changelist"),
+                    },
+                    {
+                        "title": _("Checkout"),
+                        "icon": "done_all",
+                        "link": reverse_lazy("admin:client_checkout_changelist"),
+                    },
+                    {
                         "title": _("Favourite Staff"),
                         "icon": "star",
                         "link": reverse_lazy("admin:client_favouritestaff_changelist"),
