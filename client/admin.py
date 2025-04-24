@@ -184,6 +184,7 @@ class StaffInvitationAdmin(ModelAdmin):
 @admin.register(Checkin)
 class CheckinAdmin(ModelAdmin):
    list_display = ('application', 'in_time', 'location','is_approved')
+   list_editable = ('is_approved',)
 
    def get_queryset(self, request):
        return super().get_queryset(request).select_related('application')
