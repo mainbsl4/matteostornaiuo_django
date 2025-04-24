@@ -192,7 +192,7 @@ class Checkin(models.Model):
     in_time = models.DateTimeField(blank=True, null=True)
     location =  models.CharField(max_length=255, blank=True, null=True)
     distance = models.IntegerField(default=0, blank=True, null=True, editable=False)
-    is_approved = models.BooleanField(default=False, editable=False)
+    is_approved = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
