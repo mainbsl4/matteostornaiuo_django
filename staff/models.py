@@ -7,8 +7,18 @@ from django.core.validators import ValidationError
 from dateutil.relativedelta import relativedelta
 
 from users.models import JobRole, Skill
-
+from storages.backends.s3boto3 import S3Boto3Storage
 User = get_user_model()
+
+
+
+
+
+
+class CustomS3Storage(S3Boto3Storage):
+    location = 'letme'
+    file_overwrite = False
+
 
 
 class Staff(models.Model):
@@ -19,7 +29,8 @@ class Staff(models.Model):
     address = models.CharField(max_length=300, blank=True)
     dob = models.DateField(blank=True)
     age = models.IntegerField(null=True, blank=True)
-    avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
+    # avatar = models.ImageField(blank=True, null=True, upload_to='images/staff/avatar/')
+    avatar = models.ImageField(blank=True, null=True, storage=CustomS3Storage(), upload_to="staff/avatar/")
     about = models.TextField(blank=True)
     gender = models.CharField(max_length=5, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
