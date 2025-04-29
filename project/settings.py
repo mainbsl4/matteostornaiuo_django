@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework_simplejwt",
+    "storages",
     "users",
     "client",
     "staff",
@@ -136,7 +137,7 @@ DATABASES = {
         'NAME': 'matteostornaiuo',
         'USER': 'matteostornaiuo',
         'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '51.20.35.242',
+        'HOST': '51.20.79.215',
         'PORT': '5432',
     }
 }
@@ -263,6 +264,27 @@ STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
+
+
+
+
+
+# AWS S3 settings
+# AWS Configuration
+AWS_ACCESS_KEY_ID = 'AKIATAVAA3U2IEIC55RZ'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'letmematteo'
+AWS_S3_REGION_NAME = 'eu-north-1'
+ 
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+# Configure Django-Storages
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None
+
+
+
+
 
 
 
