@@ -19,7 +19,7 @@ SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
+ALLOWED_HOSTS = ['admin.letme.no', '*']
 
 
 INSTALLED_APPS = [
@@ -51,8 +51,10 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     'whitenoise.runserver_nostatic',
+    'storages',
     "homedashbord",
     "celeryapi",
+
 
     
     
@@ -116,12 +118,12 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -130,16 +132,16 @@ WSGI_APPLICATION = "project.wsgi.application"
 # }
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'matteostornaiuo',
-        'USER': 'matteostornaiuo',
-        'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '51.20.35.242',
-        'PORT': '5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'matteostornaiuo',
+#         'USER': 'matteostornaiuo',
+#         'PASSWORD': 'matteostornaiuo@AA',
+#         'HOST': '51.20.79.215',
+#         'PORT': '5432',
+#     }
+# }
 
 # DATABASES = {
 #     'default': dj_database_url.config(
@@ -264,6 +266,18 @@ STRIPE_WEBHOOK_SECRET = "we_1QtNiWSI80DUGvJVPLfqoT0H"
 STRIPE_SUCCESS_URL = "http://127.0.0.1:8080/success"
 STRIPE_CANCEL_URL = "http://127.0.0.1:8080/cancel"
 
+
+
+# AWS Configuration
+AWS_ACCESS_KEY_ID = 'AKIATAVAA3U2IEIC55RZ'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'letmematteo'
+AWS_S3_REGION_NAME = 'eu-north-1'
+ 
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+# Configure Django-Storages
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_DEFAULT_ACL = 'public-read'
 
 
 # celety configuration
