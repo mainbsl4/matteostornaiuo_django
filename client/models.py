@@ -141,11 +141,12 @@ JOB_STATUS = (
     ('accepted', 'ACCEPTED'),
     ('rejected', 'REJECTED'),
     ('expired', 'EXPIRED'),
+    ('late', 'LATE'),
     ('completed', 'COMPLETED')
 )
 class JobApplication(models.Model):
     vacancy = models.ForeignKey(Vacancy, on_delete=models.CASCADE)
-    applicant = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    applicant = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='job_applications')
     is_approve = models.BooleanField(default=False)
     in_time = models.DateTimeField(blank=True, null=True)
     out_time = models.DateTimeField(blank=True, null=True)
@@ -191,7 +192,7 @@ class Checkin(models.Model):
     in_time = models.DateTimeField(blank=True, null=True)
     location =  models.CharField(max_length=255, blank=True, null=True)
     distance = models.IntegerField(default=0, blank=True, null=True, editable=False)
-    is_approved = models.BooleanField(default=False, editable=False)
+    is_approved = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -298,7 +299,7 @@ class FavouriteStaff(models.Model):
     
 
 class JobReport(models.Model):
-    job_application = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True)
+    job_application = models.OneToOneField(JobApplication, on_delete=models.SET_NULL, null=True, related_name='job_report')
     working_hour = models.IntegerField(null=True, blank=True)
     extra_hour = models.IntegerField(null=True, blank=True)
     regular_pay = models.DecimalField(null=True,blank=True, decimal_places=2, max_digits=10)

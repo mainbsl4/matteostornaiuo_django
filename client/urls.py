@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     # company profile
     path('company/profile/', views.CompanyProfileCreateView.as_view(), name='company_profile'), # read, create
+    path('company/profile/image/', views.ClientProfileImageView.as_view()), # update client profile image
     # path('company/profile/<int:pk>/', views.CompanyProfileCreateView.as_view()), # put, delete
     # vacancy
 
@@ -49,7 +50,7 @@ urlpatterns = [
 
 
     # give tips 
-    path('vacancy/<int:report_id>/tips/', views.TipView.as_view()),
+    path('vacancy/<int:application_id>/tips/', views.TipView.as_view()),
 
 
 

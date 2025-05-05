@@ -1,11 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from datetime import datetime
+from django.db.models import Avg, Count
+
+import csv
+from io import StringIO
 
 
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import (
     Staff,
@@ -27,7 +33,7 @@ from shifting.models import Shifting, DailyShift
 from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 from dashboard.models import Notification
 
-from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole, JobReport
+from client.models import Job, JobApplication, Vacancy, MyStaff, Checkin, Checkout, JobRole, JobReport, CompanyProfile, FavouriteStaff
 from client.serializers import JobApplicationSerializer, CheckinSerializer, CheckOutSerializer
 
 from shifting.models import Shifting, DailyShift
@@ -36,14 +42,7 @@ from shifting.serializers import ShiftingSerializer, DailyShiftSerializer
 class StaffProfileView(APIView):
     def get(self, request,pk=None, *args, **kwargs):
         user = request.user
-        try:
-            staff = Staff.objects.get(user=user)
-        except Staff.DoesNotExist:
-            return Response({
-                "status": status.HTTP_404_NOT_FOUND,
-                "message": "Staff profile not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-        
+
         if pk:
             
             try:
@@ -53,14 +52,75 @@ class StaffProfileView(APIView):
                     "status": status.HTTP_404_NOT_FOUND,
                     "message": "Staff not found"
                 }, status=status.HTTP_404_NOT_FOUND)
-            serializer = StaffSerializer(staff)
+            
+            segments = request.path.strip('/').split('/')
+            if 'app' in segments:
+                serializer = StaffSerializer(staff)
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Staff profile retrieved successfully",
+                    "data": serializer.data
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            
+            
+            StaffReview.objects.filter(staff=staff).values('job_role').annotate(avg_rating=Avg('rating'), review_count=Count('id') )
+            user = request.user
+            if user.is_client:
+                client = CompanyProfile.objects.filter(user=request.user).first()
+            
+            # custom response data
+            staff_data = {
+                "id": staff.id,
+                "image": staff.avatar.url if staff.avatar else None,
+                "name": staff.user.first_name + " " + staff.user.last_name,
+                "role": staff.role.name,
+                "contact": staff.phone,
+                "email": staff.user.email,
+                "age": staff.age,
+                "gender": staff.gender,
+                "cv": staff.cv.url if staff.cv else None,
+                "video_cv": staff.video_cv.url if staff.video_cv else None,
+                "rating": [
+                    {
+                        "job_role": review.job_role,
+                        "avg_rating": review.avg_rating,
+                        "review_count": review.review_count
+                    } for review in StaffReview.objects.filter(staff=staff).annotate(avg_rating=Avg('rating'), review_count=Count('id') )
+                ],
+                "job_info":{
+                    "total_apply": staff.job_applications.count(),
+
+                    "total_approved": staff.job_applications.filter(is_approve=True, job_status='accepted').count(),
+
+                    "total_cancel": staff.job_applications.filter(is_approve=False, job_status='cancelled').count(),
+
+                    "total_late": staff.job_applications.filter(is_approve=False, job_status='late').count(),
+                },
+                "is_favaurite": True if user.is_client and  FavouriteStaff.objects.filter(company=client, staff=staff).select_related('staff','company').exists() else False
+
+
+            }
+
+
             response_data = {
                 "status": status.HTTP_200_OK,
                 "success": True,
                 "message": "Staff profile retrieved successfully",
-                "data": serializer.data
+                "data": staff_data
             }
             return Response(response_data, status=status.HTTP_200_OK)
+        
+        try:
+            staff = Staff.objects.get(user=user)
+        except Staff.DoesNotExist:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": "Staff profile not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        
         serializer = StaffSerializer(staff)
         response_data = {
             "status": status.HTTP_200_OK,
@@ -105,7 +165,8 @@ class StaffProfileView(APIView):
             "status": status.HTTP_404_NOT_FOUND,
             "message": "Staff profile not found"
         }, status=status.HTTP_404_NOT_FOUND)
-    
+
+
 class JobApplicationView(APIView):
     def get(self, request, pk=None, *args, **kwargs):
         user = request.user
@@ -213,7 +274,7 @@ class JobApplicationView(APIView):
             "message": "You are not authorized to create this resource"
         }
         return Response(response_data, status=status.HTTP_403_FORBIDDEN)
-    
+
 
 class StaffJobView(APIView): # jobapplication 
     def get(self, request, pk=None, *args, **kwargs):
@@ -399,6 +460,7 @@ class StaffJobView(APIView): # jobapplication
         }
         return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
+# VERSION 2
 class ShiftRequestView(APIView):
     def get(self, request, pk=None,  *args, **kwargs):
         user = request.user
@@ -790,7 +852,6 @@ class StaffWorkingHoursView(APIView):
         if staff:
             working_hours = JobReport.objects.filter(job_application__applicant=staff)
             
-            print('working hours', working_hours)
             working_hours_list = []
             for report in working_hours:
                 obj = {
@@ -803,20 +864,354 @@ class StaffWorkingHoursView(APIView):
                     "overtime_pay": report.overtime_pay,
                     "tips": report.tips,
                     "total_pay": report.total_pay,
-                    "created_at": report.created_at
+
+                    "date": report.job_application.created_at,
+                    "shift": f'{report.job_application.vacancy.start_time} to {report.job_application.vacancy.end_time}',
+                    "location": report.job_application.vacancy.location
                 }
                 working_hours_list.append(obj)
+                # convert this data into csv file and send it to the response.
+                # a downloadable csv file
+                # if the request comes from the app url 
+                # split the path
+                url_route = request.path.split('/')
+                if 'app' in url_route:
+                    # make csv file, save it in media folder
+                    pass 
+                
+                csv_file = StringIO()
+                csv_writer = csv.writer(csv_file)
+                headers = ['Job Title', 'Company', 'Working Hour', 'Extra Hour', 'Regular Pay', 'Overtime Pay', 'Tips', 'Total Pay', 'Date', 'Shift', 'Location']
+                csv_writer.writerow(headers)
+                csv_writer.writerow(obj.values())
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "List of working hours",
+                    "data": csv_file.getvalue()
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
 
-            response_data = {
-                "status": status.HTTP_200_OK,
-                "success": True,
-                "message": "List of working hours",
-                "data": working_hours_list
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
+            # response_data = {
+            #     "status": status.HTTP_200_OK,
+            #     "success": True,
+            #     "message": "List of working hours",
+            #     "data": working_hours_list
+            # }
+            # return Response(response_data, status=status.HTTP_200_OK)
         response_data = {
             "status": status.HTTP_404_NOT_FOUND,
             "success": False,
             "message": "Staff not found"
         }
         return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+    
+
+# staff profile preview
+class UpcommingJobsPreview(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+
+
+        upcoming_jobs = JobApplication.objects.filter(applicant=staff, is_approve=True).select_related('vacancy__job__company')
+        # use pagination 
+        page = request.GET.get('page',1)
+        paginator = Paginator(upcoming_jobs, 5)
+        try:
+            jobs = paginator.page(page)
+        except PageNotAnInteger:
+            jobs = paginator.page(1)
+        except EmptyPage:
+            jobs = paginator.page(paginator.num_pages)
+
+        
+
+        # serializer = JobApplicationSerializer(jobs, many=True)
+        upcoming_jobs = []
+        def get_application_status(obj):
+            # return the count of each job status 
+            job_application = JobApplication.objects.filter(vacancy=obj)
+            pending = job_application.filter(job_status='pending').count()
+            accepted = job_application.filter(job_status='accepted').count()
+            rejected = job_application.filter(job_status='rejected').count()
+            expierd = job_application.filter(job_status='expired').count()
+            return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+        
+        # split route for app
+        app_route = request.path.strip('/').split('/')
+        if 'app' in app_route:
+            for job in jobs:
+                obj = {
+                    'id': job.id,
+                    'job_title': job.vacancy.job.title,
+                    'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                    # 'job_role': job.vacancy.job_title.name,
+                    "job_role": job.vacancy.job_title.name,
+                    "job_status": job.vacancy.job_status,
+                    "date": job.vacancy.created_at,
+                    "start_time": job.vacancy.start_time,
+                    "end_time": job.vacancy.end_time,
+                    "location": job.vacancy.location,
+                }
+                upcoming_jobs.append(obj)
+
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Upcoming Jobs",
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "current_page": jobs.number,
+                "data": upcoming_jobs
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+
+        for job in jobs:
+            obj = {
+                'id': job.id,
+                'job_title': job.vacancy.job.title,
+                'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                # 'job_role': job.vacancy.job_title.name,
+                "job_status": job.vacancy.job_status,
+                "date": job.vacancy.created_at,
+                "application_status": get_application_status(job.vacancy)
+            }
+            upcoming_jobs.append(obj)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Upcoming Jobs",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": jobs.number,
+            "data": upcoming_jobs
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+# job history- save as upcomming jobs. only status is completed
+class JobHistoryPreveiw(APIView):
+    permission_classes = [IsAuthenticated]
+
+    # def get_application_status(self,obj):
+    #         # return the count of each job status 
+    #         job_application = JobApplication.objects.filter(vacancy=obj)
+    #         pending = job_application.filter(job_status='pending').count()
+    #         accepted = job_application.filter(job_status='accepted').count()
+    #         rejected = job_application.filter(job_status='rejected').count()
+    #         expierd = job_application.filter(job_status='expired').count()
+    #         return {'pending': pending, 'accepted': accepted,'rejected': rejected, 'expired': expierd}
+    
+
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+        
+        job_history = JobApplication.objects.filter(applicant=staff, is_approve=True, job_status='completed').select_related('vacancy__job__company')
+        # serializer = JobApplicationSerializer(job_history, many=True)
+        # add pagination
+        page = request.GET.get('page',1)
+        paginator = Paginator(job_history, 5)
+        try:
+            jobs = paginator.page(page)
+        except PageNotAnInteger:
+            jobs = paginator.page(1)
+        except EmptyPage:
+            jobs = paginator.page(paginator.num_pages)  
+        
+        url_route = request.path.strip('/').split('/')
+        if 'app' in url_route:
+            data = {
+                    "total_apply": staff.job_applications.count(),
+
+                    "total_approved": staff.job_applications.filter(is_approve=True, job_status='accepted').count(),
+
+                    "total_cancel": staff.job_applications.filter(is_approve=False, job_status='cancelled').count(),
+
+                    "total_late": staff.job_applications.filter(is_approve=False, job_status='late').count(),
+                }
+            response_data = {
+                "status": status.HTTP_200_OK,
+                "success": True,
+                "message": "Job History",
+                "count": paginator.count,
+                "num_pages": paginator.num_pages,
+                "current_page": jobs.number,
+                "data": data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        job_history_list = []
+        for job in job_history:
+            obj = {
+                'id': job.id,
+                'job_title': job.vacancy.job.title,
+                'company_logo': job.vacancy.job.company.company_logo.url if job.vacancy.job.company.company_logo else None,
+                # 'job_role': job.vacancy.job_title.name,
+                "job_role": job.vacancy.job_title.name,
+                "job_status": job.vacancy.job_status,
+                "date": job.vacancy.open_date,
+                "start_time": job.vacancy.start_time,
+                "end_time": job.vacancy.end_time,
+                # get review content for the vacancy
+                "locatin":job.vacancy.location,
+                "review": StaffReview.objects.filter(staff=staff, vacancy=job.vacancy).values('rating', 'content').first(),
+
+            }
+            job_history_list.append(obj)
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Job History",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": jobs.number,
+            "data": job_history_list
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+# review preview
+class ReviewPreview(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        staff = get_object_or_404(Staff, id=pk)
+        review_queryset = StaffReview.objects.filter(staff=staff)
+
+        page = request.GET.get('page', 1)
+        paginator = Paginator(review_queryset, 3)
+
+        try:
+            paginated_reviews = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_reviews = paginator.page(1)
+        except EmptyPage:
+            paginated_reviews = paginator.page(paginator.num_pages)
+
+        reviews_data = []
+        for review in paginated_reviews:
+            reviews_data.append({
+                "company_image": review.vacancy.job.company.company_logo.url if review.vacancy.job.company.company_logo else None,
+                "company_name": review.vacancy.job.company.company_name,
+                "job_role": review.job_role,
+                "rating": review.rating,
+                "content": review.content,
+                "date": review.created_at
+            })
+
+        response_data = {
+            "status": status.HTTP_200_OK,
+            "success": True,
+            "message": "Reviews",
+            "count": paginator.count,
+            "num_pages": paginator.num_pages,
+            "current_page": paginated_reviews.number,
+            "data": reviews_data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+# cancel job api
+
+
+class CancelJobAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, pk):
+        vacancy = get_object_or_404(Vacancy, id=pk)
+        user = request.user
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).only('id').first()
+            if staff:
+                if staff in vacancy.participants.all():
+                    vacancy.participants.remove(staff)
+                    job_application = JobApplication.objects.filter(vacancy=vacancy,applicant=staff).first()
+                    if job_application:
+                        job_application.job_status = 'cancelled'
+                        job_application.save()
+                        notification = Notification.objects.create(
+                            user=staff.user,
+                            message=f'{staff} has cancelled the job application for {vacancy.job_title}'
+                        )
+                        response_data = {
+                            "status": status.HTTP_200_OK,
+                            "success": True,
+                            "message": "Job application cancelled successfully",
+                            "data": JobApplicationSerializer(job_application).data
+                        }
+                        return Response(response_data, status=status.HTTP_200_OK)
+                    else:
+                        response_data = {
+                            "status": status.HTTP_404_NOT_FOUND,
+                            "success": False,
+                            "message": "Job application not found"
+                        }
+                        return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+                else:
+                    response_data = {
+                        "status": status.HTTP_403_FORBIDDEN,
+                        "success": False,
+                        "message": "You are not authorized to cancel this job application"
+                    }
+                    return Response(response_data,status=status.HTTP_403_FORBIDDEN)
+                
+
+class JobReportView(APIView):
+    def get(self, request,application_id,pk=None):
+        user = request.user
+        # get 'past' from query params
+        params = request.query_params.get('past', None)
+        if user.is_staff:
+            staff = Staff.objects.filter(user=user).first()
+            try:
+                job_application = JobApplication.objects.get(id=application_id)
+            except JobApplication.DoesNotExist:
+                response_data = {
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "success": False,
+                    "message": "Job Application not found"
+                }
+                return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+            if params =='' or params == None:
+                # get current application report
+                job_report = JobReport.objects.filter(job_application=job_application).first()
+                if job_report:
+                    data = {
+                        "id": job_report.id,
+                        "full_name": job_report.job_application.applicant.user.first_name + " " + job_report.job_application.applicant.user.last_name,
+                        "job_role": job_application.vacancy.job_title.name,
+                        "date": job_application.vacancy.open_date,
+                        "start_time": job_application.vacancy.start_time,
+                        "end_time": job_application.vacancy.end_time,
+                        "total_working_hours": job_application.total_working_hours,
+                        "base_salary": job_application.vacancy.job_title.staff_price,
+                        "regular_pay": job_report.regular_pay,
+                        "overtime_pay": job_report.overtime_pay,
+                        "tips": job_report.tips,
+                        "total_pay": job_report.total_pay,
+                        "created_at": job_report.created_at
+                    
+                    }
+                    response = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "Job Report retrieved successfully",
+                        "data": data
+                    }
+                    return Response(response, status=status.HTTP_200_OK)
+                    
+                else:
+                    response = {
+                        "status": status.HTTP_200_OK,
+                        "success": True,
+                        "message": "No report found",
+                        "data": []
+                    }
+                    return Response(response, status=status.HTTP_200_OK)
+        return Response({
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Unauthorized access"
+        }, status=status.HTTP_403_FORBIDDEN)

@@ -4,7 +4,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from jwt.exceptions import InvalidTokenError
+
 from rest_framework.permissions import AllowAny
 
 from .serializers import (
@@ -49,6 +53,7 @@ class StaffSignupAPIView(APIView):
                 "access": str(refresh.access_token),
             }
             data = {
+                "user_type": "staff",
                 "user": serializer.data,
                 "tokens": tokens,
             }
@@ -95,6 +100,7 @@ class ClientSignupAPIView(APIView):
                 "access": str(refresh.access_token),
             }
             data = {
+                "user_type": "client",
                 "user": serializer.data,
                 "tokens": tokens,
             }
@@ -187,3 +193,54 @@ class UniformList(APIView):
             "data": serializer.data
         }
         return Response(response_data)
+
+
+
+
+
+
+# logout 
+
+class LogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return Response({
+                    "success": False,
+                    "status": status.HTTP_400_BAD_REQUEST,
+                    "message": "Authorization header with Bearer token required.",
+                    "errors": {"error": ["Access token is required."]}
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            access_token_str = auth_header.split(' ')[1]
+            access_token = AccessToken(access_token_str)
+
+            # Manually blacklist the token using OutstandingToken
+            token_obj = OutstandingToken.objects.filter(token=access_token_str).first()
+            if token_obj:
+                BlacklistedToken.objects.get_or_create(token=token_obj)
+
+            return Response({
+                "success": True,
+                "status": status.HTTP_200_OK,
+                "message": "Successfully logged out.",
+            }, status=status.HTTP_200_OK)
+
+        except InvalidTokenError as e:
+            return Response({
+                "success": False,
+                "status": status.HTTP_400_BAD_REQUEST,
+                "message": "Invalid or expired token.",
+                "errors": {"error": [str(e)]}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({
+                "success": False,
+                "status": status.HTTP_400_BAD_REQUEST,
+                "message": "An error occurred during logout.",
+                "errors": {"error": [str(e)]}
+            }, status=status.HTTP_400_BAD_REQUEST)

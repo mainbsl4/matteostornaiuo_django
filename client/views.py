@@ -18,6 +18,7 @@ from django.utils.timezone import now, make_aware
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from .models import (
     CompanyProfile,
@@ -306,7 +307,8 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                 vacancy = Vacancy.objects.get(id=vacancy_id)
             except Vacancy.DoesNotExist:
                 return Response({"error": "Vacancy not found"}, status=status.HTTP_404_NOT_FOUND)
-            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')
+            
+            job_applications = JobApplication.objects.filter(vacancy=vacancy, is_approve=False).select_related('vacancy','applicant').order_by('created_at')            
 
             # serializer = JobApplicationSerializer(job_applications, many=True)
             applications = []
@@ -322,6 +324,12 @@ class JobApplicationAPI(APIView): # pending actions page approve job
                     "job_title": application.applicant.role.name,
                     "is_favourite": True if FavouriteStaff.objects.filter(company=client, staff=application.applicant).select_related('staff','company').exists() else False
                 }
+                if application.vacancy.open_date < now().date():
+                    obj['job_status'] = 'expired'
+                    continue
+                if application.vacancy.close_date < now().date():
+                    obj['job_status'] = 'completed'
+                    continue
                 applications.append(obj)
 
             response_data = {
@@ -334,22 +342,88 @@ class JobApplicationAPI(APIView): # pending actions page approve job
 
 
         # use in pending action page
-        vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active','pending', 'accepted']).only('id')
+        # vacancy_list = Vacancy.objects.filter(job__company=client, job_status__in=['active','pending', 'accepted']).only('id')
 
-        job_applications = JobApplication.objects.filter(vacancy__in=vacancy_list).select_related('vacancy','applicant').order_by('created_at')
-        # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
-        # serializer = JobApplicationSerializer(applications, many=True)
+        # job_applications = JobApplication.objects.filter(vacancy__in=vacancy_list).select_related('vacancy','applicant').order_by('created_at')
+        # # job_applications = JobApplication.objects.filter(vacancy__id=vacancy_id).order_by('-created_at')
+        # # serializer = JobApplicationSerializer(applications, many=True)
+        # applications = []
+        # for application in job_applications:
+        #     obj = {
+        #         "id": application.id,
+        #         "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
+        #         "staff_id": application.applicant.id,
+        #         "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
+        #         "age": application.applicant.age,
+        #         "gender": application.applicant.gender,
+        #         "timesince": application.created_at,
+        #         "job_title": application.vacancy.job.title,
+        #         "job_role": application.applicant.role.name,
+        #         "job_status": application.job_status,
+        #         "is_favourite": True if FavouriteStaff.objects.filter(company=client, staff=application.applicant).select_related('staff','company').exists() else False
+        #     }
+        #     applications.append(obj)
+
+        # optimized query
+        vacancy_list = Vacancy.objects.filter(
+            job__company=client,
+            job_status__in=['active', 'pending', 'accepted']
+        ).only('id')
+
+        # Prefetch favourite staff in one query
+        favourite_staff_ids = set(
+            FavouriteStaff.objects.filter(company=client).values_list('staff_id', flat=True)
+        )
+
+        # Prefetch all needed related fields
+        job_applications = JobApplication.objects.filter(
+            vacancy__in=vacancy_list
+        ).select_related(
+            'vacancy__job',
+            'applicant__user',
+            'applicant__role'
+        ).only(
+            'id', 'created_at', 'job_status',
+            'vacancy__job__title',
+            'applicant__id', 'applicant__age', 'applicant__gender', 'applicant__avatar',
+            'applicant__user__first_name', 'applicant__user__last_name',
+            'applicant__role__name'
+        ).order_by('created_at')
+
         applications = []
         for application in job_applications:
+            applicant = application.applicant
+            user = applicant.user
+            full_name = f"{user.first_name} {user.last_name}"
+
             obj = {
                 "id": application.id,
-                "staff_name": application.applicant.user.first_name + application.applicant.user.last_name,
-                "staff_profile": application.applicant.avatar.url if application.applicant.avatar else None,
-                "age": application.applicant.age,
-                "gender": application.applicant.gender,
+                "staff_name": full_name,
+                "staff_id": applicant.id,
+                "staff_profile": applicant.avatar.url if applicant.avatar else None,
+                "age": applicant.age,
+                "gender": applicant.gender,
                 "timesince": application.created_at,
+                "job_date": application.vacancy.open_date,
+                "job_title": application.vacancy.job.title,
+                "job_role": applicant.role.name,
+                "job_status": application.job_status,
+                "is_favourite": applicant.id in favourite_staff_ids
             }
+            # extract the job application for expired jobs.
+            # if application.vacancy.open_date < now().date():
+            #     obj['job_status'] = 'expired'
+            #     continue
+            # if application.vacancy.close_date < now().date():
+            #     obj['job_status'] = 'completed'
+            #     continue
+            
             applications.append(obj)
+        
+        # pop object that job_date is less than today
+        applications = list(filter(lambda x: x['job_date'] >= now().date(), applications))
+        
+
         response_data = {
             "status": status.HTTP_200_OK,
                 "success": True,
@@ -517,7 +591,8 @@ class CheckInView(APIView):
                     "gender": application.applicant.gender,
                     "timesince":  f"{timesince(application.created_at)} ago",
                     "date": application.created_at.date(),
-                    "time": application.created_at.time(),
+                    # format time in H:M:s format
+                    "time": application.created_at.strffime('%H:%M:%S'),
                     "job_status": application.job_status,
                     "checkin_approved": application.checkin_approve,
                     "checkout_approved": application.checkout_approve,
@@ -584,7 +659,7 @@ class CheckInView(APIView):
                 "timesince":  f"{timesince(obj.application.created_at)} ago",
                 # format date and time
                 "date": obj.created_at.date(),
-                "time": obj.created_at.time(),
+                "time": obj.created_at.strftime('%H:%M:%S'),
                 "job_status": obj.application.job_status,
                 "checkin_approved": obj.application.checkin_approve,
                 # "checkout_approved": obj.checkout_approve,
@@ -693,6 +768,7 @@ class CheckOutView(APIView):
             obj = {
                 "id": obj.id,
                 "application_id": obj.application.id,
+                # "vacancy_id": obj.application.vacancy.id,
                 "job_title": obj.application.vacancy.job.title,
                 "staff_name": obj.application.applicant.user.first_name + obj.application.applicant.user.last_name,
                 "staff_role": obj.application.applicant.role.name,
@@ -703,7 +779,7 @@ class CheckOutView(APIView):
                 "timesince":  f"{timesince(obj.application.created_at)} ago",
                 # format date and time
                 "date": obj.created_at.date(),
-                "time": obj.created_at.time(),
+                "time": obj.created_at.strftime('%H:%M:%S'),
                 "job_status": obj.application.job_status,
                 "checkin_approved": obj.application.checkin_approve,
                 "checkout_approved": obj.application.checkout_approve,
@@ -940,6 +1016,7 @@ class FavouriteStaffView(APIView):
                 "role": staff.staff.role.name,
                 # "experience": staff.staff.experience.all(),
                 "age": staff.staff.age,
+                "gender": staff.staff.gender,
             }
             staff_list.append(data)
 
@@ -1078,11 +1155,15 @@ class CompanyReviewView(APIView):
     
 
 class TipView(APIView):
-    def post(self,request, report_id):
+    def post(self,request, application_id):
         user = request.user
         data = request.data
-        report = get_object_or_404(JobReport, id=report_id)
-        if report.job_application.vacancy.job.company.user == user:
+
+        application = get_object_or_404(JobApplication, id=application_id)
+
+        report = application.job_report
+
+        if application.vacancy.job.company.user == user:
             data = request.data
             report.tips += data['tips']
             report.save()
@@ -1099,4 +1180,42 @@ class TipView(APIView):
             "message": "You are not authorized to submit a tip for this report"
         }
         return Response(response, status=status.HTTP_403_FORBIDDEN)
-    
+
+# api for updating client profile image
+class ClientProfileImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        user = request.user
+        if user.is_client:
+            client = CompanyProfile.objects.filter(user=user).first()
+            if client:
+                data = request.FILES.get('image')
+                if not data:
+                    response_data = {
+                        "status": status.HTTP_400_BAD_REQUEST,
+                        "success": False,
+                        "message": "Invalid request"
+                    }
+                    return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+                
+                client.company_logo = data
+                client.save()
+                response_data = {
+                    "status": status.HTTP_200_OK,
+                    "success": True,
+                    "message": "Client profile image updated successfully",
+                    # "data": client.company_logo
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            response_data = {
+                "status": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "message": "Client profile not found"
+            }
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+        response_data = {
+            "status": status.HTTP_403_FORBIDDEN,
+            "success": False,
+            "message": "Only client can access this endpoint"
+        }
+        return Response(response_data, status=status.HTTP_403_FORBIDDEN)

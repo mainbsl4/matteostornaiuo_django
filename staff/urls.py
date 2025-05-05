@@ -21,7 +21,7 @@ urlpatterns =[
     path('staff/reviews/', views.StaffReviewView.as_view()), #post
     path('vacancy/<int:application_id>/review/', views.StaffReviewView.as_view()), #post
     
-
+    path('staff/job/report/<int:application_id>/', views.JobReportView.as_view()),
 
 
     path('myshift/', views.StaffShiftView.as_view()), # 1
@@ -44,6 +44,12 @@ urlpatterns =[
 
     # working hours
     path('staff/workinghours/<int:staff_id>/', views.StaffWorkingHoursView.as_view()),
+
+
+    # profile preview 
+    path('staff/review/upcomming-job/<int:pk>/', views.UpcommingJobsPreview.as_view()),
+    path('staff/review/job-history/<int:pk>/', views.JobHistoryPreveiw.as_view()),
+    path('staff/review/review-list/<int:pk>/', views.ReviewPreview.as_view()),
 
 
 ]
