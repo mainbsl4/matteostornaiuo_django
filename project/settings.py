@@ -23,7 +23,7 @@ SECRET_KEY = "django-insecure-m$w8san7%avlpm*x2n7ing8mri-c&wh!4wfody(30se_x2mln^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['matteostornaiuo-django.onrender.com', '*']
+ALLOWED_HOSTS = ['admin.letme.no', '*']
 
 
 INSTALLED_APPS = [
@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     "homedashbord",
     "celeryapi",
+
 
     
     
@@ -121,12 +122,12 @@ WSGI_APPLICATION = "project.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
 
 # DATABASES = {
 #     'default': dj_database_url.config(
