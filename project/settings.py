@@ -141,7 +141,7 @@ DATABASES = {
         'NAME': 'matteostornaiuo',
         'USER': 'matteostornaiuo',
         'PASSWORD': 'matteostornaiuo@AA',
-        'HOST': '51.20.79.215',
+        'HOST': '13.53.162.107',
         'PORT': '5432',
     }
 }
@@ -215,7 +215,8 @@ CORS_ALLOWED_ORIGINS = [
     'https://letme-frontend-web.netlify.app',
     'https://letme.no',
     'https://www.letme.no',
-
+    'https://test.letme.no',
+    'https://www.test.letme.no',
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
@@ -224,6 +225,8 @@ CSRF_TRUSTED_ORIGINS = [
 
     'https://www.letme.no',
     'https://letme.no'
+    'https://test.letme.no',
+    'https://www.test.letme.no',
 ]
 # SESSION_COOKIE_SECURE = True  # Ensure cookies are only sent over HTTPS
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are only sent over HTTPS
